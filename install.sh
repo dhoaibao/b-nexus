@@ -85,11 +85,16 @@ if merge_kind == "hooks":
 elif merge_kind == "permissions":
     permissions_new = merge_payload.get("permissions", {})
     permissions_existing = existing.setdefault("permissions", {})
-    allow = permissions_existing.setdefault("allow", [])
 
+    allow = permissions_existing.setdefault("allow", [])
     for pattern in permissions_new.get("allow", []):
         if pattern not in allow:
             allow.append(pattern)
+
+    deny = permissions_existing.setdefault("deny", [])
+    for pattern in permissions_new.get("deny", []):
+        if pattern not in deny:
+            deny.append(pattern)
 else:
     raise SystemExit(f"Unsupported MERGE_KIND: {merge_kind}")
 
@@ -215,6 +220,39 @@ _PERMISSIONS_CONFIG='{
       "mcp__brave-search__*",
       "mcp__firecrawl__*",
       "mcp__sequential-thinking__*"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.env)",
+      "Read(**/.envrc)",
+      "Read(**/.npmrc)",
+      "Read(**/.pypirc)",
+      "Read(**/.netrc)",
+      "Read(**/credentials.json)",
+      "Read(**/settings.local.json)",
+      "Read(**/secrets.yml)",
+      "Read(**/secrets.yaml)",
+      "Read(**/*.tfvars)",
+      "Read(**/terraform.tfstate*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/id_rsa)",
+      "Read(**/id_ed25519)",
+      "Read(**/.ssh/*)",
+      "Read(**/.gnupg/*)",
+      "Read(**/.aws/*)",
+      "Read(**/.config/gcloud/*)",
+      "Read(**/kubeconfig)",
+      "Read(**/.kube/config)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(**/*.env)",
+      "Write(**/.env)",
+      "Write(**/.env.*)",
+      "Write(**/*.env)"
     ]
   }
 }'
