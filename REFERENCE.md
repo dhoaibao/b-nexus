@@ -13,6 +13,7 @@ Think before coding. Decompose tasks into ordered steps, evaluate competing appr
 **Core behavior**
 - **Step 0** picks **quick mode** vs **full mode** before any other work. Quick = scoped daily tasks (chat plan, approval, then `b-implement`). Full = unclear/high-risk/multi-layer (saved plan file, then `b-implement`).
 - Auto-selects mode from task complexity, announces it in one sentence, and asks the user only when both modes are genuinely valid and preference matters.
+- For clearly scoped tasks, states the interpreted scope and uses final plan approval as the confirmation gate instead of asking twice.
 - Escalates quick → full when discovery reveals broad references, unclear requirements, structural decisions, external API uncertainty, or deployment risk.
 - Owns broad or unclear refactors until they're reduced to concrete rename/extract/move/inline steps that can be handed off to `b-refactor`.
 - Hands approved implementation work to `b-implement` by default so planning and execution stay distinct.
@@ -55,7 +56,7 @@ All external knowledge in one skill: auto-detects quick lookup vs full multi-sou
 - For library/framework API questions: Context7 first.
 - In quick mode: answers in 1–3 sentences with a minimal example, capped at 2 tool calls, never scrapes.
 - Starts with quick mode when plausible, then escalates automatically when the answer needs more than 2 tool calls, more than 1 source, or any page scraping.
-- In full mode: classifies query into VERSION / COMPARE / NEWS / HOWTO/API → Brave Search → Firecrawl scrape/extract → quality gate → synthesis report.
+- In full mode: classifies query into VERSION / COMPARE / NEWS / HOWTO/API → Brave Search with `firecrawl_search` fallback → Firecrawl scrape/extract → quality gate → synthesis report.
 - Uses `sequentialthinking` only when conflicting sources materially change the recommendation.
 - Prefers 3 high-quality sources over 5 mixed-quality ones.
 
@@ -75,6 +76,7 @@ tra cứu cách dùng thư viện Prisma
 **Key limits**
 - Quick mode caps at 2 tool calls before escalating or answering.
 - Default scrape cap in full mode: 3 URLs per session; 5 for COMPARE queries.
+- `firecrawl_crawl` is only for user-requested comprehensive coverage of a known site section, capped at `limit <= 10` and `maxDiscoveryDepth <= 2`.
 - Never fill factual gaps from training data in full mode when sources do not support them.
 
 ---
@@ -122,10 +124,10 @@ Systematic, hypothesis-driven debugging with full-loop execution by default.
 - Uses supported Serena tools to map execution path, references, suspicious symbols, and file structure (Step 2).
 - If Serena is unavailable, falls back to bash/read with reduced cross-file confidence.
 - Initializes Serena project knowledge with onboarding check before tracing when needed.
-- **Step 3a** forms ranked hypotheses with evidence/verification per item.
+- **Step 3a** forms ranked hypotheses with evidence/verification per item, reports them as progress, then continues verification without waiting unless the user requested diagnosis-only mode.
 - **Step 3b** runs fast-path lookups (library-error shortcut + error-string codebase search) before verifying — these often eliminate wrong hypotheses.
 - Library error shortcut: web search → Firecrawl scrape (top 1–2 URLs) → Context7 verification.
-- Dynamic verification loop in Step 4 when static analysis is insufficient (max 3 instrumentation rounds).
+- Dynamic verification loop in Step 4 when static analysis is insufficient (max 3 instrumentation rounds; remove added debug logging before stopping unconfirmed).
 - After confirming root cause, implements the minimal fix using symbol-aware tools and states exact verification steps.
 
 **Default contract**: `trace → confirm root cause → fix → verify`
@@ -151,7 +153,7 @@ Symptoms → Code path → Ranked hypotheses → Fast-path findings → Root cau
 
 ### b-review
 
-Human-judgment pre-PR review: correctness, requirements, edge cases, tests, and minimum observability on new entry points.
+Human-judgment pre-PR changed-code review: correctness, requirements, edge cases, tests, and minimum observability on new entry points.
 
 **Core behavior**
 - Reads git diff and builds requirements baseline from plan file, `$ARGUMENTS`, or user clarification.
@@ -178,6 +180,7 @@ Human-judgment pre-PR review: correctness, requirements, edge cases, tests, and 
 **Good triggers**
 ```text
 /b-review
+/b-review code review
 review before PR
 kiểm tra logic trước khi push
 /b-review skip test adequacy
@@ -205,7 +208,7 @@ Test-driven development, test debugging, and test coverage evaluation.
   - **Branch A — Failing test**: read test + source, identify assertion/mock/setup/async issue, apply minimal fix.
   - **Branch B — Write tests**: map source symbol, list edge cases, add tests via Serena symbol tools or `write` for new files.
   - **Branch C — Evaluate coverage**: run coverage report, rank gaps, optionally write top 1–3 missing tests.
-- Runs tests via bash after every change to confirm fix or coverage improvement.
+- Runs the narrowest relevant tests via bash after every change, ensuring the temp output directory exists and capturing full failure output instead of truncating with `tail`.
 - Distinguishes test-specific failures from runtime bugs. Unconfirmed production behavior failures hand off to `b-debug` instead of patching production code from test output alone.
 - Uses `sequentialthinking` for test strategy only when unit vs integration is ambiguous.
 
@@ -234,12 +237,12 @@ Type → Framework → Test structure → Issue/Requirements → Fix/Implementat
 Browser-based frontend testing and E2E script authoring.
 
 **Core behavior**
-- Uses Playwright MCP to navigate to the target web application.
+- Uses Playwright MCP (`playwright_browser_*` tools) to navigate to the target web application.
 - Before navigating to `localhost`, verifies the dev server is reachable via a bash health check; asks the user to start it if not responding.
-- Creates a session-specific directory under `.opencode/b-e2e/[run]/` to store intermediate artifacts (screenshots and snapshots).
-- Relies on accessibility tree snapshots (`browser_snapshot`) to map the UI and get precise target references.
+- Creates a session-specific directory under `.opencode/b-e2e/[run]/` for native notes and generated test files; Playwright MCP artifacts use supported filenames or returned artifact paths.
+- Relies on accessibility tree snapshots (`playwright_browser_snapshot`) to map the UI and get precise target references.
 - Performs sequential user interactions (clicks, typing, form fills).
-- Verifies UI state changes via updated snapshots; optionally monitors network requests with `browser_network_requests` for API-level assertions.
+- Verifies UI state changes via updated snapshots; optionally monitors network requests with `playwright_browser_network_requests` for API-level assertions.
 - Translates successful manual interactions into Playwright test code via Serena symbol tools when an existing spec exists, or `write` when no spec file exists.
 - Closes the browser session when the flow finishes and keeps artifacts unless the user asks to delete this run's directory.
 
@@ -257,9 +260,9 @@ Target URL → UI Snapshot → Interactions → Assertions → [Optional] Test C
 
 **Key rules**
 - Inherently requires the `playwright` MCP to function.
-- Never guess element selectors; always read the `browser_snapshot` first.
-- For `localhost` targets, run a bash health check before calling `browser_navigate`.
-- All testing artifacts must go into a session-specific `.opencode/b-e2e/[run]/` directory.
+- Never guess element selectors; always read the `playwright_browser_snapshot` first.
+- For `localhost` targets, run a bash health check before calling `playwright_browser_navigate`.
+- Native notes and generated test files go into `.opencode/b-e2e/[run]/`; Playwright MCP artifacts use supported filenames or returned artifact paths.
 - Always close the browser at cleanup; do not delete artifacts by default.
 - Distinct from `b-test`, which handles code-level unit testing without a live browser.
 
@@ -273,10 +276,11 @@ Code refactoring with impact analysis and safe mechanical transformation.
 - Maps full impact radius with `find_referencing_symbols` before touching any code.
 - Requires a green baseline check for medium/high-risk refactors; low-risk single-file mechanical edits may skip baseline with an explicit note.
 - Uses Serena's symbol-aware tools (`rename_symbol`, `safe_delete_symbol`, `replace_symbol_body`) for cross-file safe edits where symbol-level operations apply.
-- Assumes the target transformation is already concrete; broad or unclear refactors should go through `b-plan` first.
+- Assumes the target transformation is already concrete; broad, unclear, or vague cleanup requests should go through `b-plan` first.
 - Executes in dependency order (inner helpers first, outer callers last).
 - Verifies after every step: compilation → tests → git diff.
 - For large refactors (>3 files or crossing package boundaries): uses `sequentialthinking` to plan phases.
+- Vague cleanup requests without a specific target or behavior-preserving transformation go to `b-plan` first.
 - Hands off post-refactor failures: real regression → `/b-debug`; test-mechanic drift → `/b-test`.
 
 **Transformations supported**
@@ -327,6 +331,14 @@ Target → Impact → Risk → Transformation plan → Changes → Verification
 /b-implement [.opencode/b-plans/task.md or task-slug]
 ```
 
+### TDD flow
+```
+1. /b-test [behavior or coverage gap]
+2. Write the failing or missing behavior test
+3. /b-implement [approved implementation plan] or /b-debug [runtime failure]
+4. /b-review [task]
+```
+
 ### Debug flow
 ```
 /b-debug [symptom + expected behavior]
@@ -352,7 +364,7 @@ Target → Impact → Risk → Transformation plan → Changes → Verification
 ## Trigger tips
 
 - Invoke skills with `/` prefix: `/b-plan`, `/b-implement`, `/b-debug`, `/b-review`, `/b-research`, `/b-test`, `/b-e2e`, `/b-refactor`.
-- Use explicit intent words: `plan`, `implement`, `execute plan`, `debug`, `review`, `research`, `lookup`, `test`, `refactor`, `E2E`, `UI test`.
+- Use explicit intent words: `plan`, `implement`, `execute plan`, `debug`, `code review`, `review before PR`, `research`, `lookup`, `test`, `refactor`, `E2E`, `UI test`.
 - Mention complexity when relevant: multi-file, unfamiliar module, unclear root cause.
 
 ---
@@ -365,6 +377,9 @@ Target → Impact → Risk → Transformation plan → Changes → Verification
         └── approved plan ───────────────────────► /b-implement
         └── reduced to mechanical steps ─────────► /b-refactor
 
+/b-test ──────────────── TDD / missing behavior ─► failing or missing test
+        └────────────── implementation needed ───► /b-implement or /b-debug
+
 /b-implement ─────────── step verified ──────────► next step
              └────────── new decision needed ────► /b-plan
              └────────── runtime failure ────────► /b-debug
@@ -376,8 +391,8 @@ Target → Impact → Risk → Transformation plan → Changes → Verification
 /b-debug ─────────────── bug found during impl ──► fix inline or return to /b-implement
          └──────────── fix introduces new code ──► /b-review (optional)
 
-/b-test ──────────────── test fails ────────────► /b-debug (if failure reveals runtime bug)
-        └──────────── coverage gap ─────────────► write tests → run suite
+/b-test ──────────────── test fails ─────────────► /b-debug (if failure reveals runtime bug)
+        └────────────── coverage gap ────────────► write tests → run suite
 
 /b-e2e ───────────────── UI flow verified ──────► author Playwright spec → cleanup
        └──────────── backend failure surfaces ──► /b-debug

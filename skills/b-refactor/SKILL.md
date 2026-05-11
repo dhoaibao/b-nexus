@@ -1,7 +1,7 @@
 ---
 name: b-refactor
 description: >
-  Code refactoring: impact analysis, mechanical transformation, and verification. ALWAYS invoke when the user asks to refactor, tái cấu trúc, rename, extract method, move, inline, simplify, or clean up code. Unlike b-plan (decides what to build), b-refactor owns the mechanical workflow: impact analysis → safe edits → verify. Uses Serena's symbol-aware tools for cross-file impact and safe renaming.
+  Code refactoring: impact analysis, mechanical transformation, and verification. ALWAYS invoke when the user asks to refactor, tái cấu trúc, rename, extract method, move, inline, simplify, or clean up a named target with behavior-preserving scope. Vague cleanups go to b-plan first. Unlike b-plan (decides what to build), b-refactor owns mechanical edits.
 compatibility: opencode
 metadata:
   suite: b-skills
@@ -19,7 +19,7 @@ If `$ARGUMENTS` is provided, treat it as the refactoring instruction. Proceed di
 
 ## When to use
 
-- User asks to refactor, rename, extract method, move a function, inline a variable.
+- User asks to refactor, rename, extract method, move a function, inline a variable, or clean up a named target with concrete behavior-preserving scope.
 - User says: "refactor", "tái cấu trúc", "extract method", "rename", "move", "inline",
   "simplify", "clean up", "tách hàm", "đổi tên".
 - Mechanical code transformation that preserves behavior.
@@ -29,6 +29,7 @@ If `$ARGUMENTS` is provided, treat it as the refactoring instruction. Proceed di
 ## When NOT to use
 
 - New feature, broad refactor, or unclear scope → use **b-plan** first
+- Vague cleanup request without a specific target or behavior-preserving transformation → use **b-plan** first
 - Runtime bug or test failure → use **b-debug**
 - Review after implementation → use **b-review**
 - Tests fail after refactor → use **b-test** (test-specific) or **b-debug** (real regression)

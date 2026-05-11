@@ -14,7 +14,7 @@ Guidelines for creating, editing, and maintaining the install-only OpenCode skil
 - `skills/b-research/SKILL.md` — Library docs and multi-source research
 - `skills/b-implement/SKILL.md` — Approved-plan execution
 - `skills/b-debug/SKILL.md` — Hypothesis-driven debugging
-- `skills/b-review/SKILL.md` — Pre-PR code review
+- `skills/b-review/SKILL.md` — Pre-PR changed-code review
 - `global/AGENTS.md` — Runtime rules source installed as OpenCode's global `AGENTS.md`
 - `commands/` — Thin slash-command wrappers that load the matching skills
 
@@ -273,31 +273,24 @@ b-skills/
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **b-skills** (254 symbols, 249 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **b-skills** (260 symbols, 255 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
-
-## Two-stage workflow
-
-GitNexus narrows the problem space first; Serena confirms and edits.
-
-1. **Graph-level discovery** → `gitnexus_query`, `gitnexus_impact`, `gitnexus_detect_changes`, `gitnexus_context`
-2. **Exact symbol work** → `serena_find_symbol`, `serena_get_symbols_overview`, `serena_find_referencing_symbols`, `serena_replace_symbol_body`, `serena_rename_symbol`, `serena_safe_delete_symbol`
+> If any GitNexus tool warns the index is stale, run `gitnexus analyze` in terminal first.
 
 ## Always Do
 
-- **MUST run impact analysis before editing any shared/exported symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` to scope blast radius, then use Serena for precise reference tracing and edits.
-- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`. Then narrow to exact bodies with Serena.
+- Prefer GitNexus first for graph-shaped code tasks when the repo is indexed: architecture context, blast radius, changed-scope validation, execution-flow discovery, or multi-repo mapping.
+- If GitNexus is unavailable, stale, unindexed, or missing FTS, warn once and continue with Serena/native tools.
+- Use Serena for precise symbol edits and renames; GitNexus narrows risk, it does not replace symbol-aware editing.
+- Run `gitnexus_detect_changes()` before committing when GitNexus is available and indexed.
+- Warn the user before editing if GitNexus impact analysis returns HIGH or CRITICAL risk.
 
 ## Never Do
 
-- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
 - NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph, or `serena_rename_symbol` for single-repo precision.
-- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
+- NEVER use GitNexus as a replacement for Serena's precise symbol-level edits.
+- NEVER rename symbols with plain find-and-replace; use Serena symbol rename when available, or GitNexus/manual reference checks when Serena is unavailable.
+- NEVER commit without checking changed scope; use `gitnexus_detect_changes()` when GitNexus is available and indexed, otherwise inspect `git diff` and relevant references manually.
 
 ## Resources
 

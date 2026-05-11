@@ -439,14 +439,43 @@ sync_directory() {
   cp -R "$source_dir"/. "$target_dir"/
 }
 
+is_b_skills_skill_dir() {
+  local skill_dir="$1"
+  [ -f "$skill_dir/SKILL.md" ] || return 1
+  grep -Eq '^[[:space:]]*suite:[[:space:]]*b-skills[[:space:]]*$' "$skill_dir/SKILL.md"
+}
+
+is_legacy_b_skills_command_name() {
+  case "$1" in
+    b-plan|b-research|b-implement|b-refactor|b-debug|b-test|b-e2e|b-review)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_b_skills_command_file() {
+  local command_file="$1"
+  local command_name
+  [ -f "$command_file" ] || return 1
+  grep -q '<!-- b-skills-managed -->' "$command_file" && return 0
+
+  command_name=$(basename "$command_file" .md)
+  is_legacy_b_skills_command_name "$command_name" || return 1
+  grep -Fq "Load the \`$command_name\` skill and follow it exactly for this request." "$command_file" \
+    && grep -Fq '$ARGUMENTS' "$command_file"
+}
+
 prune_stale_skills() {
   local source_dir="$1" target_dir="$2" removed=0 skill_name
   [ -d "$target_dir" ] || { printf '0'; return; }
 
-  # Only prune b-skills-managed entries so unrelated user skills stay intact.
+  # Only prune explicitly b-skills-managed entries so unrelated user skills stay intact.
   for installed_dir in "$target_dir"/b-*; do
     [ -d "$installed_dir" ] || continue
-    [ -f "$installed_dir/SKILL.md" ] || continue
+    is_b_skills_skill_dir "$installed_dir" || continue
     skill_name=$(basename "$installed_dir")
     if [ ! -d "$source_dir/$skill_name" ] || [ ! -f "$source_dir/$skill_name/SKILL.md" ]; then
       rm -rf "$installed_dir"
@@ -461,9 +490,10 @@ prune_stale_commands() {
   local source_dir="$1" target_dir="$2" removed=0 command_name
   [ -d "$target_dir" ] || { printf '0'; return; }
 
-  # Only prune b-skills-managed wrappers so unrelated user commands stay intact.
+  # Only prune explicitly b-skills-managed wrappers so unrelated user commands stay intact.
   for installed_file in "$target_dir"/b-*.md; do
     [ -f "$installed_file" ] || continue
+    is_b_skills_command_file "$installed_file" || continue
     command_name=$(basename "$installed_file")
     if [ ! -f "$source_dir/$command_name" ]; then
       rm -f "$installed_file"
@@ -676,10 +706,6 @@ def ensure_mapping(container, key):
     return value
 
 config = load_existing_config(existing_raw)
-
-permission = config.setdefault("permission", {})
-skill_permission = permission.setdefault("skill", {})
-skill_permission.setdefault("*", "allow")
 
 mcp_defaults = {
     "brave-search": {

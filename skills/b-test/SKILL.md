@@ -89,14 +89,16 @@ Use `sequentialthinking` for branch selection only if the user's request is genu
 
 ### Step 3 — Branch A: Fix failing test
 
-1. read the failing test output via bash:
+1. Read the exact failing test output via bash. If the user provided a command, run that command. Otherwise run the narrowest discoverable test target. Capture full output; if it exceeds tool limits, read the captured output around the failure location instead of truncating with `tail`:
    ```bash
-   npm test 2>&1 | tail -50
+   mkdir -p /tmp/opencode
+   npm test -- --testNamePattern="test name" 2>&1 | tee /tmp/opencode/b-test-output.log
    # or
-   pytest -x 2>&1 | tail -30
+   mkdir -p /tmp/opencode
+   pytest path/to/test.py::test_function -x 2>&1 | tee /tmp/opencode/b-test-output.log
    ```
-2. read the failing test code with `read` (narrow section, not full file).
-3. read the source code under test (the function/class being tested).
+2. Read the failing test code with `read` (narrow section, not full file).
+3. Read the source code under test (the function/class being tested).
 4. Identify the gap between expected and actual:
 
 | Symptom | Fix |
@@ -159,7 +161,7 @@ Apply the minimal fix. Prefer `replace_symbol_body` for whole test functions ove
 
 ### Step 6 — Run and verify
 
-1. Run the specific test(s) via bash:
+1. Run the specific test(s) via bash. Prefer the exact command from the failure or the narrowest framework target over the full suite during the fix loop:
    ```bash
    npm test -- --testNamePattern="test name"
    pytest path/to/test.py::test_function
@@ -214,5 +216,5 @@ Apply the minimal fix. Prefer `replace_symbol_body` for whole test functions ove
 - write behavior tests (assert on output), not implementation tests (assert on internal state).
 - Use `sequentialthinking` for test strategy decisions only if the choice is genuinely ambiguous.
 - Never trigger destructive git commands.
-- If the test output is truncated in the terminal: increase verbosity or pipe to a file then `read` the file.
+- If test output exceeds tool limits: capture full output to a temp file, then read around the failure location instead of truncating with `tail`.
 - Prefer running specific tests over the full suite during debugging — faster feedback loop.

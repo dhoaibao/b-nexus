@@ -31,17 +31,19 @@ If `$ARGUMENTS` is provided, treat it as the research question — proceed direc
 ## Tools required
 
 - **Quick mode primary**: `resolve-library-id`, `query-docs` — from `context7` MCP server for library/framework API questions
-- **Search**: `brave_web_search` — from `brave-search` MCP server
+- **Search**: `brave_web_search` — from `brave-search` MCP server; `firecrawl_search` as fallback when Brave is unavailable or too sparse
 - **NEWS full mode**: `brave_news_search` — from `brave-search` MCP server
 - **Full-mode page reads**: `firecrawl_scrape` — from `firecrawl` MCP server
-- **Full-mode fallbacks**: `firecrawl_search`, `firecrawl_map`, `firecrawl_extract`, `firecrawl_crawl`, `firecrawl_check_crawl_status`
+- **Full-mode fallbacks**: `firecrawl_map`, `firecrawl_extract`
+- **Bounded known-site crawl**: `firecrawl_crawl`, `firecrawl_check_crawl_status` *(optional, only when the user asks for comprehensive coverage of a known site section)*
 - **Conflict resolution**: `sequentialthinking` — from `sequential-thinking` MCP server *(optional)*
 - **GitNexus is intentionally outside the `b-research` workflow.** This skill handles external knowledge only; repo-internal graph intelligence is not its responsibility.
 
 If context7 is unavailable: continue with Brave for library questions.
 If brave-search is unavailable:
 - quick mode with a clear Context7 answer may still complete;
-- otherwise stop and tell the user: `❌ brave-search MCP is not connected. Please check your MCP configuration.`
+- use `firecrawl_search` for full-mode search fallback;
+- otherwise stop only when neither Brave nor Firecrawl search is available.
 If firecrawl is unavailable:
 - quick mode may still complete without scraping;
 - full mode is blocked — tell the user: `❌ firecrawl MCP is not connected. Please check your MCP configuration.`
@@ -131,7 +133,7 @@ Apply the search strategy for the full-mode type:
 Universal rules:
 - Use English queries unless the topic is Vietnamese-specific.
 - Prefer 3 high-quality sources over 5 mixed ones.
-- If Brave returns fewer than 3 relevant results, retry with `firecrawl_search`.
+- If Brave is unavailable or returns fewer than 3 relevant results, retry with `firecrawl_search`.
 
 ### Step 6 — Scrape or extract
 
@@ -140,6 +142,7 @@ Universal rules:
 - For structured fields, params, prices, or specs, prefer `firecrawl_extract`.
 - Default cap: 3 URLs; 5 for COMPARE queries.
 - If JS-rendered pages return empty content, retry once with `waitFor: 5000`, then fall back to `firecrawl_map` if needed.
+- Use `firecrawl_crawl` only when the user asks for comprehensive coverage of a known site section; set `limit <= 10` and `maxDiscoveryDepth <= 2`, then poll with `firecrawl_check_crawl_status`.
 - If fewer than 2 usable sources remain after quality filtering, stop and tell the user there are not enough reliable sources.
 
 ### Step 7 — Synthesize

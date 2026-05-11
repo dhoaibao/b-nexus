@@ -1,7 +1,7 @@
 ---
 name: b-review
 description: >
-  Pre-PR code review. ALWAYS invoke when the user says "review", "review before PR", "kiểm tra logic", "what would a reviewer flag", or after implementation is done. Verifies correctness, requirements, edge cases, and tests. Unlike b-test, b-review judges adequacy and risk; it does not primarily write tests.
+  Pre-PR changed-code review. ALWAYS invoke for "code review", "review before PR", "kiểm tra logic", "what would a reviewer flag", or after implementation is done. Do NOT invoke for UI/design review, plan review, research synthesis review, or repository/skill audit unless the user asks for PR-style code review. Unlike b-test, b-review judges adequacy and risk; it does not primarily write tests.
 compatibility: opencode
 metadata:
   suite: b-skills
@@ -24,7 +24,7 @@ A diff that is **≤50 lines AND ≤2 files** is treated as a small change. The 
 ## When to use
 
 - After implementation is done, before committing or opening a PR.
-- User says "review before PR", "kiểm tra logic trước khi push", "what would a reviewer flag".
+- User says "code review", "review before PR", "kiểm tra logic trước khi push", "what would a reviewer flag".
 - Validating that the implementation actually fulfills the original requirements.
 - Checking if test coverage is adequate for the behavior that was changed.
 
@@ -33,6 +33,7 @@ A diff that is **≤50 lines AND ≤2 files** is treated as a small change. The 
 - Something is broken → use **b-debug**
 - write or fix tests → use **b-test**
 - Need library API details before writing code → use **b-research**
+- UI/design/UX review, plan review, research synthesis review, or repository/skill audit → do not use **b-review** unless the user explicitly asks for PR-style changed-code review.
 
 ## Tools required
 

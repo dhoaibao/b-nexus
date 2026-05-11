@@ -26,13 +26,13 @@ Drives a real browser using Playwright to verify frontend user flows, interact w
 
 ## Tools required
 
-- `browser_navigate` — from `playwright` MCP server *(Primary)*
-- `browser_snapshot` — from `playwright` MCP server *(Primary)*
-- `browser_click` / `browser_fill_form` / `browser_type` / `browser_press_key` — from `playwright` MCP server *(Primary)*
-- `browser_take_screenshot` — from `playwright` MCP server *(Secondary, for visual diffs)*
-- `browser_evaluate` — from `playwright` MCP server *(optional, for complex DOM assertions)*
-- `browser_network_requests` — from `playwright` MCP server *(optional, for asserting API calls)*
-- `browser_close` — from `playwright` MCP server *(used in cleanup)*
+- `playwright_browser_navigate` — from `playwright` MCP server *(Primary)*
+- `playwright_browser_snapshot` — from `playwright` MCP server *(Primary)*
+- `playwright_browser_click` / `playwright_browser_fill_form` / `playwright_browser_type` / `playwright_browser_press_key` — from `playwright` MCP server *(Primary)*
+- `playwright_browser_take_screenshot` — from `playwright` MCP server *(Secondary, for visual evidence)*
+- `playwright_browser_evaluate` — from `playwright` MCP server *(optional, for complex DOM assertions)*
+- `playwright_browser_network_requests` — from `playwright` MCP server *(optional, for asserting API calls)*
+- `playwright_browser_close` — from `playwright` MCP server *(used in cleanup)*
 - `find_symbol`, `get_symbols_overview`, `insert_before_symbol`, `insert_after_symbol`, `replace_symbol_body` — from `serena` MCP server *(optional, for writing test code in Step 5)*
 - `bash`, `write`, `edit` — for managing temporary artifacts, dev-server health checks, and creating new test files when needed.
 - **GitNexus is intentionally outside the core `b-e2e` workflow.** If graph-level impact analysis becomes necessary (e.g., a backend failure with cross-module scope), hand off to **b-debug** or **b-review** instead.
@@ -52,27 +52,27 @@ Determine the target URL (local dev server or staging). If the URL is a `localho
 ```bash
 curl -s -o /dev/null -w "%{http_code}" http://localhost:PORT | grep -qE "^[23]" || echo "Server not responding"
 ```
-If the server is not reachable, ask the user to start it before proceeding. Do not attempt `browser_navigate` to a non-responding host.
+If the server is not reachable, ask the user to start it before proceeding. Do not attempt `playwright_browser_navigate` to a non-responding host.
 
-Once confirmed reachable (or for remote URLs), call `browser_navigate` to load the application.
+Once confirmed reachable (or for remote URLs), call `playwright_browser_navigate` to load the application.
 
 ---
 
 ### Step 2 — Map the UI and capture visuals
 
-Call `browser_snapshot` and `browser_take_screenshot`, saving both into the session-specific `.opencode/b-e2e/[run]/` directory, to capture the accessibility tree and visual state. Always use the accessibility snapshot to find exact target references before attempting to click or type.
+Call `playwright_browser_snapshot` to capture the accessibility tree and `playwright_browser_take_screenshot` for visual evidence when needed. Save artifacts using each Playwright MCP tool's supported `filename` parameter when available; otherwise record the returned artifact path. Use the session-specific `.opencode/b-e2e/[run]/` directory for native notes and generated test files. Always use the accessibility snapshot to find exact target references before attempting to click or type.
 
 ---
 
 ### Step 3 — Execute interactions
 
-Execute the requested user flow by calling `browser_click`, `browser_fill_form`, `browser_type`, or `browser_press_key` using the precise targets mapped in Step 2. Keep interactions sequential — verify state after major actions (form submission, navigation).
+Execute the requested user flow by calling `playwright_browser_click`, `playwright_browser_fill_form`, `playwright_browser_type`, or `playwright_browser_press_key` using the precise targets mapped in Step 2. Keep interactions sequential — verify state after major actions (form submission, navigation).
 
 ---
 
 ### Step 4 — Verify state
 
-Capture a new snapshot/screenshot in the session-specific artifact directory or use `browser_evaluate` to assert that the expected text, elements, or state changes have appeared. Optionally use `browser_network_requests` for API-level assertions when the UI depends on backend calls.
+Capture a new snapshot/screenshot with the Playwright MCP tools or use `playwright_browser_evaluate` to assert that the expected text, elements, or state changes have appeared. Optionally use `playwright_browser_network_requests` for API-level assertions when the UI depends on backend calls.
 
 ---
 
@@ -103,7 +103,7 @@ If no test code is requested, skip this step and just report the verified flow.
 
 When testing, verification, and code generation are complete:
 
-1. Close the browser session: `browser_close`.
+1. Close the browser session: `playwright_browser_close`.
 2. Report the artifact directory path. Do not delete artifacts by default; they are useful evidence for failed UI checks. If the user asks to clean up, delete only the session-specific directory created by this run.
 
 ---
@@ -124,7 +124,7 @@ When testing, verification, and code generation are complete:
 ✅ [expected state confirmed — description]
 ❌ [unexpected state — description and screenshot reference if captured]
 
-#### Network requests *(optional — only if browser_network_requests was used)*
+#### Network requests *(optional — only if playwright_browser_network_requests was used)*
 - [Method + URL] — [status / payload note]
 
 #### Test code *(optional — only if writing or fixing a test file)*
@@ -141,8 +141,8 @@ Artifacts: `.opencode/b-e2e/[run]/`
 ---
 
 ## Rules
-- Always use `browser_snapshot` to get exact element targets before interacting; never guess selectors blindly.
-- Save all intermediate snapshots, screenshots, and visual outputs strictly to the session-specific `.opencode/b-e2e/[run]/` directory.
+- Always use `playwright_browser_snapshot` to get exact element targets before interacting; never guess selectors blindly.
+- Save Playwright MCP artifacts with the tool-supported `filename` parameter when available; otherwise record the returned path. Keep native notes and generated test files in the session-specific `.opencode/b-e2e/[run]/` directory.
 - Always close the browser when the testing flow finishes. Do not delete artifacts unless the user asks, and only delete this run's directory.
 - Ensure the local dev server is running before attempting to navigate to `localhost`.
 - Keep interactions sequential and verify state changes after major actions.

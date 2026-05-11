@@ -17,7 +17,7 @@ Match the user's intent to a skill before answering inline. Don't reinvent skill
 | Runtime bug, error message, "not working" | `/b-debug` |
 | Write/fix tests, evaluate coverage | `/b-test` |
 | Browser/UI verification, Playwright authoring | `/b-e2e` |
-| Pre-PR review of correctness, requirements, edge cases | `/b-review` |
+| Pre-PR changed-code review of correctness, requirements, edge cases | `/b-review` |
 
 If a request spans multiple skills, run them sequentially in the order above (Decide → Implement → Validate). Don't merge phases.
 

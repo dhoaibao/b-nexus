@@ -73,7 +73,7 @@ In quick mode: skip Steps 2–6 unless escalation triggers; produce the chat pla
 Confirm what is being built before scanning any code.
 
 **If the task is clearly scoped** (user already described the full feature, no ambiguity):
-- Restate the scope in one sentence and ask the user to confirm.
+- State the interpreted scope in one sentence and proceed. Use the final plan approval in Step 6 as the confirmation gate.
 - Note greenfield vs existing — if existing → continue to Step 2; if greenfield → skip Step 2.
 
 **If the task has unclear scope**:

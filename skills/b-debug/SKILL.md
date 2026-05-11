@@ -129,7 +129,7 @@ Use `sequential-thinking` to reason through possible causes:
   - **Version mismatch**: library API changed between versions.
   - **Data shape**: unexpected null, wrong type, missing field.
 
-Present the ranked hypotheses to the user briefly before investigating.
+Report the ranked hypotheses as a brief progress update, then continue verification without waiting unless the user explicitly asked for diagnosis-only mode.
 
 Skip `sequentialthinking` if the stack trace or code path already identifies one clear root cause with no meaningful competing hypothesis.
 
@@ -169,7 +169,7 @@ Test hypotheses starting from the most likely:
 4. If confirmed → proceed to Step 5. If eliminated → mark hypothesis as ruled out, advance to the next ranked hypothesis, restart from sub-step 1.
 5. After root cause is confirmed, remove all debug logging added during this loop.
 
-Cap at **3 iterations** — if root cause is not confirmed after 3 instrumentation rounds, surface evidence to the user:
+Cap at **3 iterations** — if root cause is not confirmed after 3 instrumentation rounds, remove any debug logging added during the loop, then surface evidence to the user:
 
 > "Root cause unconfirmed after 3 instrumentation rounds — here's what we know: [evidence gathered]. Consider: adding APM/profiler, reproducing in isolation, or escalating."
 

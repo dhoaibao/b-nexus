@@ -34,9 +34,9 @@ You can inspect and maintain the suite from this source repository, which contai
 | `/b-implement` | Build | Approved-plan execution — apply scoped steps one at a time, verify each step, stop for new decisions |
 | `/b-refactor` | Build | Code refactoring — impact analysis, safe mechanical transformation, verify |
 | `/b-debug` | Validate | Full-loop debugging — trace, confirm root cause, fix, verify |
-| `/b-test` | Validate | TDD — write tests, fix failing tests, evaluate coverage |
+| `/b-test` | Validate | TDD — write tests, fix failing tests, evaluate coverage with full failure-output capture |
 | `/b-e2e` | Validate | Browser-based UI testing — navigate, interact, verify visual state, and author Playwright E2E tests |
-| `/b-review` | Validate | Pre-PR review — logic, requirements, edge cases, test adequacy |
+| `/b-review` | Validate | Pre-PR changed-code review — logic, requirements, edge cases, test adequacy |
 
 ### Skill graph
 
@@ -59,12 +59,14 @@ You can inspect and maintain the suite from this source repository, which contai
                          NEEDS FIXES ─► fix → /b-implement or /b-debug
 
   /b-debug fires any time something breaks at runtime.
+  /b-test can start TDD before implementation when the user asks to begin with tests.
   /b-research fires any time a fact, API, or comparison is needed.
 ```
 
 **Typical flow:**
 ```text
 /b-plan [task] → approve plan → /b-implement → /b-test → /b-review → commit
+/b-test [behavior] → write failing/coverage tests → /b-implement or /b-debug
 /b-research [question]  (any time you need docs, API facts, or comparisons)
 /b-debug [symptom]      (any time something breaks)
 /b-refactor [target]    (mechanical code transformation)
