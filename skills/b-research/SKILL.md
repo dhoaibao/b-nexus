@@ -84,7 +84,8 @@ If uncertain, start in quick mode and escalate automatically to full mode if the
    - If Context7 gives a clear answer, stop and return the quick output format
 3. If Context7 has no clear answer, or the question is not library-specific:
    - Run one `brave_web_search` with the exact question
-   - Return the answer directly if one high-confidence result is enough
+   - Return the answer directly only when one official or otherwise high-authority result directly answers the question in the result content/snippet
+   - If the result is a low-context snippet, SEO page, forum guess, or ambiguous community answer, escalate to full mode instead of over-trusting it
 4. Do not scrape, crawl, or synthesize in quick mode.
 5. If a confident direct answer is still not possible, continue to Step 3 instead of telling the user to switch skills.
 
@@ -133,6 +134,7 @@ Apply the search strategy for the full-mode type:
 Universal rules:
 - Use English queries unless the topic is Vietnamese-specific.
 - Prefer 3 high-quality sources over 5 mixed ones.
+- Rank sources in this order: official docs/changelogs, source repository or release artifacts, vendor engineering posts, reputable community references, then low-context snippets/SEO content.
 - If Brave is unavailable or returns fewer than 3 relevant results, retry with `firecrawl_search`.
 
 ### Step 6 — Scrape or extract
@@ -150,6 +152,7 @@ Universal rules:
 - Answer only from fetched sources.
 - Note freshness/date when available.
 - If sources materially disagree, use `sequentialthinking` when available.
+- Discard sources that are AI-generated, content-farm-like, stale without a date, or only restate search snippets unless no better source exists; if used, label the limitation.
 - Choose the output format that matches the mode:
   - quick output for resolved quick questions
   - full report for all full-mode work
@@ -217,6 +220,7 @@ Keep it short. No citations list, no report structure, no recommendations unless
 - Always attempt Context7 first for library/framework API questions.
 - In full mode, always scrape or extract before making factual claims from web results.
 - Prefer authoritative sources over aggregators.
+- Do not answer quick-mode web questions from weak snippets; escalate to full mode when authority or context is unclear.
 - Cite every full-mode claim with its source URL or `Context7 (library-name)`.
 - Never fill factual gaps from training data in full mode; use `Limitations` instead.
 - Never trigger destructive git commands.

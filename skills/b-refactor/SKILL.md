@@ -42,11 +42,11 @@ If `$ARGUMENTS` is provided, treat it as the refactoring instruction. Proceed di
 - `sequentialthinking` — from `sequential-thinking` MCP server *(optional, for evaluating trade-offs on large refactors)*
 - `gitnexus` — from `gitnexus` MCP server *(optional, preferred first step for broad blast-radius discovery before mechanical edits — only after `gitnexus analyze`)*
 
-If Serena is unavailable: use native `read` + `edit` + bash search for manual refactoring. Note: "⚠️ Serena unavailable — cross-file renames and safe deletes require manual verification."
+If Serena is unavailable: use native `read` + `apply_patch` + bash search for manual refactoring. Note: "⚠️ Serena unavailable — cross-file renames and safe deletes require manual verification."
 If sequential-thinking is unavailable: evaluate trade-offs inline with explicit pros/cons.
 If gitnexus is unavailable, stale, unindexed, or missing FTS: warn once and fall back to `find_referencing_symbols` and native bash search for impact analysis. Note: "⚠️ GitNexus unavailable — using Serena references for blast-radius check."
 
-Graceful degradation: ⚠️ Partial — mechanical refactoring still possible with native edit, but cross-file renames and safe deletes require manual impact checks.
+Graceful degradation: ⚠️ Partial — mechanical refactoring still possible with `apply_patch`, but cross-file renames and safe deletes require manual impact checks.
 
 ## Steps
 
@@ -71,10 +71,7 @@ Graceful degradation: ⚠️ Partial — mechanical refactoring still possible w
    - **Low risk**: local rename/extract/inline inside one file, no exported API, no behavior change -> baseline may be skipped; record why.
    - **Medium/high risk**: exported symbol, move across files, delete code, package boundary, or >2 files -> run tests or typecheck before refactoring.
 
-   Suggested baseline commands:
-    ```bash
-    npm test || pytest || go test ./... || cargo test
-    ```
+   Discover baseline commands from project scripts and CI config first: `package.json`, `Makefile`, `justfile`, `pyproject.toml`, `tox.ini`, `go.mod`, `Cargo.toml`, or workflow files. Do not use generic chained commands as authoritative verification.
    If baseline checks fail before a medium/high-risk refactor: warn the user and ask whether to proceed.
 
 **Goal**: know the full impact radius before touching any code.
@@ -101,17 +98,19 @@ If the refactor affects >3 files or crosses package boundaries:
 
 ### Step 3 — Execute safely
 
-Apply edits in dependency order. Prefer Serena's symbol-aware tools over native `edit`:
+Apply edits in dependency order. Prefer Serena's symbol-aware tools over `apply_patch`:
 
 1. **`rename_symbol`** — for renaming functions, classes, and variables. Safest when the refactor is a real symbol rename across references.
 2. **`safe_delete_symbol`** — for removing dead code. Returns remaining usages; address them before retrying.
 3. **`replace_symbol_body`** — for changing the full body of a function or method while keeping the signature.
 4. **`insert_before_symbol` / `insert_after_symbol`** — for adding new functions or moving declarations.
-5. **Native `edit`** — only for line-level import updates, config changes, or prose modifications that are not symbol-relative.
+5. **`apply_patch`** — only for line-level import updates, config changes, or prose modifications that are not symbol-relative.
 
 **Execution order rule**: apply changes from the inside out — inner helpers first, then outer callers. This prevents broken references during intermediate states.
 
-**Import update rule**: if the refactor moves code across files, update imports manually via native `edit` after the symbol-level changes are done.
+**Import update rule**: if the refactor moves code across files, update imports manually via `apply_patch` after the symbol-level changes are done.
+
+**Public API compatibility rule**: if the target is exported, documented, used across package boundaries, or part of a CLI/HTTP/RPC contract, verify call sites, docs/types, and compatibility expectations before changing its signature or path. If compatibility behavior is unclear, stop and ask instead of preserving or breaking it by guesswork.
 
 ---
 
@@ -119,19 +118,13 @@ Apply edits in dependency order. Prefer Serena's symbol-aware tools over native 
 
 After every mechanical step:
 
-1. **Compilation check** *(compiled languages)*:
-   ```bash
-   npx tsc --noEmit || go build ./... || cargo check
-   ```
+1. **Compilation/type check** *(when applicable)*: run the project-specific command discovered from manifests or CI. Examples include `npm run typecheck`, `npx tsc --noEmit`, `go build ./...`, or `cargo check`, but only use commands that match the project.
 
-2. **Test check**:
-   ```bash
-   npm test || pytest || go test ./... || cargo test
-   ```
+2. **Test check**: run the project-specific narrow test first, then the broader suite after the final step when the refactor scope warrants it. Examples include `npm test -- <target>`, `pytest path/to/test.py`, `go test ./pkg/...`, or `cargo test`, but derive the command from project conventions.
 
 3. **Git diff inspection**: `git diff` to confirm only intended changes. Look for accidental deletions, wrong import paths, unintended formatting.
 
-4. **Impact re-check**: if the refactor changed a public/exported symbol, re-run `find_referencing_symbols` to confirm references resolve.
+4. **Impact re-check**: if the refactor changed a public/exported symbol, re-run `find_referencing_symbols` and any relevant import/text searches to confirm references resolve.
 
 **Iteration rule**: if tests or compilation fail, fix before proceeding. Maximum 2 fix iterations per step. If a failure looks like a real bug introduced by the refactor → handoff to /b-debug. If it's a test-mechanic failure (assertion drift, snapshot, mock) → handoff to /b-test.
 
@@ -170,7 +163,7 @@ After every mechanical step:
 
 - Never perform a medium/high-risk refactor without a green baseline check — warn and ask if checks are already failing. Low-risk single-file mechanical edits may skip baseline with an explicit note.
 - Always use `find_referencing_symbols` before renaming or deleting — cross-file impact is the most common source of refactoring bugs.
-- Prefer `rename_symbol` over manual `edit` for symbol renames — it updates all references atomically.
+- Prefer `rename_symbol` over manual `apply_patch` for symbol renames — it updates all references atomically.
 - Prefer `safe_delete_symbol` over manual deletion — it prevents accidental removal of still-used code.
 - Apply edits from the inside out — inner helpers first, then outer callers.
 - If code moves across files, update imports after the symbol-level changes are done.
@@ -179,5 +172,5 @@ After every mechanical step:
 - Run compilation check after every mechanical step — do not wait until the end.
 - Run the full test suite after the last step, not just the unit test for the changed function.
 - Never trigger destructive git commands.
-- Keep git history clean — one commit per logical transformation (rename, extract, move).
+- Keep changes commit-ready and separated by logical transformation. Do not commit unless the user explicitly asks.
 - If too large to verify in one session: stop after a safe checkpoint, run tests, and tell the user: "Safe checkpoint reached. Remaining transformations: [list]."

@@ -30,13 +30,13 @@ You can inspect and maintain the suite from this source repository, which contai
 | Skill | Phase | When to use |
 |---|---|---|
 | `/b-plan` | Decide | Think before coding — quick/full planning, task decomposition, approach evaluation, plan file when needed |
-| `/b-research` | Decide | All external knowledge — auto-detects quick lookup vs full research for docs, API facts, comparisons, and reports |
-| `/b-implement` | Build | Approved-plan execution — apply scoped steps one at a time, verify each step, stop for new decisions |
+| `/b-research` | Decide | All external knowledge — quick lookup vs full research with source-quality gating |
+| `/b-implement` | Build | Approved/scoped-plan execution — apply scoped steps one at a time, verify each step, stop for new decisions |
 | `/b-refactor` | Build | Code refactoring — impact analysis, safe mechanical transformation, verify |
 | `/b-debug` | Validate | Full-loop debugging — trace, confirm root cause, fix, verify |
 | `/b-test` | Validate | TDD — write tests, fix failing tests, evaluate coverage with full failure-output capture |
-| `/b-e2e` | Validate | Browser-based UI testing — navigate, interact, verify visual state, and author Playwright E2E tests |
-| `/b-review` | Validate | Pre-PR changed-code review — logic, requirements, edge cases, test adequacy |
+| `/b-e2e` | Validate | Browser-based UI testing — manage state, navigate, verify responsive UI, and author Playwright E2E tests |
+| `/b-review` | Validate | Pre-PR changed-code review — logic, requirements, edge cases, security, test adequacy |
 
 ### Skill graph
 
@@ -74,6 +74,15 @@ You can inspect and maintain the suite from this source repository, which contai
 ```
 
 `/b-plan` supports **quick mode** for scoped daily tasks and **full mode** for unclear, high-risk, or multi-layer work. It owns broad or unclear refactors until they reduce to concrete mechanical steps, at which point `/b-refactor` becomes the safer executor. After the user approves a plan, `/b-implement` is the default executor.
+
+### Runtime conventions
+
+- Plans are saved to `.opencode/b-plans/<task-slug>.md`.
+- Skill artifacts are saved to `.opencode/b-skills/<skill>/<run>/`; E2E artifacts use `.opencode/b-skills/b-e2e/<run>/`.
+- Temporary command output uses `/tmp/opencode/b-skills/<skill>/<slug>.log`.
+- Manual edits use `apply_patch`; skill instructions should not rely on unavailable native `edit` or `write` tools.
+- Verification commands are discovered from project scripts/CI first. Generic chained commands are not authoritative.
+- Full research ranks sources as official docs/changelogs, source repos/releases, vendor engineering posts, reputable community sources, then snippets/SEO content.
 
 See [REFERENCE.md](REFERENCE.md) for detailed skill contracts and maintenance conventions.
 
@@ -140,7 +149,7 @@ Verify the **6 core MCPs** are connected in OpenCode before relying on the full 
 
 **Decision tree**
 - Graph overview / impact / architecture? → GitNexus first (if indexed).
-- Exact symbol / body / edit? → Serena first.
+- Exact symbol / body / symbol edit? → Serena first; `apply_patch` for manual line/prose/config edits.
 - GitNexus unavailable / stale / unindexed / missing FTS? → Warn once, continue with Serena/native tools.
 
 For OpenCode, `install.sh` intentionally configures Serena as `serena start-mcp-server --context=ide --project-from-cwd`. The suite treats OpenCode as a generic Serena `ide` client: one project is activated from the current working directory, Serena owns symbol-aware code discovery and structural edits, and OpenCode's native file/shell tools handle the overlapping basic operations that `ide` context assumes the harness already provides. Serena memory remains available for durable project knowledge, but this suite uses it selectively when task-relevant rather than as a default workflow step. GitNexus augments Serena for graph-level intelligence but never replaces it for precise symbol-level edits.

@@ -37,7 +37,7 @@ Proceed directly. Do not ask "what test do you want to write?" unless `$ARGUMENT
 ## Tools required
 
 - `bash` — run test commands, inspect test output, locate test files.
-- Native file tools — Glob/Grep/Read for discovery and inspection; apply_patch-style edits for modifying or creating test files when no suitable file exists.
+- Native file tools — Glob/Grep/Read for discovery and inspection; `apply_patch` for modifying or creating test files when no suitable file exists.
 - `check_onboarding_performed`, `onboarding`, `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol` — from `serena` MCP server *(required for discovering test files and mapping tests to source symbols)*
 - `resolve-library-id`, `query-docs` — from `context7` MCP server *(optional, for verifying testing framework API — jest, vitest, pytest, etc.)*
 - `sequentialthinking` — from `sequential-thinking` MCP server *(optional, for choosing test strategy: unit vs integration vs e2e)*
@@ -46,7 +46,7 @@ Proceed directly. Do not ask "what test do you want to write?" unless `$ARGUMENT
 If Serena is unavailable: use Glob/Grep/Read for test discovery and inspection. Note: "⚠️ Serena unavailable — test discovery via file patterns and text search."
 If sequential-thinking is unavailable: choose test strategy inline with explicit pros/cons list.
 
-Graceful degradation: ✅ Possible — core test debugging works with bash + read + edit/write.
+Graceful degradation: ✅ Possible — core test debugging works with bash + read + `apply_patch`.
 
 ## Steps
 
@@ -103,14 +103,14 @@ Use `sequentialthinking` for branch selection only if the user's request is genu
 
 | Symptom | Fix |
 |---|---|
-| Wrong expected value | Update assertion to match correct output |
+| Wrong expected value | Update the assertion only after confirming the source behavior is correct from requirements, docs, or existing behavior |
 | Missing mock | Add mock/stub for the dependency |
 | Leaking state | Reset state in `beforeEach` or `afterEach` |
 | Async timing | Add `await`, return promise, or use `waitFor` |
 | Wrong test data | Provide realistic input matching the scenario |
 | Real bug in production code | Hand off to **b-debug** unless the root cause is already confirmed and the production fix is minimal |
 
-Apply the minimal fix. Prefer `replace_symbol_body` for whole test functions over line-level `edit`.
+Apply the minimal fix. Prefer `replace_symbol_body` for whole test functions over line-level `apply_patch`.
 
 ---
 
@@ -131,7 +131,7 @@ Apply the minimal fix. Prefer `replace_symbol_body` for whole test functions ove
    - **Regression prevention** (would catch a revert of the current change)
 4. Insert tests using Serena where possible:
    - `insert_after_symbol` / `insert_before_symbol` — add tests within an existing describe block.
-   - `write` — only when no suitable test file exists in the conventional location.
+   - `apply_patch` — only when no suitable test file exists in the conventional location or a small insertion is clearer than a symbol-level edit.
 
 **Framework-specific conventions**:
 - Jest/Vitest: `describe/it`, `beforeEach`, `mock()`
@@ -143,13 +143,10 @@ Apply the minimal fix. Prefer `replace_symbol_body` for whole test functions ove
 
 ### Step 5 — Branch C: Evaluate coverage
 
-1. Run the project's coverage command via bash:
-   ```bash
-   npm test -- --coverage
-   pytest --cov=.
-   go test -cover ./...
-   cargo tarpaulin    # if installed
-   ```
+1. Discover the project's coverage command before running anything:
+   - Prefer package scripts (`package.json`, `pyproject.toml`, `tox.ini`, `Makefile`, `justfile`, CI config) that already mention coverage.
+   - If no coverage command exists, derive the narrowest conventional command for the detected framework and label it as inferred.
+   - Do not install tools or assume optional tools such as `cargo tarpaulin` are available unless the project already uses them.
 2. Identify uncovered branches/lines, prioritized by:
    - Symbols implementing explicit requirements
    - Symbols at service boundaries
@@ -161,7 +158,7 @@ Apply the minimal fix. Prefer `replace_symbol_body` for whole test functions ove
 
 ### Step 6 — Run and verify
 
-1. Run the specific test(s) via bash. Prefer the exact command from the failure or the narrowest framework target over the full suite during the fix loop:
+1. Run the specific test(s) via bash. Prefer the exact command from the failure, project scripts, or the narrowest framework target over the full suite during the fix loop:
    ```bash
    npm test -- --testNamePattern="test name"
    pytest path/to/test.py::test_function
@@ -212,8 +209,9 @@ Apply the minimal fix. Prefer `replace_symbol_body` for whole test functions ove
 
 - Never modify production code to make a test pass unless the production code is actually buggy.
 - A failing test often reveals a bug in production code → if root cause is not already confirmed, hand off to **b-debug** rather than patching production code from test output alone.
+- Never update an assertion just because it is red. First confirm the expected behavior from requirements, existing contracts, or source behavior.
 - Keep test fixes minimal — if one assertion is wrong, fix that assertion; do not rewrite the entire test suite.
-- write behavior tests (assert on output), not implementation tests (assert on internal state).
+- Write behavior tests (assert on output), not implementation tests (assert on internal state).
 - Use `sequentialthinking` for test strategy decisions only if the choice is genuinely ambiguous.
 - Never trigger destructive git commands.
 - If test output exceeds tool limits: capture full output to a temp file, then read around the failure location instead of truncating with `tail`.

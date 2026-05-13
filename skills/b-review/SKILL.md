@@ -19,7 +19,7 @@ If `$ARGUMENTS` is provided, treat it as a pointer to the plan file or a descrip
 
 ## Fast-path threshold
 
-A diff that is **≤50 lines AND ≤2 files** is treated as a small change. The fast-path is referenced from Steps 2, 3, and 6 below to skip enforcement loops, the expanded security checklist, and the observability check. The injection-vector security check ALWAYS runs regardless of fast-path.
+A diff that is **≤50 lines AND ≤2 files** is treated as a small change. The fast-path is referenced from Steps 2, 3, and 6 below to skip requirements-baseline enforcement loops and some expanded checks. Fast-path NEVER skips security checks for new or changed entry points, auth/authz, injection vectors, or sensitive-data handling.
 
 ## When to use
 
@@ -63,7 +63,7 @@ Run:
 git diff HEAD
 ```
 
-If the output is empty: try `git diff --staged` (staged but not committed). If still empty: try `git diff HEAD~1 HEAD` (last commit). If still empty: ask the user — "No uncommitted, staged, or recent changes found. Which changes should I review? (Provide a commit hash, branch name, or describe the change.)" Do not proceed with an empty diff.
+If the output is empty: try `git diff --staged` (staged but not committed). If still empty, ask the user — "No uncommitted or staged changes found. Which changes should I review? Provide a commit hash, branch name, or comparison range." Do not silently review `HEAD~1`; the last commit may be unrelated.
 
 Extract:
 - **Files changed**: list of modified, added, deleted files.
@@ -80,17 +80,15 @@ Determine fast-path eligibility now and reference it in the rest of the workflow
 
 Determine what the code was *supposed* to do.
 
-1. **Check for plan file** — look for `.opencode/b-plans/[task-slug].md`. If found, read the `## Steps` section and the original scope statement. This is the primary requirements source.
-
-   1b. **Issue enrichment** *(only when a plan file was found)*: scan the plan header for an `**Issue**:` field.
-    - If the value starts with `http`: `firecrawl_scrape` with `url=[value]` and `formats: ["markdown"]`. Trim to 500 words and append to the requirements baseline as: `**Issue context** (from [URL]):\n[scraped content]`. If <200 chars or 403: skip silently and note: "Issue URL requires authentication — using URL as context reference only: [value]."
-    - If the value is a ticket ID: display in the review output header as `**Issue reference**: [value]`. No fetch.
-    - If absent: skip.
-
-2. **Check $ARGUMENTS** — if provided:
+1. **Check $ARGUMENTS** — if provided:
    - Ends in `.md` → `read` to verify the file exists; if it does, treat as the primary requirements source.
    - Otherwise → treat as a text description of requirements.
-3. **Ask the user** — if neither is available: "What was this change supposed to accomplish? What does 'done' look like?" Initial ask, then one re-prompt if vague — two questions maximum.
+2. **Check for plan files** — only if `$ARGUMENTS` is absent. Look for `.opencode/b-plans/*.md` candidates. If exactly one clearly matches the changed scope, read the `## Steps` section and original scope statement. If multiple plan files exist or no candidate clearly matches, ask the user which plan/requirements to use. Do not guess among multiple plans.
+3. **Issue enrichment** *(only when a plan file was selected)*: scan the plan header for an `**Issue**:` field.
+   - If the value starts with `http`: `firecrawl_scrape` with `url=[value]` and `formats: ["markdown"]`. Trim to 500 words and append to the requirements baseline as: `**Issue context** (from [URL]):\n[scraped content]`. If <200 chars or 403: skip silently and note: "Issue URL requires authentication — using URL as context reference only: [value]."
+   - If the value is a ticket ID: display in the review output header as `**Issue reference**: [value]`. No fetch.
+   - If absent: skip.
+4. **Ask the user** — if neither arguments nor a plan are available: "What was this change supposed to accomplish? What does 'done' look like?" Initial ask, then one re-prompt if vague — two questions maximum.
 
 **Fast-path**: when the diff is fast-path eligible, accept any non-empty requirements baseline (one sentence is sufficient) and skip the vague-response loop below.
 
@@ -156,13 +154,14 @@ read the changed code and check:
 
 **Always check** (no fast-path exception):
 - **Injection vectors** — is dynamic SQL, shell commands, or HTML constructed with unsanitized input? Check every user-facing input path regardless of diff size.
+- **New or changed entry points** — auth/authz, input validation, sensitive-data logging/returns, and rate limiting for publicly accessible endpoints/handlers/jobs/consumers.
 - **CVE lookup** — if an injection vector or known-risky pattern is found (e.g. `eval`, `exec`, `deserialize`, raw SQL concatenation, `innerHTML`): `brave_web_search` with `"[pattern or library] CVE [year]"`. Cap at 1 search query.
 
-**Skip when fast-path applies**:
-1. **Auth/authz** — do new endpoints or handlers require authentication? Is it enforced?
-2. **Input validation** — is untrusted input sanitized before use in DB queries, filesystem paths, or `eval`/exec calls?
-3. **Sensitive data** — are passwords, tokens, or PII logged or returned in responses where they should not be?
-4. **Rate limiting** — do new publicly accessible endpoints have rate limiting in place?
+**Additional non-fast-path checks**:
+1. **Input validation outside entry points** — is untrusted input sanitized before use in DB queries, filesystem paths, or `eval`/exec calls?
+2. **Auth/authz propagation** — do deeper service or middleware changes preserve existing authorization assumptions?
+3. **Sensitive data propagation** — are passwords, tokens, or PII exposed through logs, errors, telemetry, or responses?
+4. **Abuse controls** — do changed public paths preserve rate limiting, throttling, or quota behavior?
 
 For each issue found: state the file, line range, what the problem is, and what the correct behavior should be.
 

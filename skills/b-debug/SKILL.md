@@ -72,7 +72,7 @@ Graceful degradation: ✅ Possible — if Serena is unavailable, use bash/read f
 
 ### Step 1 — Gather symptoms
 
-Before touching any code, collect:
+Before touching any code, collect enough information to start, not a perfect bug report:
 
 - **Error message / stack trace**: exact text, not paraphrased.
 - **Expected behavior**: what should happen.
@@ -80,8 +80,7 @@ Before touching any code, collect:
 - **Reproduction**: consistent or intermittent? Under what conditions?
 - **Recent changes**: anything changed before the bug appeared?
 
-If any of these are missing, ask the user before proceeding. A missing "expected behavior"
-or "recent changes" is often the fastest path to root cause.
+If `$ARGUMENTS` includes a concrete symptom, error, or stack trace, begin tracing immediately. Ask only for missing expected behavior, reproduction, environment, or recent changes when that information blocks the next verification step. A missing "recent changes" answer is useful, but not a reason to stall when the code path can be inspected.
 
 ---
 
@@ -168,6 +167,7 @@ Test hypotheses starting from the most likely:
 3. Analyze the output: does it confirm or eliminate the hypothesis?
 4. If confirmed → proceed to Step 5. If eliminated → mark hypothesis as ruled out, advance to the next ranked hypothesis, restart from sub-step 1.
 5. After root cause is confirmed, remove all debug logging added during this loop.
+6. Inspect the diff or touched lines to confirm all temporary instrumentation was removed before writing the fix or reporting completion.
 
 Cap at **3 iterations** — if root cause is not confirmed after 3 instrumentation rounds, remove any debug logging added during the loop, then surface evidence to the user:
 
@@ -184,7 +184,7 @@ State clearly: *"Root cause: [X] because [Y]"* before writing any fix.
 Default behavior: implement the minimal safe fix immediately.
 
 - write the minimal fix — don't refactor unrelated code in the same change.
-- Prefer Serena symbolic edits in this order: `replace_symbol_body` → `insert_before_symbol` / `insert_after_symbol` → `rename_symbol` / `safe_delete_symbol`; use native `edit` when the fix is a small line-level patch inside a larger symbol.
+- Prefer Serena symbolic edits in this order: `replace_symbol_body` → `insert_before_symbol` / `insert_after_symbol` → `rename_symbol` / `safe_delete_symbol`; use `apply_patch` when the fix is a small line-level patch inside a larger symbol.
 - If the fix touches a non-obvious API or behavior, add a comment explaining why.
 - If the bug reveals a broader pattern (same silent-catch in 3 other places), flag it as a separate follow-up — don't fix everything at once.
 - Keep the change scoped to the confirmed symbol/file only.
@@ -245,4 +245,5 @@ Note any silent catch blocks or unexpected stops in the path.
 - Silent failure points (swallowed exceptions, missing logs) are the most common cause of "no error but not working" bugs — check these first.
 - If the fix requires understanding a library's behavior: use context7 first (`resolve-library-id` + `query-docs`); escalate to /b-research only if context7 has no index.
 - Keep fixes minimal — one bug, one fix.
+- If temporary logging or probes were added, inspect the final diff and confirm they were removed before reporting success.
 - Never trigger destructive git commands.

@@ -83,7 +83,7 @@ Confirm what is being built before scanning any code.
   - **What does success look like?** 2–4 concrete, verifiable criteria.
 - Ask once. If still unclear, ask one focused follow-up. Don't loop.
 
-**Unknown-ask rule** *(enforced throughout all steps)*: any requirement or decision that cannot be determined from the task or codebase — behavioral choice, priority, integration contract, naming — must be asked to the user immediately. Never self-infer or assume. Surface unknowns as discovered; batch per step if multiple arise.
+**Unknown-handling rule** *(enforced throughout all steps)*: ask immediately for behavioral, product, priority, integration-contract, or naming decisions that the codebase cannot answer. For low-risk engineering details with one conventional answer, proceed only if you record the assumption explicitly and it does not change user-visible behavior. Never hide assumptions.
 
 **Decision accumulation** *(running record across all steps)*: each time a user answer, codebase finding, or approach choice settles a behavioral or design question, record it as a numbered confirmed decision. Compile into `## Confirmed decisions` in the plan. Format each entry as a single, unambiguous, implementation-actionable statement — no hedging, no "consider", no "may". Example: `"Realtime update must update the existing VoiceCall matched by VendorCallKey; if soft-deleted, insert a new row instead."`
 
@@ -92,7 +92,7 @@ Confirm what is being built before scanning any code.
 - Any blockers? (Missing infrastructure, incompatible dependencies, architectural gaps.)
 - Effort estimate: S (hours) / M (1–2 days) / L (3–5 days) / XL (1–2 weeks) / XXL (weeks+).
 - If blockers found: state clearly. If no workaround exists, do not proceed until resolved.
-- If the task looks XL–XXL and depends on an unfamiliar pattern or unverified library, stop and run /b-research first.
+- If the task looks XL–XXL and depends on an unfamiliar pattern or unverified library, stop and run /b-research first when the answer affects feasibility, architecture, external contracts, security, or migration order.
 
 ---
 
@@ -176,9 +176,10 @@ Flag anything unresolved before handing off:
 |---|---|
 | **User decision** — behavioral choice, priority, integration contract, naming, or anything the codebase can't answer | ⛔ Stop. Ask the user immediately. Do NOT write the plan until resolved. |
 | **Tech lookup** — library API behavior, yes/no capability, 2-option comparison | Resolve inline: `query-docs` (context7) or `brave_web_search`. Append `→ Confirmed: [finding]`. |
-| **Complex research** — multi-source or open-ended comparison | Delegate to /b-research. Mark as `Unknown — needs /b-research: [topic]`. Do NOT block the plan on this. |
+| **Complex research that affects feasibility/architecture/contracts/security/migration order** | ⛔ Stop. Use /b-research first, then resume planning with the confirmed result. |
+| **Complex research that is informational only** | Mark as `Follow-up — optional /b-research: [topic]`. Do not block the plan. |
 
-**Clarification gate** — before Step 6, batch all outstanding user-decision unknowns into a single message and wait for answers. Only write the plan after every user-decision unknown is resolved.
+**Clarification gate** — before Step 6, batch all outstanding blocking user decisions and blocking research needs into one message and wait for answers/results. Only write the plan after every blocking unknown is resolved.
 
 ---
 
@@ -198,7 +199,7 @@ Present a short summary (scope + step count) and ask for confirmation. Update an
 
 ## Output format
 
-Always English, regardless of the user's query language.
+Saved plan files are always English. Chat responses follow the global language rule.
 
 ```markdown
 # Plan: [task name]
@@ -252,7 +253,7 @@ Always English, regardless of the user's query language.
 - [Risk]: [mitigation or fallback]
 
 ## Unknowns *(resolve before starting)*
-- Need /b-research: [topic] — [what to verify]
+- Need /b-research before implementation: [topic] — [what to verify]
 - Need decision: [question for user]
 - Assuming: [assumption that may not hold]
 ```
@@ -270,5 +271,5 @@ Always English, regardless of the user's query language.
 - Surface risks and assumptions proactively.
 - Split into phases if 10+ steps.
 - Never trigger destructive git commands.
-- **Never self-infer ambiguous requirements** — ask the user immediately.
+- **Never self-infer ambiguous requirements** — ask the user immediately. Low-risk implementation assumptions are allowed only when recorded and non-behavioral.
 - **Handoff standard: 90%+** — every step must be detailed enough that a fresh agent with zero prior context can implement it without asking a follow-up question.

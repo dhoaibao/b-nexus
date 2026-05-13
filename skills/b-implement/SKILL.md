@@ -1,7 +1,7 @@
 ---
 name: b-implement
 description: >
-  Execute approved plans safely. ALWAYS invoke when the user says "implement", "execute plan", "build this", "thực hiện", "làm theo plan", or after /b-plan approval. Reads `.opencode/b-plans/` or a chat plan, applies steps one at a time, verifies each step, and stops for new decisions. Unlike b-plan (decide), b-implement changes code.
+  Execute approved plans safely. ALWAYS invoke when the user says "implement", "execute plan", "thực hiện", "làm theo plan", or after /b-plan approval with a scoped plan. Reads `.opencode/b-plans/` or an approved chat plan, applies steps one at a time, verifies each step, and stops for new decisions. Unlike b-plan (decide), b-implement changes code.
 compatibility: opencode
 metadata:
   suite: b-skills
@@ -21,13 +21,14 @@ plan cannot be found or the implementation target is ambiguous.
 ## When to use
 
 - A `/b-plan` chat plan or saved `.opencode/b-plans/[task-slug].md` has been approved.
-- User says: "implement", "execute plan", "build this", "carry out the plan", "thực hiện", "làm theo plan".
-- The task is already scoped and the next action is to modify code or docs.
+- User says: "implement", "execute plan", "carry out the plan", "thực hiện", "làm theo plan" with an approved or clearly scoped implementation source.
+- The task is already scoped and accepted, and the next action is to modify code or docs.
 - You need a disciplined step-by-step executor that verifies each completed step.
 
 ## When NOT to use
 
 - Scope, acceptance criteria, or implementation approach is still unclear -> use **b-plan**.
+- Broad "build this" or feature requests without an approved/scoped plan -> use **b-plan**.
 - Something is broken at runtime -> use **b-debug**.
 - The requested change is a concrete rename/extract/move/inline/delete -> use **b-refactor**.
 - The task is only to write or fix tests -> use **b-test**.
@@ -57,7 +58,7 @@ Resolve the implementation source in this order:
 1. `$ARGUMENTS` points to a `.md` file -> read that plan.
 2. `$ARGUMENTS` names a slug -> read `.opencode/b-plans/[slug].md`.
 3. `$ARGUMENTS` contains a complete approved chat plan -> use that text directly.
-4. No usable source -> ask: "Which approved plan should I implement? Provide a `.opencode/b-plans/...` path, task slug, or paste the approved chat plan."
+4. No usable source -> if the request is broad, multi-file, or unclear, switch to **b-plan**. Otherwise ask: "Which approved plan should I implement? Provide a `.opencode/b-plans/...` path, task slug, or paste the approved chat plan."
 
 Extract:
 - Confirmed decisions.
@@ -96,6 +97,8 @@ Follow this order:
    - If GitNexus reports the repo is unindexed, stale, or missing FTS, warn once and continue with Serena references alone.
 4. Apply the smallest edit that satisfies the step.
 5. Do not add unplanned abstractions, features, cleanup, or compatibility code.
+
+Use `rename_symbol`, `safe_delete_symbol`, and other refactor-oriented tools only when the approved plan explicitly calls for that mechanical transformation. If implementation reveals an unplanned rename, move, extract, inline, or delete, switch to **b-refactor** instead of folding it into the feature step.
 
 If implementation reveals a new behavioral/product decision, stop and ask. Do not self-infer.
 
