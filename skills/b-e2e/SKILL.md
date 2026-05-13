@@ -26,18 +26,9 @@ Drives a real browser using Playwright to verify frontend user flows, inspect th
 
 ## Tools required
 
-- `playwright_browser_navigate` — from `playwright` MCP server *(Primary)*
-- `playwright_browser_snapshot` — from `playwright` MCP server *(Primary)*
-- `playwright_browser_click` / `playwright_browser_fill_form` / `playwright_browser_type` / `playwright_browser_press_key` — from `playwright` MCP server *(Primary)*
-- `playwright_browser_wait_for` / `playwright_browser_resize` — from `playwright` MCP server *(Primary for stable waits and responsive checks)*
-- `playwright_browser_take_screenshot` — from `playwright` MCP server *(Secondary, for visual evidence)*
-- `playwright_browser_evaluate` — from `playwright` MCP server *(optional, for complex DOM assertions)*
-- `playwright_browser_network_requests` / `playwright_browser_network_request` — from `playwright` MCP server *(optional, for asserting API calls)*
-- `playwright_browser_console_messages` — from `playwright` MCP server *(optional, for surfacing frontend errors)*
-- `playwright_browser_close` — from `playwright` MCP server *(used in cleanup)*
+- Playwright MCP: navigate, snapshot, click/fill/type/press, wait, resize, screenshot, evaluate, network, console, and close tools.
 - `find_symbol`, `get_symbols_overview`, `insert_before_symbol`, `insert_after_symbol`, `replace_symbol_body` — from `serena` MCP server *(optional, for writing test code in Step 5)*
 - `bash`, `apply_patch` — for managing temporary artifacts, dev-server health checks, and creating/updating test files when needed.
-- **GitNexus is intentionally outside the core `b-e2e` workflow.** If graph-level impact analysis becomes necessary (e.g., a backend failure with cross-module scope), hand off to **b-debug** or **b-review** instead.
 
 If `playwright` MCP is unavailable: stop and inform the user that E2E browser interactions require the Playwright MCP server.
 If `serena` is unavailable in Step 5: write test code with `apply_patch` instead.
@@ -170,4 +161,3 @@ Artifacts: `.opencode/b-skills/b-e2e/[run]/`
 - Avoid arbitrary sleeps; wait for specific text, elements, URL changes, or network state.
 - Run desktop and mobile checks for visual/user-facing flows unless scoped otherwise.
 - Prefer accessible roles/names from the snapshot over brittle CSS selectors when authoring tests.
-- Never trigger destructive git commands.

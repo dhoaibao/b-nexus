@@ -40,12 +40,9 @@ plan cannot be found or the implementation target is ambiguous.
 - `check_onboarding_performed`, `onboarding`, `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol` — from `serena` MCP server *(preferred for symbol discovery and code edits)*.
 - `resolve-library-id`, `query-docs` — from `context7` MCP server *(optional, for narrow library/API checks discovered during implementation)*.
 - `sequentialthinking` — from `sequential-thinking` MCP server *(optional, for resolving step-order ambiguity or failure triage)*.
-- `gitnexus` — from `gitnexus` MCP server *(optional, preferred first step for pre-edit blast-radius checks on shared/exported symbols and post-change scope validation — only after `gitnexus analyze`)*.
+- `gitnexus` — from `gitnexus` MCP server *(optional radar for high-risk shared/exported symbol checks and post-change scope validation — only when indexed and fresh)*.
 
-If Serena is unavailable: use native Glob/Grep/Read plus apply_patch-style edits. Note: "WARNING: Serena unavailable — symbol-aware impact tracking is reduced."
-If context7 is unavailable: use /b-research for library/API uncertainty instead of guessing.
-If sequential-thinking is unavailable: triage inline as `Step -> Failure -> Likely cause -> Next action`.
-If gitnexus is unavailable, stale, unindexed, or missing FTS: warn once and skip GitNexus checks; continue with Serena and native tools. Note: "⚠️ GitNexus unavailable — using Serena for impact and scope checks."
+Fallbacks follow the global MCP rules. If context7 cannot resolve a library/API uncertainty, use `/b-research`; if GitNexus fails its gate, skip it and continue with Serena/native checks.
 
 Graceful degradation: ✅ Possible — implementation can proceed with native file tools, but broad symbol changes are riskier without Serena.
 
@@ -92,11 +89,9 @@ Follow this order:
 1. Locate the named symbol or file from the plan.
 2. Use `get_symbols_overview` before opening large source files.
 3. Use `find_referencing_symbols` when the step changes exported/shared behavior.
-3b. **Optional graph-level impact check** *(when gitnexus is connected, the repo is indexed, and the step changes a shared/exported symbol)*:
-   - Call `gitnexus_impact` on the target symbol to scope blast radius before editing.
-   - If GitNexus reports the repo is unindexed, stale, or missing FTS, warn once and continue with Serena references alone.
-4. Apply the smallest edit that satisfies the step.
-5. Do not add unplanned abstractions, features, cleanup, or compatibility code.
+4. Optionally call `gitnexus_impact` when GitNexus passes the global gate and the step changes a shared/exported boundary; confirm with Serena references.
+5. Apply the smallest edit that satisfies the step.
+6. Do not add unplanned abstractions, features, cleanup, or compatibility code.
 
 Use `rename_symbol`, `safe_delete_symbol`, and other refactor-oriented tools only when the approved plan explicitly calls for that mechanical transformation. If implementation reveals an unplanned rename, move, extract, inline, or delete, switch to **b-refactor** instead of folding it into the feature step.
 
@@ -137,9 +132,7 @@ Before reporting completion:
 1. Inspect `git diff` to confirm only planned files changed.
 2. Run the final verification command from the plan, if present.
 3. If the implementation is non-trivial, recommend `/b-review` before commit or PR.
-4. **Optional changed-scope validation** *(when gitnexus is connected and the repo is indexed)*:
-   - Call `gitnexus_detect_changes` to verify the changes only affect expected symbols and execution flows.
-   - If GitNexus reports the repo is unindexed, stale, or missing FTS, warn once and continue with git diff inspection alone.
+4. **Optional changed-scope validation** *(only when GitNexus passes the global gate and the implementation touched shared/exported boundaries or broad flows)*: call `gitnexus_detect_changes`; otherwise rely on diff inspection and Serena references.
 
 Do not commit unless the user explicitly requested a commit.
 
@@ -179,5 +172,3 @@ Do not commit unless the user explicitly requested a commit.
 - Never invent missing requirements or product decisions.
 - Prefer symbol-aware edits for code and minimal apply_patch-style edits for prose/config.
 - Do not refactor opportunistically while implementing a feature step.
-- Do not commit unless explicitly asked.
-- Never trigger destructive git commands.

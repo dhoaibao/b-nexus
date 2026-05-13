@@ -1,8 +1,6 @@
 # b-skills
 
-A lean 8-skill suite for **OpenCode**, optimized around **symbol-first code analysis (Serena MCP)** and **selective structured reasoning (Sequential Thinking only when ambiguity or trade-offs justify it)**.
-
-It follows a symbol-first workflow: **activate project → symbol/file discovery → symbol overview → references → narrow reads → symbolic edits** before any skill trusts code context.
+A lean 8-skill suite for **OpenCode**, optimized around **Serena for symbol-aware code work**, optional **GitNexus graph radar**, and selective reasoning only when ambiguity warrants it.
 
 ## Install & Update
 
@@ -38,32 +36,8 @@ You can inspect and maintain the suite from this source repository, which contai
 | `/b-e2e` | Validate | Browser-based UI testing — manage state, navigate, verify responsive UI, and author Playwright E2E tests |
 | `/b-review` | Validate | Pre-PR changed-code review — logic, requirements, edge cases, security, test adequacy |
 
-### Skill graph
+### Typical Flows
 
-```text
-                 ┌─────────────┐
-                 │  /b-plan    │ ◄── unknown library/approach ──► /b-research
-                 └──────┬──────┘
-                        │ approved plan
-                        ▼
-                 /b-implement
-                        │
-            ┌───────────┼───────────┬──────────────┐
-            ▼           ▼           ▼              ▼
-      /b-refactor   code edits   /b-test        /b-e2e
-            │           │           │              │
-            └───────────┴─────┬─────┴──────────────┘
-                              ▼
-                         /b-review ── READY FOR PR ─► commit
-                              │
-                         NEEDS FIXES ─► fix → /b-implement or /b-debug
-
-  /b-debug fires any time something breaks at runtime.
-  /b-test can start TDD before implementation when the user asks to begin with tests.
-  /b-research fires any time a fact, API, or comparison is needed.
-```
-
-**Typical flow:**
 ```text
 /b-plan [task] → approve plan → /b-implement → /b-test → /b-review → commit
 /b-test [behavior] → write failing/coverage tests → /b-implement or /b-debug
@@ -83,6 +57,7 @@ You can inspect and maintain the suite from this source repository, which contai
 - Manual edits use `apply_patch`; skill instructions should not rely on unavailable native `edit` or `write` tools.
 - Verification commands are discovered from project scripts/CI first. Generic chained commands are not authoritative.
 - Full research ranks sources as official docs/changelogs, source repos/releases, vendor engineering posts, reputable community sources, then snippets/SEO content.
+- GitNexus is optional radar; Serena is primary hands. GitNexus scopes graph risk, while Serena confirms exact symbols and performs symbol-aware edits.
 
 See [REFERENCE.md](REFERENCE.md) for detailed skill contracts and maintenance conventions.
 
@@ -107,6 +82,8 @@ b-skills/
 ├── README.md
 ├── REFERENCE.md
 ├── install.sh
+├── scripts/
+│   └── validate-skills.sh
 └── skills/
     ├── b-plan/SKILL.md
     ├── b-research/SKILL.md
@@ -137,22 +114,28 @@ When you open this repo in OpenCode, the checked-in `AGENTS.md` provides maintai
 | `firecrawl` | Full page scraping, structured data extraction |
 | `playwright` | Browser automation, DOM snapshots, and UI interaction for E2E testing |
 | `sequential-thinking` | Structured reasoning for multi-hypothesis decisions |
-| `gitnexus` *(optional)* | Graph-level repo intelligence: cross-file impact, architecture context, execution-flow discovery, stale-index detection, and multi-repo mapping — only useful after `gitnexus analyze` |
+| `gitnexus` *(optional)* | Radar for graph-level repo intelligence: cross-file impact, architecture context, execution-flow discovery, stale-index detection, route/API consumers, and multi-repo mapping — only useful when indexed and fresh |
 
 Verify the **6 core MCPs** are connected in OpenCode before relying on the full suite. GitNexus is optional and augments the suite when a repo has been indexed.
 
 **GitNexus best-practice flow:**
 1. Install the GitNexus CLI separately (`npm install -g gitnexus` or your preferred method).
 2. Run `install.sh` with `B_SKILLS_INSTALL_MCP=Y` (or answer `y` at the MCP prompt) — GitNexus is included in the default MCP set.
-3. Index each repo with `gitnexus analyze` before using GitNexus tools/resources.
-4. Selected skills reach for GitNexus first when the task is graph-shaped (architecture, blast radius, changed scope); if GitNexus is unavailable, stale, unindexed, or missing FTS, they warn once and continue with Serena and native tools.
+3. Index each repo with `gitnexus analyze` only after sensitive files and local private artifacts are excluded.
+4. Use GitNexus only when the repo is indexed, fresh, and the target file/symbol is represented.
+5. Selected skills reach for GitNexus first when the task is graph-shaped (architecture, blast radius, changed scope); if GitNexus is unavailable, stale, unindexed, missing FTS, or missing the target, they warn once and continue with Serena and native tools.
 
 **Decision tree**
-- Graph overview / impact / architecture? → GitNexus first (if indexed).
+- Graph overview / impact / architecture? → GitNexus first (if indexed, fresh, and target-aware).
 - Exact symbol / body / symbol edit? → Serena first; `apply_patch` for manual line/prose/config edits.
-- GitNexus unavailable / stale / unindexed / missing FTS? → Warn once, continue with Serena/native tools.
+- GitNexus unavailable / stale / unindexed / missing FTS / missing target? → Warn once, continue with Serena/native tools.
 
-For OpenCode, `install.sh` intentionally configures Serena as `serena start-mcp-server --context=ide --project-from-cwd`. The suite treats OpenCode as a generic Serena `ide` client: one project is activated from the current working directory, Serena owns symbol-aware code discovery and structural edits, and OpenCode's native file/shell tools handle the overlapping basic operations that `ide` context assumes the harness already provides. Serena memory remains available for durable project knowledge, but this suite uses it selectively when task-relevant rather than as a default workflow step. GitNexus augments Serena for graph-level intelligence but never replaces it for precise symbol-level edits.
+OpenCode integration:
+- Serena runs as `serena start-mcp-server --context=ide --project-from-cwd`.
+- Serena owns symbol discovery, references, and structural edits; native tools handle files, strings, manifests, commands, prose, and configs.
+- GitNexus augments Serena for graph-level intelligence only when indexed, fresh, and target-aware.
+
+**Evidence model:** GitNexus evidence scopes graph risk; Serena evidence confirms exact symbols and references; text search confirms strings/config/prose; runtime checks verify behavior.
 
 ---
 
@@ -163,6 +146,8 @@ For OpenCode, `install.sh` intentionally configures Serena as `serena start-mcp-
 - Skills live in `skills/<name>/SKILL.md`.
 - Commands live in `commands/<name>.md`.
 - `install.sh` is responsible for deploying and pruning suite-managed files under `~/.config/opencode/`.
+- `scripts/validate-skills.sh` checks frontmatter, required sections, stale tool names, old artifact paths, GitNexus scope drift, runtime-global leakage, and README/REFERENCE coverage.
 - Any skill change requires updating both `README.md` and `REFERENCE.md` in the same commit.
+- Run `scripts/validate-skills.sh` before installing or committing skill changes.
 - Keep skill descriptions trigger-focused and concise.
 - Preserve the existing skill logic; only change platform integration, docs, installer behavior, and OpenCode-specific scaffolding when migrating or maintaining the suite.

@@ -40,11 +40,9 @@ If `$ARGUMENTS` is provided, treat it as the refactoring instruction. Proceed di
 - `bash` — run tests, check compilation, inspect git diff.
 - `check_onboarding_performed`, `onboarding`, `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol` — from `serena` MCP server *(required for impact analysis and safe symbol-level edits)*
 - `sequentialthinking` — from `sequential-thinking` MCP server *(optional, for evaluating trade-offs on large refactors)*
-- `gitnexus` — from `gitnexus` MCP server *(optional, preferred first step for broad blast-radius discovery before mechanical edits — only after `gitnexus analyze`)*
+- `gitnexus` — from `gitnexus` MCP server *(optional radar for broad blast-radius discovery before exported/shared mechanical edits — only when indexed and fresh)*
 
-If Serena is unavailable: use native `read` + `apply_patch` + bash search for manual refactoring. Note: "⚠️ Serena unavailable — cross-file renames and safe deletes require manual verification."
-If sequential-thinking is unavailable: evaluate trade-offs inline with explicit pros/cons.
-If gitnexus is unavailable, stale, unindexed, or missing FTS: warn once and fall back to `find_referencing_symbols` and native bash search for impact analysis. Note: "⚠️ GitNexus unavailable — using Serena references for blast-radius check."
+Fallbacks follow the global MCP rules. Without Serena, manual refactors require native search plus extra reference verification. Without sequential-thinking, evaluate large-refactor trade-offs inline.
 
 Graceful degradation: ⚠️ Partial — mechanical refactoring still possible with `apply_patch`, but cross-file renames and safe deletes require manual impact checks.
 
@@ -59,10 +57,7 @@ Graceful degradation: ⚠️ Partial — mechanical refactoring still possible w
    - User references a file → `get_symbols_overview` to inspect top-level symbols.
    - Vague instruction ("clean up the auth module") → `get_symbols_overview` on the file, then ask the user for a specific target.
 
-3. **Broad blast-radius discovery** *(when gitnexus is connected and the repo is indexed)*:
-   - Call `gitnexus impact` or `gitnexus context` on the target symbol first to understand cross-module or cross-package impact beyond direct symbol references.
-   - If GitNexus reports the repo is unindexed, stale, or missing FTS, warn once and continue with Serena references alone.
-   - Record any hidden callers, event-driven boundaries, or architecture constraints discovered.
+3. **Broad blast-radius discovery** *(only when the target is exported/shared, crosses packages, or affects >2 files and GitNexus passes the global gate)*: call `gitnexus impact` or `gitnexus context`, then confirm with Serena references. Record hidden callers, event boundaries, or architecture constraints.
 
 4. Call `find_referencing_symbols` on the target to map every call site and usage.
    Record: how many files reference it, whether it's exported/public, whether any references are in tests.
@@ -171,6 +166,5 @@ After every mechanical step:
 - If the refactor affects >3 files: use `sequentialthinking` to evaluate rollback strategy.
 - Run compilation check after every mechanical step — do not wait until the end.
 - Run the full test suite after the last step, not just the unit test for the changed function.
-- Never trigger destructive git commands.
-- Keep changes commit-ready and separated by logical transformation. Do not commit unless the user explicitly asks.
+- Keep changes commit-ready and separated by logical transformation.
 - If too large to verify in one session: stop after a safe checkpoint, run tests, and tell the user: "Safe checkpoint reached. Remaining transformations: [list]."

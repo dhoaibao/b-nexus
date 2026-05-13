@@ -37,7 +37,6 @@ If `$ARGUMENTS` is provided, treat it as the research question — proceed direc
 - **Full-mode fallbacks**: `firecrawl_map`, `firecrawl_extract`
 - **Bounded known-site crawl**: `firecrawl_crawl`, `firecrawl_check_crawl_status` *(optional, only when the user asks for comprehensive coverage of a known site section)*
 - **Conflict resolution**: `sequentialthinking` — from `sequential-thinking` MCP server *(optional)*
-- **GitNexus is intentionally outside the `b-research` workflow.** This skill handles external knowledge only; repo-internal graph intelligence is not its responsibility.
 
 If context7 is unavailable: continue with Brave for library questions.
 If brave-search is unavailable:
@@ -223,4 +222,3 @@ Keep it short. No citations list, no report structure, no recommendations unless
 - Do not answer quick-mode web questions from weak snippets; escalate to full mode when authority or context is unclear.
 - Cite every full-mode claim with its source URL or `Context7 (library-name)`.
 - Never fill factual gaps from training data in full mode; use `Limitations` instead.
-- Never trigger destructive git commands.

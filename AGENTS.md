@@ -107,11 +107,7 @@ $ARGUMENTS
 - `tool_name` — from `mcp-server` MCP server
 - `tool_name` — from `mcp-server` MCP server *(optional, for [condition])*
 
-If [MCP] is unavailable: [what to do — stop, fallback, or degrade]
-
-If the skill uses GitNexus, prefer this canonical fallback form to avoid wording drift:
-- `If gitnexus is unavailable, stale, unindexed, or missing FTS: warn once and continue with [Serena/native fallback]. Note: "⚠️ GitNexus unavailable — using [fallback summary]."`
-- For step-level conditional GitNexus calls: `If GitNexus reports the repo is unindexed, stale, or missing FTS, warn once and continue with [local Serena/native fallback].`
+Fallbacks: reference the global MCP rules and add only skill-specific stop/degrade behavior.
 
 Graceful degradation: [✅ Possible / ⚠️ Partial / ❌ Not possible] — [brief explanation]
 
@@ -166,17 +162,17 @@ When deciding which MCPs a skill should use:
 
 **Rules:**
 - Never add an MCP just to increase coverage — every MCP must have a clear use case in the Steps section
-- Always document what happens when an optional/secondary MCP is unavailable
+- Document skill-specific fallback behavior; do not duplicate global MCP fallback text
 - Label each MCP in "Tools required" with its role: required vs `*(optional, for [condition])`*
 - Always include a `Graceful degradation:` line summarizing fallback behavior
 - Serena-using skills in this repo must assume OpenCode's generic `ide` context: prefer Serena for symbol-aware code work, keep overlapping basic file/shell tasks on native OpenCode tools, and avoid multi-project assumptions unless the runtime contract changes
 
 **GitNexus-specific criteria:**
-- GitNexus is always **optional** for this suite. It is never a primary dependency of any skill.
-- Add GitNexus to a skill when graph-level intelligence (cross-file impact, architecture context, execution-flow discovery, stale-index detection, multi-repo mapping) materially improves the workflow. GitNexus should be the preferred first step for graph-shaped tasks on indexed repos; Serena then handles exact symbol inspection and edits.
+- GitNexus is always **optional radar** for this suite. It is never a primary dependency of any skill and never acts as the editing layer.
+- Serena is the primary **hands** layer for exact symbol discovery, source inspection, references, and symbol-aware edits.
+- Add GitNexus to a skill only when graph-level intelligence (cross-file impact, architecture context, execution-flow discovery, stale-index detection, route/API consumers, multi-repo mapping) materially improves the workflow. GitNexus should be the preferred first step for graph-shaped tasks only when the repo is indexed, fresh, and the target file/symbol is represented; Serena then handles exact symbol inspection and edits.
 - If the target symbol or file is already known, or the task is local to a single file/module, skip GitNexus and go straight to Serena. Use GitNexus only when cross-file, architectural, execution-flow, or blast-radius context is needed.
-- Every skill that uses GitNexus must document `gitnexus analyze` as a prerequisite and must fall back to Serena/native tools when GitNexus is unavailable, stale, unindexed, or missing FTS.
-- Reuse the canonical GitNexus fallback template from `## Skill file structure template` unless a step needs a narrower local fallback target.
+- Every skill that uses GitNexus must use the global indexing/freshness/target gate and fall back to Serena/native tools when the gate fails.
 - GitNexus must never replace Serena for precise symbol-level edits (`rename_symbol`, `safe_delete_symbol`, `replace_symbol_body`, etc.).
 
 ---
@@ -217,72 +213,26 @@ Before merging any skill file change, verify:
 
 1. **Description <=80 words** — verify with `wc -w` on the extracted description text
 2. **Every step has imperative verbs** — "Call X", "Extract Y", "Check Z" — not "X is called" or "Y should be extracted"
-3. **Every fallback path is explicit** — if a tool is unavailable, the skill says exactly what to do (stop, degrade, or use alternative)
+3. **Fallbacks are explicit without duplication** — global MCP fallbacks cover shared behavior; skills state only local stop/degrade differences
 4. **Inter-skill handoffs have trigger conditions** — "if [condition] -> use /b-[other]" with the specific condition, not just "consider using"
 5. **No trigger keyword regression** — before rewriting a description, list all current trigger keywords and verify all survive in the new version
+6. **Suite validator passes** — run `scripts/validate-skills.sh` before installing or committing skill changes
 
 ---
-
-## New skill creation guide
-
-### Folder structure
-
-```text
-b-skills/
-├── AGENTS.md                # Repo-level maintainer guidance
-├── commands/
-│   └── b-example.md
-├── global/
-│   └── AGENTS.md            # Runtime rules source installed as OpenCode's global AGENTS.md
-├── skills/
-│   └── b-example/
-│       └── SKILL.md
-├── install.sh
-├── README.md
-└── REFERENCE.md
-```
-
-### Naming convention
-
-- `name` field: `b-[verb-or-noun]` in kebab-case
-- Examples: `b-plan`, `b-docs`, `b-research`, `b-debug`
-- Keep names short (1-2 words after `b-`)
-
-### How to add a new skill
-
-1. Create `skills/<name>/SKILL.md` with valid OpenCode frontmatter (`name` + `description`)
-2. Create the matching `commands/<name>.md` wrapper
-3. `install.sh` picks both up automatically — no script changes needed
-4. Update `README.md` skills overview table and install/source-layout notes
-5. Update `REFERENCE.md` with a detailed reference section
-6. Run `install.sh` to deploy the updated suite into the correct OpenCode paths
-
-### How to add a new MCP to the suite
-
-1. Add the MCP to the `MCP dependencies` table in `README.md`
-2. In each skill that uses it, add it to the "Tools required" section with a role label
-3. Update the docs that mention the expected MCP set size
-4. Document graceful degradation for every skill that uses the new MCP
-
-**GitNexus-specific steps:**
-- Add GitNexus as an optional row in the `MCP dependencies` table with "optional" role and a note that it requires per-repo indexing.
-- Ensure `global/AGENTS.md` reflects the GitNexus tool-priority boundary vs Serena.
-- Ensure `install.sh` supports an opt-in `gitnexus` MCP entry without auto-installation or global CLI setup.
-- Never add GitNexus as a primary dependency and never vendor its upstream skill pack or hooks in this repo.
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
 This project is indexed by GitNexus as **b-skills** (260 symbols, 255 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
-> If any GitNexus tool warns the index is stale, run `gitnexus analyze` in terminal first.
+> If any GitNexus tool warns the index is stale, first ensure sensitive files and local private artifacts are excluded, then run `gitnexus analyze` only when indexing is safe.
 
 ## Always Do
 
-- Prefer GitNexus first for graph-shaped code tasks when the repo is indexed: architecture context, blast radius, changed-scope validation, execution-flow discovery, or multi-repo mapping.
-- If GitNexus is unavailable, stale, unindexed, or missing FTS, warn once and continue with Serena/native tools.
-- Use Serena for precise symbol edits and renames; GitNexus narrows risk, it does not replace symbol-aware editing.
-- Run `gitnexus_detect_changes()` before committing when GitNexus is available and indexed.
+- Use GitNexus as optional radar for graph-shaped code tasks only when the repo is indexed, fresh, and target-aware: architecture context, blast radius, route/API consumers, changed-scope validation, execution-flow discovery, or multi-repo mapping.
+- If GitNexus is unavailable, stale, unindexed, missing FTS, or missing the target, warn once and continue with Serena/native tools.
+- Use Serena as the primary hands layer for precise symbol discovery, source inspection, references, edits, and renames.
+- Run `gitnexus_detect_changes()` before committing only when GitNexus is available, fresh, indexed, and relevant to the changed scope.
 - Warn the user before editing if GitNexus impact analysis returns HIGH or CRITICAL risk.
 
 ## Never Do
@@ -290,7 +240,7 @@ This project is indexed by GitNexus as **b-skills** (260 symbols, 255 relationsh
 - NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
 - NEVER use GitNexus as a replacement for Serena's precise symbol-level edits.
 - NEVER rename symbols with plain find-and-replace; use Serena symbol rename when available, or GitNexus/manual reference checks when Serena is unavailable.
-- NEVER commit without checking changed scope; use `gitnexus_detect_changes()` when GitNexus is available and indexed, otherwise inspect `git diff` and relevant references manually.
+- NEVER commit without checking changed scope; use `gitnexus_detect_changes()` only when GitNexus is fresh, indexed, and relevant to the changed scope, otherwise inspect `git diff` and relevant references manually.
 
 ## Resources
 

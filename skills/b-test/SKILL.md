@@ -41,10 +41,8 @@ Proceed directly. Do not ask "what test do you want to write?" unless `$ARGUMENT
 - `check_onboarding_performed`, `onboarding`, `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol` — from `serena` MCP server *(required for discovering test files and mapping tests to source symbols)*
 - `resolve-library-id`, `query-docs` — from `context7` MCP server *(optional, for verifying testing framework API — jest, vitest, pytest, etc.)*
 - `sequentialthinking` — from `sequential-thinking` MCP server *(optional, for choosing test strategy: unit vs integration vs e2e)*
-- **GitNexus is intentionally outside the core `b-test` workflow.** If graph-level impact analysis becomes necessary (e.g., a test failure reveals a cross-module runtime bug), hand off to **b-debug** or **b-review** instead.
 
-If Serena is unavailable: use Glob/Grep/Read for test discovery and inspection. Note: "⚠️ Serena unavailable — test discovery via file patterns and text search."
-If sequential-thinking is unavailable: choose test strategy inline with explicit pros/cons list.
+Fallbacks follow the global MCP rules. Without Serena, use Glob/Grep/Read for test discovery. Without sequential-thinking, choose the test strategy inline.
 
 Graceful degradation: ✅ Possible — core test debugging works with bash + read + `apply_patch`.
 
@@ -213,6 +211,5 @@ Apply the minimal fix. Prefer `replace_symbol_body` for whole test functions ove
 - Keep test fixes minimal — if one assertion is wrong, fix that assertion; do not rewrite the entire test suite.
 - Write behavior tests (assert on output), not implementation tests (assert on internal state).
 - Use `sequentialthinking` for test strategy decisions only if the choice is genuinely ambiguous.
-- Never trigger destructive git commands.
 - If test output exceeds tool limits: capture full output to a temp file, then read around the failure location instead of truncating with `tail`.
 - Prefer running specific tests over the full suite during debugging — faster feedback loop.

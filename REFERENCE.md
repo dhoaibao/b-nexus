@@ -47,6 +47,10 @@ how should I approach refactoring the auth module?
 - All unresolved unknowns must be surfaced. Blocking decisions/research stop planning; non-blocking assumptions must be recorded explicitly.
 - **Handoff standard: 90%+** — every step must be detailed enough that a fresh agent with zero prior context can implement it without asking a follow-up question.
 
+**GitNexus use**
+- Use only for graph-shaped planning: unfamiliar architecture, broad impact, route/API consumers, process flows, multi-repo or package boundaries.
+- Skip GitNexus for known-file, known-symbol, or local-only planning; go directly to Serena/native tools.
+
 ---
 
 ### b-research
@@ -120,6 +124,10 @@ Plan source -> Step progress -> Changes -> Verification -> Blockers/Decisions ->
 - Do not overwrite unrelated user changes.
 - Do not commit unless explicitly asked.
 
+**GitNexus use**
+- Use only for high-risk shared/exported boundaries or post-change changed-scope validation when the index is fresh and target-aware.
+- Treat GitNexus output as graph evidence for prioritization; confirm exact symbols and edits with Serena.
+
 ---
 
 ### b-debug
@@ -156,6 +164,10 @@ Symptoms → Code path → Ranked hypotheses → Fast-path findings → Root cau
 **Key rules**
 - Never patch before root cause is explicitly confirmed.
 - After fixing, keep Serena-aware edits focused on the changed symbols/files only.
+
+**GitNexus use**
+- Use only when the bug path is unfamiliar, cross-module, process-flow-driven, or too broad for direct Serena tracing.
+- Treat GitNexus as a route into the right subsystem; confirm the execution path with Serena/text/runtime evidence.
 
 ---
 
@@ -198,13 +210,16 @@ kiểm tra logic trước khi push
 
 **Output**
 ```
-Logic findings → Requirements coverage table or diff-only limitation → Edge cases / test adequacy → Observability
-→ Reviewer question → READY FOR PR or NEEDS FIXES
+Findings → Coverage / tests / observability → READY FOR PR or NEEDS FIXES
 ```
 
 **Handoff**
 - `READY FOR PR` → implement any non-blocking suggestions, then commit.
 - `NEEDS FIXES` → fix blockers, re-run tests, then `/b-review` again.
+
+**GitNexus use**
+- Use only for broad changed-scope, route/API consumer, process-flow, or cross-module review risk when the index is fresh and target-aware.
+- Treat GitNexus findings as prioritization evidence; confirm findings with `git diff`, Serena references, and narrow source reads.
 
 ---
 
@@ -330,96 +345,9 @@ Target → Impact → Risk → Transformation plan → Changes → Verification
 - Run compilation check after every mechanical step.
 - Keep changes separated by logical transformation, but do not commit unless explicitly asked.
 
----
-
-## Usage patterns
-
-### Standard feature flow
-```
-1. /b-plan [task]
-2. Approve the quick chat plan or full saved plan
-3. /b-implement [approved plan path or slug]
-4. Run the targeted checks from each step's "Done when"
-5. /b-review [task]
-6. commit
-```
-
-### Approved-plan implementation
-```
-/b-implement [.opencode/b-plans/task.md or task-slug]
-```
-
-### TDD flow
-```
-1. /b-test [behavior or coverage gap]
-2. Write the failing or missing behavior test
-3. /b-implement [approved implementation plan] or /b-debug [runtime failure]
-4. /b-review [task]
-```
-
-### Debug flow
-```
-/b-debug [symptom + expected behavior]
-```
-
-### Before touching unfamiliar code
-```
-/b-plan [task]    (b-plan scans existing code as part of planning)
-```
-
-### Library choice / comparison
-```
-/b-research compare [A] vs [B] for [use case]
-```
-
-### Known library, API uncertain
-```
-/b-research [library] — [feature]
-```
-
----
-
-## Trigger tips
-
-- Invoke skills with `/` prefix: `/b-plan`, `/b-implement`, `/b-debug`, `/b-review`, `/b-research`, `/b-test`, `/b-e2e`, `/b-refactor`.
-- Use explicit intent words: `plan`, `implement`, `execute plan`, `debug`, `code review`, `review before PR`, `research`, `lookup`, `test`, `refactor`, `E2E`, `UI test`.
-- Mention complexity when relevant: multi-file, unfamiliar module, unclear root cause.
-
----
-
-## Skill interaction map
-
-```
-/b-plan ──────────────── writes ─────────────────► plan file in .opencode/b-plans/
-        └── unknown library/approach ────────────► /b-research (before or during planning)
-        └── approved plan ───────────────────────► /b-implement
-        └── reduced to mechanical steps ─────────► /b-refactor
-
-/b-test ──────────────── TDD / missing behavior ─► failing or missing test
-        └────────────── implementation needed ───► /b-implement or /b-debug
-
-/b-implement ─────────── step verified ──────────► next step
-             └────────── new decision needed ────► /b-plan
-             └────────── runtime failure ────────► /b-debug
-             └────────── test mechanics failure ─► /b-test
-
-/b-review ────────────── READY FOR PR ───────────► commit
-          └──────────── NEEDS FIXES ─────────────► fix → /b-review again
-
-/b-debug ─────────────── bug found during impl ──► fix inline or return to /b-implement
-         └──────────── fix introduces new code ──► /b-review (optional)
-
-/b-test ──────────────── test fails ─────────────► /b-debug (if failure reveals runtime bug)
-        └────────────── coverage gap ────────────► write tests → run suite
-
-/b-e2e ───────────────── UI flow verified ──────► author Playwright spec → cleanup
-       └──────────── backend failure surfaces ──► /b-debug
-
-/b-refactor ─────────── rename/move/extract ────► /b-review (after transformation)
-            └────── test failure ───────────────► /b-test (mechanic) or /b-debug (regression)
-
-/b-research ──────────── quick lookup or full research, auto-routes internally
-```
+**GitNexus use**
+- Use only for exported/shared targets, package/service boundaries, or >2-file refactors when the index is fresh and target-aware.
+- Treat GitNexus impact as blast-radius radar; Serena references and symbol edits remain the source of truth.
 
 ---
 
@@ -432,6 +360,7 @@ This repository is the install-only source layout for the suite. OpenCode does n
 - `global/AGENTS.md` — source for runtime rules installed as OpenCode's global `AGENTS.md`.
 - `skills/<name>/SKILL.md` — reusable OpenCode skills distributed by the installer.
 - `commands/<name>.md` — explicit slash-command wrappers distributed by the installer.
+- `scripts/validate-skills.sh` — lightweight contract validator for skill frontmatter, required sections, stale tool references, old artifact paths, GitNexus scope drift, runtime-global leakage, and docs coverage.
 
 ### Runtime artifacts
 - `~/.config/opencode/skills/` — installed skill destination created by `install.sh`.
@@ -450,12 +379,20 @@ This repository is the install-only source layout for the suite. OpenCode does n
 - Manual line/prose/config edits use `apply_patch`; runtime skill instructions should not rely on unavailable native `edit` or `write` tools.
 - The activated Serena project is expected to follow the current working directory, so core skill guidance must stay single-project and must not depend on project-switching workflows.
 - Serena memory is available for durable project knowledge, but the suite treats it as selective and task-driven rather than a default read/write step in every skill.
-- **GitNexus** *(optional)* — graph-level repo intelligence (cross-file impact, architecture context, execution-flow discovery, stale-index detection, multi-repo mapping). It is the preferred first step for graph-shaped tasks on indexed repos; Serena then handles exact symbol inspection and edits. It is only useful after `gitnexus analyze` has indexed the repo. If GitNexus is unavailable, stale, unindexed, or missing FTS, skills warn once and fall back to Serena and native tools.
+- **GitNexus** *(optional radar)* — graph-level repo intelligence (cross-file impact, architecture context, execution-flow discovery, stale-index detection, route/API consumers, multi-repo mapping). Use it only for graph-shaped tasks when the repo is indexed, fresh, and the target file/symbol is represented. Serena then handles exact symbol inspection and edits. If GitNexus is unavailable, stale, unindexed, missing FTS, or missing the target, skills warn once and fall back to Serena and native tools.
+
+### Evidence model
+- **Graph evidence**: GitNexus relationships, routes, processes, and impact. Use for prioritization and risk, not proof that edits are safe.
+- **Symbol evidence**: Serena symbol bodies, references, overviews, and symbol edits. Use as the source of truth for code modifications.
+- **Text evidence**: Glob/Grep/Read/Bash exact matches. Use for manifests, config, prose, generated files, and import/string confirmation.
+- **Runtime evidence**: tests, builds, command output, browser state, network calls, and logs. Use to verify behavior.
 
 ### Maintenance rules
 - Keep one folder per skill under `skills/`.
 - Keep command wrappers thin; they are entrypoints, not duplicate logic stores.
 - Keep repo-level maintainer guidance in the root `AGENTS.md` and runtime rule sources under `global/`.
 - When a skill changes, update `README.md` and `REFERENCE.md` in the same commit.
+- Run `scripts/validate-skills.sh` before installing or committing skill changes.
+- After editing source skills or global rules, run `install.sh` or state that the installed runtime under `~/.config/opencode/` was not updated.
 - Keep skill descriptions trigger-focused and specific enough for correct routing.
 - Preserve skill behavior; do not silently redesign logic while doing platform migrations.

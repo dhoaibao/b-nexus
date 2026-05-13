@@ -43,14 +43,9 @@ A diff that is **≤50 lines AND ≤2 files** is treated as a small change. The 
 - `firecrawl_scrape` — from `firecrawl` MCP server *(optional, for fetching issue/ticket URL content when an `**Issue**:` URL is present in the plan file)*
 - `resolve-library-id` + `query-docs` — from `context7` MCP server *(optional, for verifying library API calls in changed code)*
 - `brave_web_search` — from `brave-search` MCP server *(optional, for CVE/known-vulnerability lookup when a risky security pattern is found)*
-- `gitnexus` — from `gitnexus` MCP server *(optional, preferred first step for blast-radius and changed-flow analysis — `detect_changes`/`impact` — only after `gitnexus analyze`)*
+- `gitnexus` — from `gitnexus` MCP server *(optional radar for blast-radius, route/API consumer, and changed-flow analysis — only when indexed and fresh)*
 
-If sequential-thinking is unavailable: reason through review dimensions inline as `Finding → Severity → Why blocker/not blocker → Suggested action`.
-If Serena is unavailable: use read tool to inspect changed files directly. Note: "⚠️ Serena unavailable — symbol-aware impact analysis unavailable."
-If firecrawl is unavailable: skip Issue URL fetch; display ticket ID or URL as a context reference only.
-If context7 is unavailable: skip API verification step; note any suspicious library calls manually.
-If brave-search is unavailable: skip CVE lookup; flag the pattern as a manual security review item.
-If gitnexus is unavailable, stale, unindexed, or missing FTS: warn once and continue with git diff and Serena references for impact analysis. Note: "⚠️ GitNexus unavailable — using git diff + Serena for blast-radius check."
+Fallbacks follow the global MCP rules. If optional research tools are unavailable, skip enrichment and label the affected review dimension as manual/limited.
 
 Graceful degradation: ✅ Possible — core review works with bash + read. Each MCP adds a specific review dimension; none is strictly required.
 
@@ -105,12 +100,9 @@ If still vague or unavailable, continue in **diff-only risk review** mode instea
 
 ### Step 3 — Logic correctness review
 
-If gitnexus is connected and the repo is indexed, run blast-radius analysis first to prioritize review depth. Then narrow with Serena's symbol-aware read-order — never jump straight from `git diff` to full-file reads for code-symbol changes:
+If GitNexus passes the global gate and is relevant to the diff scope, run blast-radius analysis first for broad changed-flow, route/API consumer, or cross-module risk. Then narrow with Serena's symbol-aware read-order:
 
-**Blast-radius analysis** *(when gitnexus is connected and the repo is indexed)*:
-- Call `gitnexus detect_changes` or `gitnexus impact` on the changed symbols first to understand affected processes, event flows, or cross-module boundaries beyond what `git diff` shows.
-- If GitNexus reports the repo is unindexed, stale, or missing FTS, warn once and continue immediately with git diff and Serena references.
-- Use the findings to prioritize which changed symbols deserve deeper review, then confirm with `git diff` and Serena reference checks.
+**Blast-radius analysis**: use `gitnexus detect_changes` or `gitnexus impact` to prioritize deeper review, then confirm findings with `git diff` and Serena reference checks.
 
 Initialize Serena project knowledge next: call `check_onboarding_performed`; if onboarding has not been performed, run `onboarding`. Then follow this exact read-order:
 
@@ -122,7 +114,7 @@ Initialize Serena project knowledge next: call `check_onboarding_performed`; if 
 
 **Impact-first review rule**: prioritize review depth on (a) symbols with the broadest references, (b) symbols at service boundaries, and (c) symbols implementing explicit requirements from Step 2. Raw line-count alone should not determine review depth.
 
-read the changed code and check:
+Read the changed code and check:
 
 **Control flow**
 - Are all branches of conditionals handled? (if/else, switch cases, error paths)
@@ -235,55 +227,20 @@ Use the output to produce the final report.
 ```
 ### b-review: [task / PR title]
 
-**Diff scope**: [N files changed, +X -Y lines] *(fast-path: yes/no)*
-**Requirements baseline**: [plan file / $ARGUMENTS / user-stated]
-**Review mode**: [requirements-based / diff-only risk review]
+**Diff scope**: [N files, +X -Y] *(fast-path: yes/no)*
+**Baseline**: [plan / arguments / user-stated / unavailable]
+**Mode**: [requirements-based / diff-only risk review]
 
----
+#### Findings
+- [severity] `[file:line]` — [issue] -> [expected behavior]
 
-#### Logic correctness
-✅ No issues found
-— or —
-❌ [Issue]: [file:line] — [what's wrong] → [what it should do]
-
----
-
-#### Requirements coverage
-| Requirement | Status | Notes |
-|---|---|---|
-| [req] | ✅ / ❌ / ⚠️ | [detail] |
-
----
-
-#### Edge cases & test adequacy
-✅ Covered
-— or —
-⚠️ Missing test: [behavior] — [why it matters]
-❌ Missing test: [critical behavior] — [risk if untested]
-
----
-
-#### Observability
-*(skipped — fast-path or no new handlers/endpoints/jobs)*
-— or —
-✅ Entry-point logging present, errors captured
-⚠️ [issue]: [file:line] — [missing instrumentation] → [suggestion]
-
----
-
-#### Reviewer questions
-> [Question a senior engineer would ask about this code]
-
----
+#### Coverage / Tests / Observability
+- Requirements: [covered / missing / not assessed]
+- Tests: [adequate / missing gaps]
+- Observability: [skipped / adequate / gaps]
 
 #### Verdict
 **[READY FOR PR / NEEDS FIXES]**
-
-Blockers (must fix before PR):
-- [item]
-
-Suggestions (non-blocking):
-- [item]
 ```
 
 ---
@@ -297,4 +254,3 @@ Suggestions (non-blocking):
 - If logic is too complex to understand without running it, say so — do not guess.
 - Keep diff scope in mind: a 3-line fix needs a lighter review than a 200-line feature.
 - If requirements are not fulfillable with the current implementation, state clearly: "Requirement X is not met — the implementation does Y instead of Z".
-- Never trigger destructive git commands.

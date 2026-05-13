@@ -36,35 +36,14 @@ If `$ARGUMENTS` explicitly limits scope to investigation-only, honor that limit 
 
 ## Tools required
 
-From `serena` MCP server:
-- `check_onboarding_performed` / `onboarding` — initialize project knowledge when needed.
-- `find_symbol` — locate the entry point or suspicious symbol.
-- `get_symbols_overview` — inspect file structure before opening source.
-- `find_referencing_symbols` — trace callers/usages of a function or class.
-- `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol` — apply symbol-level fixes once root cause is confirmed.
+- `serena` — onboarding, symbol discovery, overview, references, and symbol-level fixes after root cause is confirmed.
+- Native search/read — exact error strings, config keys, repeated patterns, and narrow source chunks.
+- `sequential-thinking` — rank hypotheses when there are multiple plausible causes.
+- `context7` — verify library API behavior when a hypothesis points to API misuse or version mismatch.
+- `brave-search` + `firecrawl` — look up and scrape known library errors, issues, and changelogs.
+- `gitnexus` *(optional radar)* — unfamiliar large-codebase tracing, process flows, or cross-module impact when indexed and fresh.
 
-Use native bash search for exact error strings, config keys, and repeated patterns. Use native `read` for narrow source chunks after Serena identifies relevant symbols/files.
-
-From `sequential-thinking` MCP server:
-- `sequentialthinking` — structured reasoning to form and rank hypotheses.
-
-From `context7` MCP server *(optional)*:
-- `resolve-library-id` + `query-docs` — verify correct library API behavior when a hypothesis points to API misuse or version mismatch. Faster than invoking full /b-research for a single API question.
-
-From `brave-search` MCP server *(optional)*:
-- `brave_web_search` — look up known library errors, GitHub issues, changelogs.
-
-From `firecrawl` MCP server *(optional)*:
-- `firecrawl_scrape` — scrape full content of relevant GitHub issue pages, Stack Overflow answers, or changelogs found via web search.
-- `firecrawl_map` — map all URLs on a site when `firecrawl_scrape` returns empty content; use to discover the correct URL before retrying scrape.
-
-From `gitnexus` MCP server *(optional, preferred for large-codebase tracing and cross-module impact — only after `gitnexus analyze`)*:
-- `gitnexus query` / `gitnexus context` / `gitnexus impact` — graph-level repo intelligence for multi-file debugging.
-
-If Serena is unavailable: use bash search and `read` to map files manually. Always note: "⚠️ Serena unavailable — analysis based on bash/read; cross-file tracking incomplete."
-If sequential-thinking is unavailable: reason inline as `Hypothesis N → Evidence for → Evidence against → Cheapest verification → Confirmed/Rejected`.
-If context7 is unavailable: invoke /b-research for library API questions instead.
-If gitnexus is unavailable, stale, unindexed, or missing FTS: warn once and continue with Serena and native tools. Note: "⚠️ GitNexus unavailable — using Serena/bash for cross-file tracing."
+Fallbacks follow the global MCP rules. If context7 cannot answer a library/API question, use `/b-research`.
 
 Graceful degradation: ✅ Possible — if Serena is unavailable, use bash/read for file analysis. Quality is reduced but the skill remains functional.
 
@@ -86,11 +65,9 @@ If `$ARGUMENTS` includes a concrete symptom, error, or stack trace, begin tracin
 
 ### Step 2 — Map the code structure
 
-**Graph-level fast path** *(when gitnexus is connected and the repo is indexed)*:
-- Call `gitnexus query` or `gitnexus context` to understand the module or subsystem where the bug surfaces.
-- Use `gitnexus impact` to identify upstream/downstream dependencies of the entry point.
-- If GitNexus reports the repo is unindexed, stale, or missing FTS, warn once and continue immediately with Serena/bash tracing.
-- After GitNexus narrows the problem space, confirm exact symbols and references with Serena below.
+**Graph-level fast path** *(only when GitNexus passes the global gate and the bug path is unfamiliar or cross-module)*:
+- Use `gitnexus query`, `context`, or `impact` to narrow the subsystem and dependencies.
+- Confirm exact symbols and references with Serena below.
 
 Use `serena` to trace the execution path in this order:
 
@@ -246,4 +223,3 @@ Note any silent catch blocks or unexpected stops in the path.
 - If the fix requires understanding a library's behavior: use context7 first (`resolve-library-id` + `query-docs`); escalate to /b-research only if context7 has no index.
 - Keep fixes minimal — one bug, one fix.
 - If temporary logging or probes were added, inspect the final diff and confirm they were removed before reporting success.
-- Never trigger destructive git commands.
