@@ -1,7 +1,11 @@
 ---
 name: b-implement
 description: >
-  Execute approved plans safely. ALWAYS invoke when the user says "implement", "execute plan", "thực hiện", "làm theo plan", or after /b-plan approval with scoped work. Reads `.opencode/b-plans/` or an approved chat plan, applies the next small step, verifies it, and stops for new decisions. Unlike b-plan, b-implement changes code.
+  Execute approved or scoped work safely. ALWAYS invoke after /b-plan
+  approval, when the user asks to execute or implement scoped work, or when a
+  small direct request meets the threshold in global/AGENTS.md §3. Reads the
+  approved plan, applies the next small step, verifies it, and stops for new
+  decisions. Unlike b-plan, b-implement changes code.
 compatibility: opencode
 metadata:
   suite: b-skills
@@ -13,31 +17,30 @@ $ARGUMENTS
 
 Execute approved or clearly scoped work with discipline: load the source of truth, change the next smallest step, verify it, and stop when a new decision appears.
 
-If `$ARGUMENTS` is present, treat it as the plan path, plan slug, approved chat plan, or small direct implementation request.
+If `$ARGUMENTS` is present, treat it as the plan path, plan slug, approved chat plan, or **small direct request** as defined in `global/AGENTS.md` §3.
 
 ## When to use
 
 - The user approved a saved plan or chat plan.
 - The task is already scoped and the next action is to edit code or docs.
-- The request is small and concrete enough to implement directly without a planning pass.
+- The request meets the **small direct request** threshold from `global/AGENTS.md` §3 (≤3 files, no public contract, no sensitive path, no remaining design decision).
 
 ## When NOT to use
 
-- Scope or acceptance criteria are still unclear -> use **b-plan**.
-- The request is a named rename, extract, move, inline, or delete -> use **b-refactor**.
-- The task is only external lookup -> use **b-research**.
-- The task is only tests -> use **b-test**.
-- Something is broken and root cause is not confirmed -> use **b-debug**.
+- The request fails the **small direct request** threshold and is not backed by an approved plan → use **b-plan**.
+- The request is a named rename, extract, move, inline, or delete → use **b-refactor**.
+- The task is only external lookup → use **b-research**.
+- The task is only tests → use **b-test**.
+- Something is broken and root cause is not confirmed → use **b-debug**.
 
 ## Tools required
 
 - `bash` — inspect status, diff, and run verification commands.
-- `check_onboarding_performed`, `onboarding`, `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `find_declaration`, `find_implementations`, `search_for_pattern`, `get_diagnostics_for_file`, `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol` — from `serena` MCP server *(preferred for symbol-aware edits)*.
-- `resolve-library-id`, `query-docs` — from `context7` MCP server *(optional, for a narrow API uncertainty discovered mid-step)*.
-- `sequentialthinking` — from `sequential-thinking` MCP server *(optional, for failure triage or step-order ambiguity)*.
-- `gitnexus` — from `gitnexus` MCP server *(optional radar for shared route, tool, or exported-boundary changes when indexed and fresh)*.
+- `serena-symbol-toolkit` *(preferred for symbol-aware edits)*
+- `gitnexus-radar` *(optional, for shared-route/tool/exported-boundary changes)*
+- `context7-docs` *(optional, for a narrow API uncertainty discovered mid-step)*
 
-Fallbacks follow the global MCP rules. If execution reveals a new research blocker, stop and use **b-research**.
+Fallbacks: `global/AGENTS.md` §4 MCP fallback ladder. If execution reveals a new research blocker, stop and use **b-research**.
 
 Graceful degradation: ✅ Possible — native tools can still implement, but broad symbol changes are riskier without Serena.
 
@@ -46,69 +49,68 @@ Graceful degradation: ✅ Possible — native tools can still implement, but bro
 ### Step 1 — Load the source of truth
 
 Resolve scope in this order:
-1. a saved plan path
-2. a plan slug under `.opencode/b-plans/`
-3. an explicitly approved chat plan
-4. a small clearly scoped direct request
+1. A saved plan path under `.opencode/b-skills/b-plan/`.
+2. A plan slug under `.opencode/b-skills/b-plan/` (resolved via the slug algorithm in `global/AGENTS.md` §8).
+3. An explicitly approved chat plan.
+4. A request that meets the **small direct request** threshold (`global/AGENTS.md` §3).
 
-If the request is broad, multi-file, or still ambiguous, stop and use **b-plan** instead of improvising.
+If the request fails the threshold and no plan exists, stop and route to **b-plan** via the handoff envelope (`global/AGENTS.md` §9).
 
-Extract only what execution needs:
-- confirmed decisions
-- planned touch points
-- ordered steps or the single scoped request
-- verification expectations
-- unresolved blockers
+Apply the **plan staleness gate** (`global/AGENTS.md` §2) before executing. A stale plan must be re-planned, not improvised against.
+
+Extract only what execution needs: confirmed decisions, planned touch points, ordered steps or the single scoped request, verification expectations, unresolved blockers.
 
 ### Step 2 — Check the working state
 
 Run `git status --short` and inspect only the files relevant to the current step.
 
-- Leave unrelated changes alone.
+- Leave unrelated changes alone (`global/AGENTS.md` §6 worktree safety).
 - If the target file already has unrelated edits, patch around them.
 - If user changes directly conflict with the approved scope, stop and ask.
 
-If the plan is multi-step, choose the next dependency-ready step. If the request is a tiny direct task, treat it as a one-step implementation and do not invent extra ceremony.
+If the plan is multi-step, choose the next dependency-ready step. If the request is a small direct task, treat it as a one-step implementation; do not invent extra ceremony.
 
 ### Step 3 — Implement the next smallest step
 
-For code changes, initialize Serena once, then work in this order:
-1. locate the owner with `find_symbol` or `search_for_pattern`
-2. inspect structure with `get_symbols_overview`
-3. use `find_declaration` or `find_implementations` when the plan starts from usage or an abstract boundary
-4. use `find_referencing_symbols` for shared or exported behavior
-5. use GitNexus only when the step changes a route, tool contract, or shared boundary and the graph question is still unresolved
-6. apply the smallest edit that satisfies the step
+Use `serena-symbol-toolkit` for symbol-aware edits and the cheapest discovery tool that closes the next question (`global/AGENTS.md` §4). Use `gitnexus-radar` only when the step crosses a shared route, tool, or exported boundary, subject to the freshness gate.
 
-If the step turns into an unplanned rename, move, extract, inline, or delete, stop and hand off to **b-refactor**.
+Apply the smallest edit that satisfies the step.
 
-If a new behavioral or product decision appears, stop and ask.
+If the step turns into an unplanned rename, move, extract, inline, or delete → stop and hand off to **b-refactor**.
+
+If a new behavioral or product decision appears → stop and ask.
+
+If the plan itself is wrong (touch points missing, ordering incorrect, decisions invalidated by current code) → trigger the **plan revision protocol** in `global/AGENTS.md` §2. Do not improvise against the stale plan.
 
 ### Step 4 — Verify before moving on
 
-Run the exact plan verification when available. Otherwise run the narrowest relevant check for the touched area.
+Run the exact plan verification when available. Otherwise run the narrowest relevant check for the touched area, following the verification ladder in `global/AGENTS.md` §7.
 
-Use `get_diagnostics_for_file` before broader commands when the language supports it.
+Use `get_diagnostics_for_file` on the touched source file (production code, not just tests) before broader commands when the language supports it. Honor the LSP-coverage caveat in `global/AGENTS.md` §4.
 
 Classify failures:
-- implementation mistake -> fix and rerun
-- test harness problem -> **b-test**
-- runtime/root-cause uncertainty -> **b-debug**
-- unresolved library/API behavior -> Context7, then **b-research** if still unclear
+- Implementation mistake → fix and rerun.
+- Test harness problem → **b-test**.
+- Runtime/root-cause uncertainty → **b-debug**.
+- Unresolved library/API behavior → `context7-docs`, then **b-research** if still unclear.
+- External (CI down, registry outage, dep yanked) → record the blocker, do not retry inside the iteration cap.
 
-Use the global 3-iteration limit per step.
+**Mid-step rollback:** if a partial edit has left the tree in a broken state (compile failure, import cycle, half-renamed symbol) and the next iteration cannot move forward without first restoring a coherent baseline, stop attempting to push through. Either (a) finish the edit to a coherent state in one more focused pass, or (b) revert the in-progress changes for the current step with `git checkout -- <path>` / `git restore <path>` and re-attempt from the last known-good state. Never leave the working tree mid-transform across a skill exit — surface the rollback explicitly to the user.
+
+Apply the iteration cap from `global/AGENTS.md` §7.
 
 ### Step 5 — Record progress and finish cleanly
 
 After a step passes verification:
-- update saved-plan checkboxes when a saved plan exists
-- keep the diff limited to approved scope
-- continue to the next step only if there is one
+- Update saved-plan checkboxes when a saved plan exists.
+- Keep the diff limited to approved scope.
+- Continue to the next step only if there is one.
 
 At the end:
-- inspect `git diff`
-- run the final relevant verification
-- recommend **b-review** for non-trivial changes
+- Inspect `git diff`.
+- Run the final relevant verification.
+- For non-trivial changes (`global/AGENTS.md` §3), emit a handoff envelope (`global/AGENTS.md` §9) recommending **b-review**.
+- Close with the skill-exit status block (`global/AGENTS.md` §9).
 
 ## Rules
 
@@ -116,5 +118,6 @@ At the end:
 - Preserve unrelated user changes.
 - Do not add opportunistic refactors, compatibility code, or side cleanup.
 - Stop for new decisions instead of guessing.
-- Small direct implementation requests may stay lightweight, but they still need a real verification step.
+- A small direct request must still pass a real verification step.
 - Do not commit unless explicitly asked.
+- When the plan is wrong, revise it via `global/AGENTS.md` §2 — do not silently drift the implementation.

@@ -1,12 +1,12 @@
-# b-skills — OpenCode Global Rules
+# b-skills — OpenCode Runtime Contract
 
-> Shared runtime contract for the installed suite. Skill files own workflow details; this file owns routing, tool priority, safety, evidence, and handoffs.
+> Single home for routing, definitions, MCP bundles, tool priority, safety, evidence, execution discipline, artifacts, output, cross-cutting decisions, and session lifecycle. Skills must reference this file instead of restating shared rules.
 
 ---
 
-## Skill Routing
+## 1. Routing
 
-Match the user's intent to one active skill before acting. If a request spans phases, use `Decide -> Build -> Validate`.
+Match the user's intent to one active skill before acting. If a request spans phases, sequence `Decide -> Build -> Validate`.
 
 | Intent | Skill |
 |---|---|
@@ -19,168 +19,520 @@ Match the user's intent to one active skill before acting. If a request spans ph
 | Browser/UI verification or browser-driven flow testing | `/b-e2e` |
 | Pre-PR changed-code review | `/b-review` |
 
-Trigger precedence when intents overlap:
+### Trigger precedence (when intents overlap)
+
 - Browser-driven flow testing beats `b-test`; use `b-e2e`.
-- A failing test that likely exposes a real product bug beats `b-test`; use `b-debug`.
+- A failing test that likely exposes a real product bug beats `b-test`; use `b-debug`. See §10.
 - A named behavior-preserving rename/extract/move beats `b-implement`; use `b-refactor`.
 - Unclear scope or acceptance beats `b-implement`; use `b-plan`.
 - `b-research` is for genuine external-knowledge blockers, not for questions the codebase or repo docs can answer locally.
+- DOM-rendered unit tests (jsdom, React Testing Library, Vue Test Utils) stay in `b-test`; only real browser navigation goes to `b-e2e`.
+
+### One active skill
 
 Keep one active skill until its stop condition is hit. Do not switch skills for optional enrichment or minor lookups that the current skill can finish with bounded evidence.
 
-Ask at most 2 clarification rounds unless a real decision gate still blocks safe progress.
+### Mid-flow switch policy
 
-When switching skills, include a compact handoff:
-- `source`
-- `goal`
-- `decisions`
-- `assumptions`
-- `files`
-- `verification`
-- `blockers`
-- `next skill`
+- A new request mid-flow does **not** auto-cancel the active skill. State the conflict in one line, ask the user whether to pause, queue, or abandon, then proceed.
+- An explicit `/<skill>` command from the user always overrides. Emit a handoff envelope (§9) before switching.
+- A required sub-task (e.g., a research blocker discovered during `b-implement`) is a handoff, not a parallel run. Pause, hand off, resume — never both skills active.
+
+### Clarification budget
+
+Ask at most **2 clarification rounds** unless a real decision gate still blocks safe progress.
+
+### Localized trigger phrases
+
+Match intent regardless of language. The phrases below are routing aids only; do not duplicate them inside individual skill descriptions.
+
+| Skill | English triggers | Vietnamese triggers |
+|---|---|---|
+| `/b-plan` | plan, design, decompose, approach, "how should I" | lập kế hoạch, thiết kế, hướng tiếp cận, chia nhỏ |
+| `/b-research` | docs, library, API, compare, look up, "what is" | tra cứu, tài liệu, so sánh, tìm hiểu |
+| `/b-implement` | implement, add, build, execute, finish, ship | triển khai, thực hiện, viết code, hoàn thành |
+| `/b-refactor` | rename, extract, move, inline, delete, cleanup | đổi tên, tách, di chuyển, xoá, dọn dẹp |
+| `/b-debug` | bug, broken, error, stack trace, "not working", regression | lỗi, hỏng, không chạy, sai, truy vết |
+| `/b-test` | tests, coverage, failing test, snapshot, mock | kiểm thử, viết test, độ bao phủ, mock |
+| `/b-e2e` | E2E, browser, UI flow, Playwright, navigate | trình duyệt, UI, end-to-end, kiểm thử giao diện |
+| `/b-review` | review, PR, lint, pre-PR, "what would a reviewer" | rà soát, review, kiểm tra trước PR |
 
 Ignore legacy or alternate skill trees that do not match the installed runtime contract unless the user explicitly asks to inspect or edit them.
 
 ---
 
-## Source Of Truth
+## 2. Source of truth and plan lifecycle
+
+### Conflict ladder
 
 Use this order when instructions compete:
 1. User's latest explicit instruction.
-2. Approved saved plan in `.opencode/b-plans/`.
+2. Approved saved plan in `.opencode/b-skills/b-plan/<task-slug>.md`.
 3. Approved chat plan.
 4. Current repository evidence.
 5. Conventional defaults recorded as assumptions.
 
 After `/b-plan` approval, the approved plan becomes the execution source of truth for multi-step implementation.
 
+### Plan staleness gate
+
+A saved plan is stale if any of these are true:
+- A file listed under `Planned touch points` has been modified (mtime or git history) since approval.
+- A `Confirmed decision` conflicts with the current repo state.
+- The git HEAD has moved past a rebase/merge that touches planned files.
+
+A stale plan must be re-planned, not improvised against.
+
+### Plan revision protocol
+
+When the user asks to revise an approved plan, or `b-implement` discovers the plan is wrong mid-execution:
+
+1. Edit the plan file **in place** — never write `plan-v2.md`.
+2. Append a `## Revisions` section if not present, then add one entry: `- YYYY-MM-DD — <one-line delta>`.
+3. Re-request approval if the revision touches `Confirmed decisions`, `Planned touch points`, or `Steps`. Cosmetic edits do not need re-approval.
+4. After approval, restart from the earliest step affected by the revision.
+
+### Do not invent
+
 Do not invent product behavior, acceptance criteria, compatibility promises, or naming decisions. Ask instead.
 
 ---
 
-## Coding Principles
+## 3. Definitions and rubrics
 
-- Define success before non-trivial work.
-- Choose the smallest safe path and the smallest correct change.
-- Prefer editing existing files and symbols over adding new files, abstractions, or compatibility layers unless the task clearly requires them.
-- Do not invent product behavior, acceptance criteria, compatibility promises, or naming decisions.
-- Verify the changed area narrowly first, then broaden checks only when scope or risk justifies it.
+The single glossary all skills defer to. Do not redefine these terms inside individual skill files.
+
+### Non-trivial work
+
+A change is **non-trivial** if any is true:
+- Touches more than 3 files.
+- Touches a public contract (exported API, route, CLI flag, schema, migration).
+- Touches a sensitive path (auth, authz, billing, secrets, crypto, persistence migrations).
+- Adds, removes, or changes a dependency.
+- Modifies CI, build, or release configuration.
+
+Otherwise the change is **trivial** and may use the lightweight paths in each skill.
+
+### Small direct request
+
+A request that may bypass `/b-plan` and go straight to `/b-implement` must meet **all** of:
+- 3 or fewer files.
+- No exported/public contract change.
+- No sensitive path (auth, security, billing, migration).
+- No remaining design decision; behavior is obvious from the request.
+
+Anything failing this threshold goes back to `/b-plan`.
+
+### Severity rubric (`/b-review`, `/b-debug`, any finding)
+
+| Severity | Meaning |
+|---|---|
+| **BLOCKER** | Correctness, security, data-loss, or contract violation. Cannot ship. |
+| **MAJOR** | Likely regression, missing coverage on changed behavior, or operability gap in a new entry point. Should fix before PR. |
+| **MINOR** | Bug-prone code, edge case, or follow-up cleanup that does not block the PR. |
+| **NIT** | Style, naming, or preference. Authors may ignore. |
+
+### Risk rubric (`/b-refactor`, `/b-implement`, verification depth)
+
+| Risk | Criteria |
+|---|---|
+| **trivial** | One file, no exported change, few or no external references, behavior preserved. |
+| **low** | Single module, internal refs only, narrow tests cover the area. |
+| **medium** | Multi-file, exported/shared symbol, or partial test coverage. |
+| **high** | Public contract, schema, migration, auth/security/billing path, or known broad blast radius. |
+
+Match verification depth to the risk band per the verification ladder (§7).
+
+### Confidence signal
+
+When an answer rests on incomplete evidence, end with one line:
+
+`Confidence: high | medium | low — <one-clause reason>.`
+
+- **high** = direct evidence (runtime, primary docs, symbol bodies). Omit the line entirely.
+- **medium** = consistent secondary evidence.
+- **low** = single weak source, snippet only, or material gap.
+
+Skip the line on trivial high-confidence answers (a single docs lookup with a direct hit) to avoid ceremony. Always include it on partial, single-source, or recency-sensitive answers.
 
 ---
 
-## Tool Priority
+## 4. Tool model
+
+### Tool priority
 
 Use the lightest capable tool that can answer reliably. Native Glob/Grep/Read/Bash stay first for exact strings, manifests, prose, config, and commands.
 
 | Task shape | First choice | Then narrow with |
 |---|---|---|
-| Graph overview, architecture, blast radius, changed-scope validation | `gitnexus:*` when indexed, fresh, and target-aware | `serena:*` |
-| Exact symbol discovery, declarations, references, symbol edits | `serena:*` | Native tools + `apply_patch` |
-| Library/framework docs | `context7:*` | `/b-research` |
-| Web search | `brave-search` | `firecrawl_search`, then `webfetch` |
-| Known URL extraction | `firecrawl_scrape` | `firecrawl_interact`, then `firecrawl_map` |
-| Local document extraction | `firecrawl_parse` | `firecrawl_scrape` only if already hosted |
-| Browser automation | `playwright:*` via `/b-e2e` | none |
-| Multi-hypothesis reasoning | `sequential-thinking` | inline reasoning |
+| Graph overview, architecture, blast radius, changed-scope validation | `gitnexus-radar` when indexed, fresh, target-aware | `serena-symbol-toolkit` |
+| Exact symbol discovery, declarations, references, symbol edits | `serena-symbol-toolkit` | Native tools + `apply_patch` |
+| Library/framework docs | `context7-docs` | `/b-research` |
+| Web search | `brave-discovery` | `firecrawl-extraction` |
+| Known URL extraction | `firecrawl-extraction` | `firecrawl-extended`, then `firecrawl-deep` (approval) |
+| Local document extraction | `firecrawl-extraction` (`firecrawl_parse`) | `firecrawl-extraction` (`firecrawl_scrape`) only if already hosted |
+| Browser automation | `playwright-browser` via `/b-e2e` | none |
 
-**Radar/hands boundary**: GitNexus is optional radar; Serena is primary hands. GitNexus scopes graph risk, flows, routes, consumers, and cross-module impact. Serena confirms exact symbols, bodies, references, and performs symbol-aware edits.
+### Radar/hands boundary
 
-**GitNexus freshness gate**: rely on GitNexus only when the repo is indexed, not stale, and the target file or symbol is represented. If unavailable, stale, unindexed, missing FTS, or missing the target, warn once and continue with Serena or native tools. Stale graph output is not evidence.
+GitNexus is optional radar; Serena is primary hands. GitNexus scopes graph risk, flows, routes, consumers, and cross-module impact. Serena confirms exact symbols, bodies, references, and performs symbol-aware edits.
 
-For symbol-aware work, call `check_onboarding_performed`; if false, call `onboarding` once per skill run when Serena first becomes necessary.
+### GitNexus freshness gate
 
-Tool budget:
+Rely on GitNexus only when the repo is indexed, not stale, and the target file or symbol is represented. If unavailable, stale, unindexed, missing FTS, or missing the target, warn once and continue with Serena or native tools. If a GitNexus result references a file whose mtime is newer than the index timestamp, treat the result as stale. Stale graph output is not evidence.
+
+### Tool selection rules
+
 - Single-file or local-only task: skip GitNexus.
 - Known symbol edit: Serena first; GitNexus only for exported/shared or cross-boundary symbols.
 - Large unfamiliar area: one GitNexus pass to narrow, then Serena confirms.
-- Do not use GitNexus and Serena in parallel for the same exact symbol hunt.
-- Do not escalate to a second MCP when the first authoritative source already answered the question well enough to act.
+- Do not use GitNexus and Serena in parallel on the same exact symbol hunt.
+- Do not escalate to a second MCP when the first authoritative source already answered.
+- Pick the cheapest discovery tool that closes the next question; there is no required ordering among Serena discovery tools.
+
+### MCP bundles
+
+Skills reference bundles by name rather than enumerating tool lists.
+
+#### `serena-symbol-toolkit`
+
+- **Server:** `serena`
+- **Session init (once per session, only when symbol-aware work first becomes necessary):** `check_onboarding_performed`, then `onboarding` (only if the preflight returned false).
+- **Discovery:** `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `find_declaration`, `find_implementations`, `search_for_pattern`.
+- **Verification:** `get_diagnostics_for_file`.
+- **Edits:** `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol`.
+- **LSP coverage caveat:** strong for TS/JS, Python, and similar; weak/absent for Bash, YAML, Markdown, Lua, and many DSLs. Treat renames/safe-deletes/diagnostics from non-LSP languages as **not authoritative** — widen verification.
+
+#### `gitnexus-radar`
+
+- **Server:** `gitnexus`
+- **Role:** optional graph radar for scoping blast radius, route/consumer surfaces, or unfamiliar architecture.
+- **Use only when** indexed, fresh, and the target is represented.
+- **Never use for** symbol editing, exact-body inspection, or anything Serena can answer directly.
+
+#### `context7-docs`
+
+- **Server:** `context7`
+- **Tools:** `resolve-library-id`, `query-docs`.
+- **Version-pinning rule:** before querying, pin the library version from manifests **and lockfiles**. Check `package-lock.json`/`pnpm-lock.yaml`/`yarn.lock`, `poetry.lock`/`uv.lock`, `go.sum`, `Cargo.lock`, or equivalent. In monorepos, resolve the version at the workspace closest to the touched file, not the repo root. If the version is ambiguous or conflicting, ask before querying.
+- **Fallback:** if Context7 cannot answer, prefer the library's own documentation URL pattern (e.g., `<library>.dev/docs/`) over generic web search.
+
+#### `brave-discovery`
+
+- **Server:** `brave-search`
+- **Tools:** `brave_web_search`.
+- **Role:** page discovery only. Pass discovered URLs to `firecrawl-extraction` for content.
+- `brave_news_search` / `brave_image_search` are not part of the bundle; use inline only when news or visual evidence is explicitly required.
+
+#### `firecrawl-extraction` (default tier)
+
+- **Server:** `firecrawl`
+- **Tools:** `firecrawl_scrape`, `firecrawl_parse`.
+- **Use for:** content extraction from a known URL or local document.
+
+#### `firecrawl-extended` (conditional tier)
+
+- **Tools:** `firecrawl_map`, `firecrawl_extract`.
+- **Use only when** mapping a site's structure or extracting structured fields (prices, params, tables). Do not reach for these on plain content.
+
+#### `firecrawl-deep` (last-resort tier, requires explicit user approval)
+
+- **Tools:** `firecrawl_interact`, `firecrawl_agent`.
+- **Cost warning:** can run for minutes and burn substantial credit. Surface the cost and obtain approval before invoking. Exhaust default and extended tiers first.
+
+#### `playwright-browser`
+
+- **Server:** `playwright` MCP (preferred when available).
+- **Fallback:** local Playwright CLI via Bash (`npx playwright …`) when the project already has Playwright installed.
+- **Tools used in skill prose:** snapshot, navigate, click, type, fill, select, hover, drag/drop, upload, dialog handling, tabs, wait, resize, screenshot, evaluate, network, console, close.
+- **Restricted:** any `*_unsafe` tool (such as code-execution variants) is excluded from the default toolkit and requires explicit user approval per invocation.
+
+#### Sequential-thinking
+
+Not bundled. Opus 4.7 performs multi-hypothesis reasoning natively. Use the `sequential-thinking` MCP only when **three or more** plausible hypotheses remain with equal cheapest-verification cost.
+
+### MCP availability and fallback ladder
+
+1. Assume the bundle is available; do not preflight unless prior failure suggests otherwise.
+2. On failure, retry once with a narrower call.
+3. On second failure, fall back per the ladder and label the limitation in the final report.
+
+**Fallback ladder:**
+- `serena-symbol-toolkit` unavailable → native Glob/Grep/Read + `apply_patch`. Treat renames and safe-deletes as high-risk; widen verification.
+- `gitnexus-radar` unavailable, stale, or missing target → continue without graph evidence; do not retry.
+- `context7-docs` unavailable → official-docs URL via `brave-discovery` + `firecrawl-extraction`.
+- `firecrawl-extraction` unavailable → search snippets only; mark answer as snippet-only with `Confidence: low`.
+- `playwright-browser` MCP unavailable → local Playwright CLI if installed; otherwise stop and tell the user browser automation is unavailable.
+
+### Fallback labeling
+
+When any fallback fires, attach a `[degraded: <reason>]` tag to the affected step or finding in the final report. Use exactly this format so output stays scannable across skills.
+
+### Per-skill tool budget
+
+- A skill run must not exceed **12 MCP tool calls** without surfacing progress and asking whether to continue.
+- At call 12: emit a one-line budget notice (`Tool budget: 12/12 reached. Continue? Remaining work: <list>`), then stop. Do not silently exceed.
+- `firecrawl-deep` invocations require user approval each time.
+- `gitnexus-radar` should rarely exceed 2 calls in one skill run; further graph questions usually mean the wrong skill was chosen.
+- Cross-turn cache: if the same library/URL/symbol was just fetched in this session, reuse the result instead of re-fetching.
+- The verification iteration cap (§7) applies in addition.
 
 ---
 
-## Evidence standards
+## 5. Evidence standards
 
 Use this evidence hierarchy:
-- Runtime evidence: tests, builds, logs, browser state, network calls.
-- Symbol evidence: Serena bodies, declarations, references, diagnostics, edits.
-- Graph evidence: GitNexus routes, processes, impact, consumers.
-- Text evidence: exact matches from native tools.
-- Search snippets: triage only until scraped, documented, or otherwise confirmed.
+- **Runtime evidence:** tests, builds, logs, browser state, network calls.
+- **Symbol evidence:** Serena bodies, declarations, references, diagnostics, edits.
+- **Graph evidence:** GitNexus routes, processes, impact, consumers.
+- **Text evidence:** exact matches from native tools.
+- **Search snippets:** triage only until scraped, documented, or otherwise confirmed.
 
-Graph evidence prioritizes review or exploration; it does not prove edits are safe.
+Graph evidence is useful for review or exploration; it does not prove edits are safe. Stale graph output is not evidence (see §4 freshness gate).
+
+When two authoritative sources disagree (e.g., two versions of vendor docs), prefer the one matching the pinned version (§4); if still ambiguous, present both with the conflict labeled and a `Confidence: medium` line.
+
+When a final answer is derived from anything weaker than runtime or symbol evidence, attach the **confidence signal** from §3.
 
 ---
 
-## Safety
+## 6. Safety gates
+
+### Approval-required actions
 
 Approval required before installs, dev servers, migrations, destructive commands, production-like or staging writes, broad refactors, commits, or any operation that could mutate shared environments.
 
-Public web privacy gate:
-- Never send private stack traces, internal URLs, customer data, secrets, or proprietary code to Brave, Firecrawl, or other public web tools without explicit approval.
-- Sanitize queries when a safe sanitized form will answer the question.
+### Canonical approval ask
+
+Use a single template so users see consistent ask shape across skills:
+
+```text
+[approval] <action in imperative form>
+Effect: <blast radius and any mutation>
+Proceed? (y/n)
+```
+
+Example: `[approval] Run pnpm install — Effect: writes node_modules and updates pnpm-lock.yaml. Proceed? (y/n)`
+
+### Public web privacy gate
+
+- Never send private stack traces, internal URLs, customer data, secrets, or proprietary code to `brave-discovery`, `firecrawl-*`, or any other public web tool without explicit approval.
+- Sanitize queries when a sanitized form can answer the question.
 - If sanitizing would remove the essential signal, stop and ask.
 
-Sensitive file safety:
-- Never read, search, print, diff, edit, upload, summarize, or commit likely-secret files without explicit permission.
+Skills do not restate this. They reference §6.
+
+### Sensitive file safety
+
+- Never read, search, print, diff, edit, upload, summarize, or commit likely-secret files (e.g., `.env`, `*.pem`, `credentials.*`, `secrets.*`) without explicit permission.
 - If unsure whether a file is sensitive, stop and ask.
 
-Worktree safety:
+### Worktree safety
+
 - Check dirty state before non-trivial edits.
 - Preserve unrelated user changes.
 - If a target file already has unrelated edits, patch around them.
 - If user changes directly conflict with the task, stop and ask.
 
-Git safety:
+### Git safety
+
 - Never run autonomously: `git push`, `git pull`, `git commit`, `git reset --hard`, `git revert`, `git clean -f`, `git branch -D`.
 - Never use hook or signature bypass flags unless explicitly requested.
 
 ---
 
-## Execution
+## 7. Execution discipline
 
 Define success before non-trivial work. Choose the smallest safe path.
 
 If the user asked only for diagnosis or explanation, stop at confirmed root cause or answer unless they also asked for a fix.
 
-Verification ladder:
-- Narrow local check first.
-- Broader affected-area check second.
-- Full project check only when scope or risk justifies it.
+### Verification ladder
 
-Use a maximum of 3 local fix/verify loops before reporting remaining evidence and the blocker.
+- Narrow local check first (touched file diagnostics, single test).
+- Broader affected-area check second (module tests, type/build narrowed to changed area).
+- Full project check only when scope or risk justifies it (high-risk per §3, or shared contracts).
 
-If command output is truncated or times out, save the full output under `/tmp/opencode/b-skills/<skill>/` and inspect the failing section instead of guessing.
+### Iteration cap
+
+Use a **maximum of 3 fix/verify loops per step** before reporting remaining evidence and the blocker. This applies to `b-implement`, `b-debug`, `b-refactor`, and `b-test`. Skills do not restate the number.
+
+### Truncated output
+
+If command output is truncated or times out, save the full output under `/tmp/opencode/b-skills/<skill>/<slug>.log` and inspect the failing section instead of guessing.
+
+### Empty-state defaults
+
+When the expected input is missing, do not silently fall back; ask once with a concrete default in mind:
+- No git diff → ask which commit, branch, or range to review.
+- No approved plan → check if the request meets the small-direct-request threshold (§3); otherwise route to `/b-plan`.
+- No test framework in the repo → ask before adding one; never introduce a framework as a side effect.
+- No browser-test framework → ask before adding Playwright.
+- No MCP for the requested bundle → see the fallback ladder (§4) and label the run as `[degraded: <bundle> unavailable]`.
 
 ---
 
-## Artifacts And Logs
+## 8. Artifacts
 
-- Plans: `.opencode/b-plans/<task-slug>.md`
-- Run IDs: `<YYYYMMDD-HHMMSS>-<slug>`
-- Skill artifacts: `.opencode/b-skills/<skill>/<run-id>/`
-- E2E artifacts: `.opencode/b-skills/b-e2e/<run-id>/`
-- Temporary logs: `/tmp/opencode/b-skills/<skill>/<slug>.log`
+### Slug algorithm
 
-If a skill creates more than one artifact, create or report a manifest with:
-- `artifacts`
-- `commands`
-- `generated_files`
-- `cleanup`
-- `notes`
+Derive `<task-slug>` from the user's request:
+1. Take the imperative form of the request (drop polite filler, English or Vietnamese).
+2. Lowercase. Replace any non-ASCII (including Vietnamese diacritics) with the closest ASCII equivalent.
+3. Replace non-alphanumeric runs with `-`. Trim leading/trailing `-`.
+4. Cap at **40 characters**. If truncation would split a word, end at the previous `-`.
+5. If a collision exists with an unrelated active plan or run, append `-2`, `-3`, … (numeric only; never random suffixes).
+
+Examples:
+- "Add rate limiting to the API" → `add-rate-limiting-to-the-api`
+- "Đổi tên UserService thành UserRepository" → `doi-ten-userservice-thanh-userrepository`
+
+### Run ID
+
+`<YYYYMMDD-HHMMSS>-<task-slug>`. All skills use this format.
+
+### Paths
+
+- **Plans:** `.opencode/b-skills/b-plan/<task-slug>.md` (canonical). The legacy `.opencode/b-plans/` is deprecated; do not write there.
+- **Skill artifacts:** `.opencode/b-skills/<skill>/<run-id>/`.
+- **Temporary logs:** `/tmp/opencode/b-skills/<skill>/<slug>.log`.
 
 Do not write generated artifacts outside those paths unless editing project source files is the task.
 
+### Manifest schema
+
+Any run that produces more than one artifact must include `manifest.json` at the root of its run directory:
+
+```json
+{
+  "run_id": "<YYYYMMDD-HHMMSS>-<task-slug>",
+  "skill": "<b-skill-name>",
+  "status": "complete | blocked | partial",
+  "artifacts": ["<relative-path>", "..."],
+  "commands": ["<command run>", "..."],
+  "generated_files": ["<source path edited or created>", "..."],
+  "cleanup": "<what was cleaned up, or 'none'>",
+  "notes": "<one-line summary>"
+}
+```
+
+Single-artifact runs may skip the manifest and report these fields inline instead.
+
 ---
 
-## Output Contract
+## 9. Output contract
 
-Respond in the user's language for chat output. Saved artifacts are English unless requested otherwise.
+### Language
 
-For non-trivial implementation, debug, test, refactor, review, or research work, final responses should include:
+- **Chat:** match the language of the user's most recent message. Code identifiers, paths, and command examples stay in their natural form.
+- **Saved artifacts:** English (headings, prose, slugs) regardless of chat language, so plans, manifests, and reports remain interoperable.
+
+### Lead with the result
+
+Findings, decisions, or the next action come first. Narration second, if at all. Be concise.
+
+### Skill-exit status block
+
+Every non-trivial skill run ends with a single fenced status block. Use exactly this schema so downstream skills can parse it:
+
+```text
+[status]
+skill: <b-skill-name>
+state: complete | blocked | needs-input | handed-off
+artifacts: <comma-separated paths or 'none'>
+next: <skill name or 'none'>
+blockers: <one-line list or 'none'>
+confidence: high | medium | low — <reason>   (omit when high and evidence is direct)
+```
+
+For trivial runs (a one-line answer, a tiny edit), the block can be omitted.
+
+### Handoff envelope
+
+When a skill hands off to another skill, emit this fenced block in chat **before** invoking the next skill:
+
+```text
+[handoff]
+source: <current skill>
+goal: <one-line goal for the next skill>
+decisions: <confirmed decisions or 'none'>
+assumptions: <open assumptions or 'none'>
+files: <relevant paths or 'none'>
+verification: <expected check or 'none'>
+blockers: <known blockers or 'none'>
+next-skill: <b-skill-name>
+```
+
+### Standard report shape
+
+For non-trivial implementation, debug, test, refactor, review, or research work, final responses include:
 - answer, action, or findings first
 - verification evidence
 - blockers or skipped checks
+- confidence signal (§3) when evidence is incomplete
 - the natural next action
+- the skill-exit status block
 
-Be concise. Lead with the result, not narration.
+---
+
+## 10. Cross-cutting decisions
+
+### Test failure vs runtime bug
+
+Owned here so `b-test` and `b-debug` agree. Use this table when a test is red:
+
+| Signal | Lane |
+|---|---|
+| Assertion mismatch and production behavior is confirmed correct | `b-test` — update the test |
+| Missing mock, fixture, setup, async/await, leaked state, snapshot drift after intentional change | `b-test` |
+| Production behavior is uncertain, ambiguous, or under dispute | `b-debug` — confirm root cause first |
+| Test reproduces a real reported symptom | `b-debug` |
+| Newly added test exposes pre-existing wrong behavior | `b-debug` |
+| Flaky test (passes on rerun without code change) | `b-test` — diagnose flake source; if root cause is a real race or timing bug in product code, switch to `b-debug` |
+
+Never modify production code purely because a test is red. Never modify an assertion, snapshot, or golden file without confirming the intended behavior first.
+
+### Snapshot confirmation procedure
+
+1. State the intended new behavior in one sentence.
+2. Point to the source change or product decision that justifies it.
+3. Then update the snapshot.
+
+### Flake handling
+
+Rerun the suspected test up to 2 times in isolation. If it passes some runs and fails others without any code change, mark it `flaky`, capture the failing output under `/tmp/opencode/b-skills/b-test/`, and investigate ordering, shared state, async timing, or external time/network dependence before either skipping or rewriting it.
+
+### DOM-unit vs browser-flow boundary
+
+- jsdom, happy-dom, React Testing Library, Vue Test Utils, Svelte testing-library, and any test that renders components without launching a real browser → `b-test`.
+- Playwright, Cypress, WebdriverIO, Puppeteer, or anything driving a real Chromium/Firefox/WebKit instance → `b-e2e`.
+- A test file that boots Playwright but is invoked through the unit-test runner still counts as `b-e2e` because a real browser is launched.
+
+### Self-review vs reviewing-someone-else's-code
+
+`/b-review` handles both. The skill must state which mode it is in:
+- **Self-review:** assume author bias. Be harsher on "obviously correct" assumptions; verify the spec the author claims to satisfy.
+- **External review:** assume the author cannot answer follow-ups. Be explicit about what would block the merge vs what is style.
+
+---
+
+## 11. Session lifecycle
+
+### Session-start preflight (run once at first non-trivial action)
+
+1. `git status --short` — note dirty state; preserve unrelated changes (§6).
+2. Check for an approved plan under `.opencode/b-skills/b-plan/` matching the current request.
+3. Confirm MCP availability lazily on first use (do not preflight all bundles up front).
+4. Acknowledge dirty state explicitly if it could affect the request.
+
+### Crash/resume
+
+- If a prior session left a partially complete run directory under `.opencode/b-skills/<skill>/<run-id>/`, resume from its manifest's last `complete` artifact rather than restarting.
+- If no manifest exists, treat the directory as orphaned; do not delete it without asking.
+- For saved plans, the staleness gate (§2) decides whether to resume or re-plan.
+
+### Cross-skill conventions
+
+- Skill descriptions cover **intent and disambiguation only**. Trigger keywords live in §1, not duplicated in every skill description.
+- Skills must not redefine: severity, risk, "non-trivial," "small direct request," iteration cap, onboarding rule, privacy gate, confidence signal, run-id format, artifact paths, slug algorithm, test-vs-bug decision, DOM/browser boundary, manifest schema, status block, or handoff envelope. Reference §3, §4, §6, §7, §8, §9, or §10 as needed.
+- A skill should switch to another skill only on a real stop/block condition — not for optional enrichment the current skill can finish inline with bounded evidence.

@@ -1,7 +1,12 @@
 ---
 name: b-debug
 description: >
-  Systematic hypothesis-driven debugging. ALWAYS invoke when the user says "debug", "bug", "lỗi", "không chạy", "fix this", "why is X not working", or pastes an error message. Traces execution paths, confirms root cause, then fixes and verifies by default. Unlike b-test, b-debug owns runtime behavior failures, not test mechanics.
+  Systematic hypothesis-driven debugging. ALWAYS invoke when the user reports
+  a runtime bug, an error, broken behavior, slow path, memory issue, or
+  pastes a stack trace. Traces execution, confirms root cause, then fixes
+  minimally and verifies. Unlike b-test, b-debug owns runtime behavior
+  failures, not test-mechanic issues such as wrong assertions, mocks, or
+  fixtures.
 compatibility: opencode
 metadata:
   suite: b-skills
@@ -11,109 +16,113 @@ metadata:
 
 $ARGUMENTS
 
-Trace the bug, confirm root cause, apply the smallest safe fix, and verify the result. Do not patch before the cause is explicit.
+Trace the bug, confirm root cause, apply the smallest safe fix, verify, and remove probes. Do not patch before the cause is explicit.
 
 If `$ARGUMENTS` includes a symptom, error, or stack trace, start from it directly. If the user asked only for diagnosis, stop after the confirmed root cause and proposed fix.
 
 ## When to use
 
 - The user reports a runtime bug, broken behavior, or error message.
-- A test likely exposes a real product bug rather than a test harness issue.
+- A test likely exposes a real product bug rather than a test harness issue (`global/AGENTS.md` §10).
 - The failure path may cross middleware, async boundaries, configuration, or multiple modules.
+- The bug is non-deterministic (flake, race, time/network dependence) and the test lane has ruled out fixture or harness drift.
+- The symptom is **slow**, not wrong — latency regression, memory leak, runaway CPU, or unbounded growth.
 
 ## When NOT to use
 
-- The problem is clearly a test assertion, mock, fixture, or setup issue -> use **b-test**.
-- The task is external docs or API lookup only -> use **b-research**.
-- The task is a new feature or scoped implementation request -> use **b-plan** or **b-implement**.
+- The problem is clearly a test assertion, mock, fixture, or setup issue → use **b-test**.
+- The task is external docs or API lookup only → use **b-research**.
+- The task is a new feature or scoped implementation request → use **b-plan** or **b-implement**.
 
 ## Tools required
 
-- `check_onboarding_performed`, `onboarding`, `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `find_declaration`, `find_implementations`, `search_for_pattern`, `get_diagnostics_for_file`, `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol` — from `serena` MCP server *(preferred for tracing and focused fixes)*.
-- Native search and read tools — exact error strings, config keys, repeated patterns, and narrow source reads.
-- `sequentialthinking` — from `sequential-thinking` MCP server *(optional, when several root-cause hypotheses remain plausible)*.
-- `resolve-library-id`, `query-docs` — from `context7` MCP server *(optional, for suspected library/API misuse)*.
-- `brave_web_search`, `firecrawl_scrape`, `firecrawl_map` — from web tools *(optional, for known public library or framework errors)*.
-- `gitnexus` — from `gitnexus` MCP server *(optional radar for unfamiliar cross-module paths when indexed and fresh)*.
+- `serena-symbol-toolkit` *(preferred for tracing and focused fixes)*
+- `gitnexus-radar` *(optional radar for unfamiliar cross-module paths)*
+- `context7-docs` *(optional, for suspected library/API misuse)*
+- `brave-discovery` + `firecrawl-extraction` *(optional, for known public errors; honor `global/AGENTS.md` §6 privacy gate)*
+- Native search and `bash` — exact error strings, config keys, repeated patterns, narrow source reads, reproduction commands, profilers.
 
-Fallbacks follow the global MCP rules. If the only safe next step is external research, sanitize first or ask for approval.
+Fallbacks: `global/AGENTS.md` §4 MCP fallback ladder.
 
-Graceful degradation: ✅ Possible — native analysis still works, but cross-file tracing is slower without Serena.
+Graceful degradation: ✅ Possible — native analysis still works; cross-file tracing is slower without Serena.
 
 ## Steps
 
 ### Step 1 — Frame the symptom
 
 Collect only what is needed to begin:
-- exact error or observable failure
-- expected behavior
-- actual behavior
-- reproduction notes if they matter
+- Exact error or observable failure.
+- Expected vs actual behavior.
+- Reproduction notes.
+- Determinism: reproducible every run, intermittent, or one-shot.
+- For perf bugs: workload shape, baseline timing, threshold or SLO that was violated.
 
-If the stack trace or a diagnostic already points to one obvious function or file, mark it as a fast path and skip broad hypothesis generation later.
+If a stack trace or diagnostic already points at one function or file, mark it as a **fast path** and go directly to Step 3.
 
-### Step 2 — Map the execution path
+### Step 2 — Map the path and rank suspects
 
-Use GitNexus only when the path is unfamiliar, graph-shaped, or route/consumer oriented. Stop once the likely subsystem or boundary is identified.
+Use `gitnexus-radar` only when the path is unfamiliar, graph-shaped, or route/consumer oriented. Stop once the likely subsystem or boundary is identified.
 
-Then use Serena in this order:
-1. `check_onboarding_performed` -> `onboarding` if needed
-2. `find_symbol` for the entry point or likely owner
-3. `get_symbols_overview` on the relevant files
-4. `find_referencing_symbols` for callers or consumers
-5. `find_declaration` for suspicious helper usage or imports
-6. `find_implementations` for interfaces or abstract contracts
-7. `search_for_pattern` when behavior is easier to describe than a symbol name
-8. native exact-string search and narrow `read`
+Then use `serena-symbol-toolkit` to confirm owners, references, and code shape. Pick the cheapest discovery tool that closes the next question (`global/AGENTS.md` §4).
 
-Map where data or control can stop, mutate, or silently fail.
+**First-suspect heuristic** — bias toward these patterns before broader experimentation:
+- Swallowed errors and silent catches.
+- Auth/authz gates and middleware short-circuits.
+- Config drift and environment-variable defaults.
+- Async ordering, missing `await`, race-prone callbacks.
+- Shared-state leaks across requests, tests, or threads.
+- Off-by-one and boundary conditions in newly added code.
+- For perf bugs: N+1 queries, unbounded retries, hot-loop allocations, blocking I/O on the request path.
 
-### Step 3 — Use cheap checks before broad experimentation
+For non-deterministic bugs, enumerate the candidate non-determinism sources first (shared state, async ordering, time, network, randomness, environment).
 
-Always search the codebase for the exact error string or log text when it exists.
+Rank remaining hypotheses by likelihood × cheapest verification. Example: a "config default flipped" hypothesis (verifiable in one `grep`) outranks a "race in worker pool" hypothesis (requires stress harness) even when the race is slightly more likely — verify the cheap one first, then move on. Skip ranking when the fast path already isolates one cause.
 
-If the symptom points to a public library or framework error, you may search the web and scrape the top public results. Before doing that:
-- do not send private stack traces, internal URLs, customer data, or proprietary code to public web tools without approval
-- sanitize the query when possible
-
-If the failure looks like API misuse, verify the exact method or option with Context7 before guessing.
-
-If multiple hypotheses remain, rank them by likelihood and cheapest verification step. Skip this ranking when the fast path already isolates one clear cause.
-
-### Step 4 — Confirm root cause
+### Step 3 — Confirm root cause cheaply
 
 Start with the cheapest verification:
-- local diagnostics
-- narrow repro command already present in the project
-- targeted temporary logging at one choke point
-- config or environment confirmation when relevant
+- Search the codebase for the exact error string or log text.
+- For library/framework errors, check `context7-docs` for exact API/option behavior.
+- For known public errors, optionally use `brave-discovery` + `firecrawl-extraction` after honoring the privacy gate (`global/AGENTS.md` §6).
+- Local diagnostics: `get_diagnostics_for_file`.
+- A narrow repro command already in the project.
+- Targeted temporary logging at one choke point.
+- For perf bugs: profiler, `time`/`hyperfine`, runtime tracing, or a tight benchmark — never guess from code shape alone.
+- For non-deterministic bugs: forced ordering, fake clock, stress loop. Repro must demonstrate the failure under conditions you control before claiming root cause.
 
-If static analysis is insufficient, use up to 3 instrumentation or repro rounds. Remove temporary probes before finalizing the fix.
+If the symptom **cannot be reproduced** — disappears between sessions, was reported but never returns — do not patch. State this explicitly, capture every state difference between the failing report and current environment (config, version, data), and ask the user whether to (a) instrument and wait, (b) treat as one-shot, or (c) investigate the diff.
 
 State the root cause explicitly before editing:
-`Root cause: X because Y.`
 
-### Step 5 — Apply the minimal fix
+`Root cause: <what fails> because <why>` (extend with conditions when the bug only fires under Z).
+
+### Step 4 — Apply the minimal fix
 
 Keep the fix narrow:
-- use Serena symbol edits when the change is clearly symbol-scoped
-- use `apply_patch` for small line-level fixes inside a larger symbol
-- add a brief comment only when the fix would otherwise be non-obvious
+- Use `serena-symbol-toolkit` edits when the change is symbol-scoped.
+- Use `apply_patch` for small line-level fixes inside a larger symbol.
+- Add a brief comment only when the fix would otherwise be non-obvious.
 
 Do not roll broader cleanup or unrelated refactors into the bug fix.
 
-### Step 6 — Verify the fix
+### Step 5 — Verify and remove probes
 
-Run the narrowest relevant command or procedure that proves the symptom changed.
+1. Run the narrowest relevant command that proves the symptom changed.
+2. For non-deterministic bugs, also run the stress repro from Step 3 long enough to gain confidence the race no longer triggers.
+3. For perf bugs, re-run the benchmark and report the before/after delta, not just "feels faster."
+4. **Re-scan the diff** for every temporary probe added during Step 3: `console.log`, `print`, breakpoints, extra metrics, debug flags, fake clocks, profiler hooks. Remove each one that was not part of the final fix and re-run verification.
+5. If the fix affects config or process startup, tell the user whether a restart or reload is required.
+6. If the fix touched several files or a shared boundary, emit a handoff envelope (`global/AGENTS.md` §9) recommending **b-review**.
 
-If the fix affects config or process startup, tell the user whether a restart or reload is required.
+Apply the verification ladder and iteration cap from `global/AGENTS.md` §7.
 
-If the fix touched several files or a shared boundary, recommend **b-review** before commit.
+Close with the skill-exit status block (`global/AGENTS.md` §9).
 
 ## Rules
 
 - Never patch before confirming root cause.
-- Default to the full loop: trace -> confirm -> fix -> verify.
 - Use the obvious-stack-trace fast path when one file or function is already strongly implicated.
-- Treat swallowed errors, auth gates, config drift, and async order issues as common first suspects.
-- Keep fixes minimal and remove temporary instrumentation before reporting success.
+- For perf bugs, measure before and after; do not infer speed from code structure.
+- For cannot-reproduce reports, stop and surface the gap; do not speculate-fix.
+- Verify probe removal explicitly before reporting success.
+- Attach the confidence signal (`global/AGENTS.md` §3) when the fix relies on indirect or partial evidence.

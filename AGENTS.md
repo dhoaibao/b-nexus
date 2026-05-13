@@ -55,9 +55,9 @@ metadata:
 
 **Description rules:**
 - Start with a one-line summary of what the skill does
-- Include `ALWAYS invoke when...` with specific trigger phrases
-- Include both Vietnamese and English trigger keywords
-- End with disambiguation from the most similar skill
+- Include `ALWAYS invoke when...` with a short, intent-shaped condition
+- End with one-clause disambiguation from the most similar skill
+- Keep Vietnamese trigger words in `global/AGENTS.md` routing aids rather than spamming every skill description with multilingual keyword lists
 - No step-by-step instructions, no tool lists, no output format details
 
 ---
@@ -85,7 +85,8 @@ For this repo, each skill currently uses a single `SKILL.md` file plus a thin co
 ---
 name: b-example
 description: >
-  [<=80 words, trigger-focused]
+  [<=80 words, intent + disambiguation. Do NOT include trigger keyword
+  lists; those live in global/AGENTS.md and maintainer docs.]
 compatibility: opencode
 metadata:
   suite: b-skills
@@ -104,10 +105,17 @@ $ARGUMENTS
 - [Scenarios that should trigger a different skill instead]
 
 ## Tools required
-- `tool_name` — from `mcp-server` MCP server
-- `tool_name` — from `mcp-server` MCP server *(optional, for [condition])*
+- `bundle-name` (see `global/AGENTS.md` §4)
+- `bundle-name` *(optional, for [condition])*
 
-Fallbacks: reference the global MCP rules and add only skill-specific stop/degrade behavior.
+Skills reference **MCP bundles** by name (e.g., `serena-symbol-toolkit`,
+`gitnexus-radar`, `context7-docs`). Do not enumerate per-tool lists inside
+the skill; the bundle definition in `global/AGENTS.md` is the source of
+truth, including session-init steps, fallback ladder, and cost/approval
+caveats.
+
+Fallbacks: reference `global/AGENTS.md` MCP fallback ladder. Skills add
+only skill-specific stop/degrade behavior.
 
 Graceful degradation: [✅ Possible / ⚠️ Partial / ❌ Not possible] — [brief explanation]
 
@@ -127,7 +135,12 @@ Graceful degradation: [✅ Possible / ⚠️ Partial / ❌ Not possible] — [br
 ---
 
 ## Rules
-- [Bullet list of constraints and guardrails]
+- [Bullet list of constraints and guardrails. Do NOT restate severity,
+  risk, iteration cap, privacy gate, onboarding rule, confidence signal,
+  run-id format, artifact paths, slug algorithm, status block, handoff
+  envelope, manifest schema, test-vs-bug decision, DOM/browser boundary,
+  or canonical approval ask — those live in global/AGENTS.md and skills
+  reference them.]
 ```
 
 ---
@@ -152,32 +165,31 @@ Keep command wrappers thin. They are entrypoints, not duplicate logic stores.
 
 ## MCP selection criteria
 
-When deciding which MCPs a skill should use:
+Skills declare MCP usage by referencing **bundles** defined in `global/AGENTS.md` §4 — not by enumerating individual tool names. Bundle definitions own session-init steps, fallback behavior, cost/approval caveats, and language-coverage caveats.
 
 | Role | When to add | Example |
 |---|---|---|
-| **Primary** | Skill cannot function without it | brave-search for b-research |
-| **Secondary** | Skill uses it conditionally for a specific step | context7 for b-research (HOWTO queries only) |
-| **Optional** | Enhances quality but skill works without it | sequential-thinking for b-review |
+| **Primary** | Skill cannot function without it | `playwright-browser` for `b-e2e` |
+| **Secondary** | Skill uses it conditionally for a specific step | `context7-docs` in `b-debug` for API-misuse checks |
+| **Optional** | Enhances quality but skill works without it | `gitnexus-radar` in any code-touching skill |
 
 **Rules:**
-- Never add an MCP just to increase coverage — every MCP must have a clear use case in the Steps section
-- Document skill-specific fallback behavior; do not duplicate global MCP fallback text
-- Label each MCP in "Tools required" with its role: required vs `*(optional, for [condition])`*
-- Always include a `Graceful degradation:` line summarizing fallback behavior
-- Serena-using skills in this repo must assume OpenCode's generic `ide` context: prefer Serena for symbol-aware code work, keep overlapping basic file/shell tasks on native OpenCode tools, and avoid multi-project assumptions unless the runtime contract changes
+- Never add a bundle just to increase coverage — every bundle must have a clear use case in the Steps section.
+- Reference the bundle name. Do not paste the per-tool list into the skill; that list belongs in `global/AGENTS.md` §4.
+- Label each bundle in "Tools required" with its role: required vs `*(optional, for [condition])`*.
+- Always include a `Graceful degradation:` line summarizing skill-specific fallback (the generic MCP fallback ladder lives in `global/AGENTS.md` §4 and is not restated).
 - Write skill prose to prefer the lightest capable tool. Do not force MCP-first behavior for exact strings, manifests, prose, small file reads, or other cases where native tools are cheaper and equally reliable.
+- Do not list `sequential-thinking` in a skill's tool table. The global rules describe when to reach for it inline; it is not a per-skill dependency.
+- Do not list `*_unsafe` tool variants (e.g., browser code-execution) in skill workflows. Approval is required per-invocation; they are excluded from default toolkits.
 
 **GitNexus-specific criteria:**
 - GitNexus is always **optional radar** for this suite. It is never a primary dependency of any skill and never acts as the editing layer.
-- Serena is primary hands for exact symbol discovery, source inspection, references, and symbol-aware edits.
-- Add GitNexus to a skill only when graph-level intelligence (cross-file impact, architecture context, execution-flow discovery, stale-index detection, route/API consumers, multi-repo mapping) materially improves the workflow. GitNexus should be the preferred first step for graph-shaped tasks only when the repo is indexed, fresh, and target-aware; Serena then handles exact symbol inspection and edits.
-- If the target symbol or file is already known, or the task is local to a single file/module, skip GitNexus and go straight to Serena. Use GitNexus only when cross-file, architectural, execution-flow, or blast-radius context is needed.
-- Every skill that uses GitNexus must use the global indexing/freshness/target gate and fall back to Serena/native tools when the gate fails.
-- GitNexus must never replace Serena for precise symbol-level edits (`rename_symbol`, `safe_delete_symbol`, `replace_symbol_body`, etc.).
-- When both MCPs appear in one workflow, GitNexus must answer only the graph question first; Serena then becomes the source of truth for symbol lookup, body inspection, references, and edits. Do not keep both active on the same exact question.
-- Avoid skill handoff churn: a skill should switch to another skill only on a real stop/block condition, not for optional enrichment that the current skill can finish inline with bounded evidence.
-- Before maintainers suggest `gitnexus analyze --skip-agents-md` or add indexing guidance to a skill, verify it is only when indexing is safe.
+- Serena is **primary hands** for exact symbol discovery, source inspection, references, and symbol-aware edits.
+- Add `gitnexus-radar` to a skill only when graph-level intelligence (cross-file impact, architecture context, execution-flow discovery, stale-index detection, route/API consumers, multi-repo mapping) materially improves the workflow. GitNexus is the preferred first step for graph-shaped tasks only when the repo is **indexed, fresh, and target-aware**; Serena then handles exact symbol inspection and edits.
+- If the target symbol or file is already known, or the task is local to a single file/module, skip GitNexus and go straight to Serena.
+- Every skill that uses GitNexus must rely on the freshness gate in `global/AGENTS.md` §4 and fall back to Serena/native tools when the gate fails.
+- When both MCPs appear in one workflow, GitNexus answers the graph question first; Serena then becomes the source of truth for symbol lookup, body inspection, references, and edits. Do not keep both active on the same exact question.
+- Before maintainers suggest `gitnexus analyze --skip-agents-md` or add indexing guidance to a skill, verify it is **only when indexing is safe**.
 
 ---
 
@@ -222,3 +234,4 @@ Before merging any skill file change, verify:
 5. **No trigger keyword regression** — before rewriting a description, list all current trigger keywords and verify all survive in the new version
 6. **Suite validator passes** — run `scripts/validate-skills.sh` before installing or committing skill changes
 7. **No avoidable churn** — steps should not force repeated Serena preflights, optional MCP escalation, or skill switches when the current skill can complete with bounded evidence
+8. **No duplicated global concepts** — slug algorithm, skill-exit status block, handoff envelope, manifest schema, canonical approval ask, fallback labeling, tool-budget overflow, empty-state defaults, plan staleness/revision gates, and the DOM-unit vs browser-flow boundary all live in `global/AGENTS.md`. Skills reference them; they do not restate them.

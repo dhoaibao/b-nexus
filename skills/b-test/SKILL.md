@@ -1,7 +1,12 @@
 ---
 name: b-test
 description: >
-  Test-driven development, test debugging, and test coverage evaluation. ALWAYS invoke when the user asks about writing tests, fixing failing tests, test coverage gaps, or TDD: "test", "viết test", "failing test", "test đang fail", "bắt đầu bằng test", "test coverage", "missing test". Unlike b-debug (traces runtime bugs), b-test focuses on test-specific failures: wrong assertions, missing mocks, setup issues, coverage gaps.
+  Test-driven development, test debugging, and test coverage evaluation.
+  ALWAYS invoke when the user asks to write tests, fix failing tests,
+  evaluate coverage, or work TDD-style. Unlike b-debug, which traces runtime
+  bugs, b-test owns test-specific failures: wrong assertions, missing mocks,
+  fixture or setup issues, and coverage gaps. Use the test-vs-bug decision in
+  global/AGENTS.md §10 when a red test could go either way.
 compatibility: opencode
 metadata:
   suite: b-skills
@@ -11,38 +16,35 @@ metadata:
 
 $ARGUMENTS
 
-Own code-level test work: write tests, fix test-only failures, and evaluate coverage
-without treating every red test as proof that production code is wrong.
+Own code-level test work: write tests, fix test-only failures, and evaluate coverage without treating every red test as proof that production code is wrong.
 
-If `$ARGUMENTS` is provided, treat it as the test task or failing symptom and proceed
-directly.
+If `$ARGUMENTS` is provided, treat it as the test task or failing symptom and proceed directly.
 
 ## When to use
 
 - User asks to write tests for new or existing behavior.
-- A test is failing and the likely issue is assertion logic, mocks, fixtures, setup, or timing.
+- A test is failing and the **test-vs-bug decision** in `global/AGENTS.md` §10 routes the work to the test lane.
 - User asks about coverage gaps or missing regression tests.
-- User says: "test", "viết test", "test case", "failing test", "test coverage",
-  "TDD", "unit test", "integration test", "test đang fail", "bắt đầu bằng test",
-  or "missing test".
+- DOM-rendered unit tests (jsdom, happy-dom, React Testing Library, Vue Test Utils, Svelte testing-library) — these stay here, not in **b-e2e**. See the **DOM-unit vs browser-flow boundary** in `global/AGENTS.md` §10.
+- **Hybrid component tests** (component-scoped tests that mount a real router, real store, real query client, or other non-trivial provider chain) stay in **b-test** as long as the runner is jsdom/happy-dom/node — the test is still a unit/integration test, just with realistic wiring. Route to **b-e2e** only when a real browser engine drives the flow. When a hybrid test starts requiring real network, real cookies, or visual assertions, that is the signal to promote it to **b-e2e**, not to keep stretching jsdom.
 
 ## When NOT to use
 
-- The failing test likely exposes a real runtime or product bug -> use **b-debug**.
-- The task is browser-driven UI verification or a live user flow -> use **b-e2e**.
-- Scope or acceptance is still unclear -> use **b-plan**.
-- The request is a pre-PR logic review -> use **b-review**.
-- The task is only an external docs or testing-framework lookup -> use **b-research**.
+- The failing test likely exposes a real runtime or product bug (`global/AGENTS.md` §10) → use **b-debug**.
+- The task drives a real browser (Playwright, Cypress, WebdriverIO, Puppeteer) → use **b-e2e**.
+- Scope or acceptance is still unclear → use **b-plan**.
+- The request is a pre-PR logic review → use **b-review**.
+- The task is only an external docs or testing-framework lookup → use **b-research**.
+- The task is property-based, fuzzing, or contract testing — these are **out of scope** for this skill; treat them as bespoke implementation work via **b-plan** + **b-implement**.
 
 ## Tools required
 
 - `bash` — run project test and coverage commands, inspect failure output.
 - Native file tools — discover test files, manifests, and focused source/test sections.
-- `check_onboarding_performed`, `onboarding`, `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `find_declaration`, `find_implementations`, `get_diagnostics_for_file`, `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol` — from `serena` MCP server *(preferred for mapping tests to source behavior and editing existing test code)*.
-- `resolve-library-id`, `query-docs` — from `context7` MCP server *(optional, for verifying testing framework APIs or matcher behavior)*.
-- `sequentialthinking` — from `sequential-thinking` MCP server *(optional, for ambiguous unit vs integration strategy choices)*.
+- `serena-symbol-toolkit` *(preferred for mapping tests to source behavior and editing existing test code)*
+- `context7-docs` *(optional, for verifying testing-framework APIs or matcher behavior)*
 
-Fallbacks follow the global MCP rules. Without Serena, discover tests with native tools and edit carefully with `apply_patch`. Without Context7 or `sequentialthinking`, keep the same flow and note the limitation only if it affects confidence.
+Fallbacks: `global/AGENTS.md` §4 MCP fallback ladder. Without Serena, discover tests with native tools and edit carefully with `apply_patch`. The Serena LSP coverage caveat applies.
 
 Graceful degradation: ✅ Possible — the core workflow still works with native file tools, `bash`, and `apply_patch`.
 
@@ -50,73 +52,69 @@ Graceful degradation: ✅ Possible — the core workflow still works with native
 
 ### Step 1 — Discover framework and scope
 
-1. Locate the relevant test files and the project-specific test commands from manifests or CI config.
+1. Locate the relevant test files and project-specific test commands from manifests or CI config.
 2. If the user named a failing test, start from the narrowest runnable target for that test.
-3. If symbol-aware inspection is useful, call `check_onboarding_performed`; if false, call `onboarding` once.
-4. Use Serena to map the relationship between test and source code:
-   - `find_symbol` for the named test or source symbol.
-   - `find_declaration` when the test points to a helper, import, or usage rather than the owning definition.
-   - `find_implementations` when the target behavior sits behind an interface or polymorphic boundary.
-   - `get_symbols_overview` on the test file when setup, fixtures, or grouped cases matter.
+3. Initialize Serena per `global/AGENTS.md` §4 only when symbol-aware inspection adds value.
+4. Map the test ↔ source relationship with the cheapest discovery tool that closes the next question.
 
-Goal: know the framework, the narrowest command to run, and the exact behavior under test.
+**Empty-state** (`global/AGENTS.md` §7): if the repo has no test framework, do not introduce one as a side effect. Ask the user before adding a framework, even when the request implies tests are wanted.
 
 ### Step 2 — Choose the lane
 
-Pick one lane and stay in it:
+Use `global/AGENTS.md` §10 (test failure vs runtime bug) to pick the lane:
 
 - **Failing test** — fix the test, fixture, setup, or clearly confirmed production bug.
 - **Write tests** — add new regression, unit, or integration coverage for known behavior.
 - **Coverage review** — identify the highest-value missing tests and optionally add the top ones.
+- **Flaky test** — apply the flake handling procedure in `global/AGENTS.md` §10 before rewriting or skipping.
 
-If the failure might reflect a real product bug and the correct behavior is not already confirmed, switch to **b-debug** instead of guessing from test output alone.
+If the failure might reflect a real product bug and the correct behavior is not already confirmed, switch to **b-debug**.
 
 ### Step 3 — Fix or add tests
 
-For a failing test:
-
+**Failing test:**
 1. Run the narrowest test command.
-2. If output is large, capture it under `/tmp/opencode/b-skills/b-test/` and inspect the failure section instead of truncating it.
+2. If output is large, capture it under `/tmp/opencode/b-skills/b-test/` (`global/AGENTS.md` §7) and inspect the failure section.
 3. Read the failing test and the source behavior it exercises.
-4. Classify the issue:
-   - wrong assertion after behavior confirmation
-   - missing mock or stub
-   - leaked shared state or fixture drift
-   - async timing or missing await
-   - environment/setup problem
-   - snapshot or golden drift after intentional behavior change
-   - real product bug -> switch to **b-debug** unless the root cause is already confirmed and the fix is minimal
+4. Classify per the test-vs-bug table in `global/AGENTS.md` §10.
+5. For snapshot or golden updates, follow the **snapshot confirmation procedure** in `global/AGENTS.md` §10.
 
-For new tests:
-
+**New tests:**
 1. Identify the behavior, branches, and edge cases that matter.
-2. Choose unit or integration scope; hand browser-driven flows to **b-e2e**.
+2. Choose unit or integration scope; hand real-browser flows to **b-e2e**.
 3. Cover happy path, edge cases, error handling, and the regression that would catch an accidental revert.
 4. Prefer local fixtures unless the repo already has a shared fixture that fits the scenario.
 
-For coverage review:
+**Coverage review** — rank gaps by value:
 
-1. Discover the project's existing coverage command before inventing one.
-2. Rank gaps by requirement coverage, service boundaries, and widely referenced symbols.
-3. Optionally add the top 1-3 missing tests when the user wants implementation, not just analysis.
+| Priority | Gap shape |
+|---|---|
+| **1 — required** | Changed behavior in the current diff without any covering test. |
+| **2 — strong** | Public-contract symbols (exports, routes, handlers, CLI flags) without a regression test. |
+| **3 — useful** | Widely referenced internal symbols (high fan-in) without a regression test. |
+| **4 — opportunistic** | Edge cases of branches already partially covered. |
 
-Prefer Serena insertions for existing test bodies. Use `apply_patch` when creating a new test file or when a small non-symbol edit is clearer.
+Discover the project's existing coverage command before inventing one. If the repo has no coverage runner, ask before adding one. Optionally add the top 1–3 missing tests when the user wants implementation, not just analysis.
+
+Prefer `serena-symbol-toolkit` insertions for existing test bodies. Use `apply_patch` when creating a new test file or when a small non-symbol edit is clearer.
 
 ### Step 4 — Verify
 
-1. Run `get_diagnostics_for_file` on touched files when the language supports it.
+1. Run `get_diagnostics_for_file` on touched files — both the test and the underlying source — when the language supports it.
 2. Re-run the narrowest relevant tests.
-3. Widen to a broader suite only when the change touches shared fixtures/helpers, public contracts, or the repo's normal test workflow requires it.
-4. Use a maximum of 3 local fix/verify loops before reporting what still fails.
+3. Widen to a broader suite only when the change touches shared fixtures/helpers, public contracts, or the repo's normal test workflow requires it (verification ladder in `global/AGENTS.md` §7).
+4. Apply the iteration cap from `global/AGENTS.md` §7.
+
+Close with the skill-exit status block (`global/AGENTS.md` §9).
 
 ## Output format
 
-```
+```text
 ### b-test: [test task]
 
-**Type**: [failing test / write tests / coverage review]
-**Framework**: [jest / vitest / pytest / go test / cargo test / other]
-**Scope**: [unit / integration / mixed]
+**Type:** [failing test / write tests / coverage review / flaky test]
+**Framework:** [jest / vitest / pytest / go test / cargo test / other]
+**Scope:** [unit / integration / DOM-unit / mixed]
 
 #### Findings
 - `[path]` — [what was wrong or what behavior needed coverage]
@@ -136,10 +134,11 @@ Prefer Serena insertions for existing test bodies. Use `apply_patch` when creati
 
 ## Rules
 
-- Never change production code just because a test is red.
-- If production behavior is uncertain, switch to **b-debug** before patching source.
-- Never update an assertion, snapshot, or golden file without confirming the intended behavior first.
-- Browser-driven user flows belong to **b-e2e**; keep `b-test` focused on code-level tests.
+- Never change production code just because a test is red. Defer to `global/AGENTS.md` §10.
+- Never update an assertion, snapshot, or golden file without confirming intended behavior first; follow the snapshot procedure in `global/AGENTS.md` §10.
+- Real-browser flows belong to **b-e2e**; keep DOM-rendered unit tests here.
+- Property-based, fuzz, and contract testing are out of scope; route them via **b-plan** + **b-implement**.
 - Prefer behavior assertions over implementation-detail assertions.
 - Keep fixture, mock, and setup changes as local as practical.
 - State when broader suite coverage was skipped and why the narrower check was sufficient.
+- Never introduce a test framework or coverage runner without explicit approval.

@@ -1,7 +1,12 @@
 ---
 name: b-refactor
 description: >
-  Code refactoring: impact analysis, mechanical transformation, and verification. ALWAYS invoke when the user asks to refactor, tái cấu trúc, rename, extract method, move, inline, simplify, or clean up a named target with behavior-preserving scope. Vague cleanups go to b-plan first. Unlike b-plan (decides what to build), b-refactor owns mechanical edits.
+  Code refactoring: impact analysis, mechanical transformation, and
+  verification. ALWAYS invoke when the user asks for a named
+  behavior-preserving transform — rename, extract, move, inline, delete dead
+  code, or simplify a specific target. Vague cleanups go to b-plan first.
+  Unlike b-plan, which decides what to build, b-refactor owns mechanical
+  edits.
 compatibility: opencode
 metadata:
   suite: b-skills
@@ -11,87 +16,98 @@ metadata:
 
 $ARGUMENTS
 
-Handle behavior-preserving mechanical code changes: lock the exact target, map the
-impact radius, apply the smallest safe transformation, and verify that references still
-hold.
+Handle behavior-preserving mechanical code changes: lock the exact target, map the impact radius, apply the smallest safe transformation, and verify references still hold.
 
 If `$ARGUMENTS` is provided, treat it as the refactoring instruction and proceed directly.
 
 ## When to use
 
 - User asks to rename, extract, move, inline, delete dead code, or simplify a named target.
-- The requested transformation is meant to preserve behavior.
+- The transformation is meant to preserve behavior.
 - The scope is concrete enough to execute without re-deciding product behavior.
 
 ## When NOT to use
 
-- The request is broad, vague, or partly a feature change -> use **b-plan** first.
-- The work is mainly implementing new behavior -> use **b-implement**.
-- The task is a runtime bug fix -> use **b-debug**.
-- The task is a test-only failure or test rewrite -> use **b-test**.
-- The request is only an external API lookup -> use **b-research**.
+- The request is broad, vague, or partly a feature change → use **b-plan** first.
+- The work is mainly implementing new behavior → use **b-implement**.
+- The task is a runtime bug fix → use **b-debug**.
+- The task is a test-only failure or test rewrite → use **b-test**.
+- The request is only an external API lookup → use **b-research**.
 
 ## Tools required
 
 - `bash` — inspect git state and run project-specific checks.
-- `check_onboarding_performed`, `onboarding`, `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `find_declaration`, `find_implementations`, `search_for_pattern`, `get_diagnostics_for_file`, `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol` — from `serena` MCP server *(preferred for exact target locking, reference mapping, and symbol-aware edits)*.
-- `sequentialthinking` — from `sequential-thinking` MCP server *(optional, for multi-phase or high-risk refactor ordering)*.
-- `gitnexus` — from `gitnexus` MCP server *(optional radar for broad exported/shared impact when indexed and fresh)*.
+- `serena-symbol-toolkit` *(preferred for exact target locking, reference mapping, and symbol-aware edits)*
+- `gitnexus-radar` *(optional, for broad exported/shared impact)*
 
-Fallbacks follow the global MCP rules. Without Serena, continue only when native search plus careful `apply_patch` edits are still safe enough for the requested scope.
+Fallbacks: `global/AGENTS.md` §4 MCP fallback ladder. Serena's LSP-coverage caveat applies — for non-LSP languages, treat every rename, safe-delete, and diagnostics result as **not authoritative** and widen verification.
 
-Graceful degradation: ⚠️ Partial — small local refactors remain possible, but cross-file renames and safe deletes are riskier without symbol-aware tooling.
+Graceful degradation: ⚠️ Partial — small local refactors remain possible with native search plus `apply_patch`, but cross-file renames and safe deletes are riskier without symbol-aware tooling.
 
 ## Steps
 
 ### Step 1 — Lock the target
 
 1. Resolve the exact symbol or file to change.
-2. If the request starts from a usage site, helper import, interface, or repeated code shape, use `find_declaration`, `find_implementations`, or `search_for_pattern` before editing.
-3. If symbol-aware work is needed, call `check_onboarding_performed`; if false, call `onboarding` once.
+2. Initialize Serena per `global/AGENTS.md` §4 (once per session, only when symbol-aware work first becomes necessary).
+3. If the request starts from a usage site, helper import, interface, or repeated code shape, use the cheapest Serena discovery tool that closes the next question.
 4. If the request is still vague after a short inspection, ask the smallest question needed to make the target concrete.
 
-### Step 2 — Assess impact and verification depth
+### Step 2 — Assess impact and choose verification depth
 
-1. Use `find_referencing_symbols` to map call sites and usages.
-2. Treat **trivial local refactors** as a fast path when all of these are true:
-   - one file
-   - no exported/public contract change
-   - few or no external references
-   - behavior clearly preserved
-3. For shared, exported, multi-file, route/tool, or package-boundary refactors, optionally use GitNexus to scope the blast radius before editing.
-4. For medium or high-risk refactors, discover the baseline verification command from project scripts or CI config. If baseline checks are already failing, stop and ask before proceeding.
+1. Run `find_referencing_symbols` on the locked target to enumerate impact. This is the single canonical mapping step — do not repeat it under different framings.
+2. Classify the refactor on the **risk rubric** in `global/AGENTS.md` §3 (trivial / low / medium / high).
+3. **Trivial-local fast path** is allowed only when **all** of:
+   - One file.
+   - No exported/public contract change.
+   - Few or no external references.
+   - Behavior clearly preserved.
+   - Language is **LSP-supported by Serena**.
+
+   This is intentional: non-LSP languages (Bash, YAML, Markdown, Lua, many DSLs) auto-promote to **low** risk at minimum. The fast path is locked behind LSP support because rename/safe-delete results in non-LSP languages are not authoritative.
+4. For medium or high-risk refactors, optionally use `gitnexus-radar` to scope blast radius before editing. Discover the baseline verification command from project scripts or CI config. If baseline checks are already failing, stop and ask.
 
 ### Step 3 — Apply the mechanical transform
 
 Choose the smallest matching transformation:
 
-- rename symbol -> `rename_symbol`
-- delete dead code -> `safe_delete_symbol`
-- extract or split function -> insert helper, then update caller
-- inline local logic -> update caller, then remove old symbol safely
-- move code between files -> add destination first, then update imports and remove origin
+- **Rename symbol** → `rename_symbol`.
+- **Delete dead code** → `safe_delete_symbol` after confirming zero references.
+- **Extract function** → insert the helper, then update callers.
+- **Inline local logic** → update callers, then remove the old symbol safely.
+- **Rename + extract** (common combo): extract first under the **old** name, verify references, then `rename_symbol` to the new name. Keeps the two transforms independently verifiable.
+- **Move code between files** (highest mechanical risk):
+  1. Add the new destination first with `insert_after_symbol` or `apply_patch`; do not delete the origin yet.
+  2. Update every import or re-export, using the reference map from Step 2.
+  3. Update test-only imports, fixtures, and mocks — these often live outside the LSP graph; grep the suite explicitly.
+  4. Update build config, path aliases, barrel files, and route registries when present.
+  5. Remove the origin symbol via `safe_delete_symbol` only after diagnostics on every touched file are clean.
+  6. Re-run `find_referencing_symbols` on the moved symbol; if any references still point at the old location, stop and investigate.
 
 Use `apply_patch` only for import updates, config, prose, or non-symbol glue.
 
-If the work turns into a behavioral redesign instead of a mechanical transform, stop and hand it back to **b-plan**.
+If the work turns into a behavioral redesign instead of a mechanical transform, stop and hand it back to **b-plan** via the handoff envelope in `global/AGENTS.md` §9. Include the locked target, the reference map produced in Step 2, and the specific decision that turned mechanical.
 
 ### Step 4 — Verify
 
-1. Run `get_diagnostics_for_file` on touched files when supported.
-2. Run the narrowest typecheck, build, or test command that matches the risk level.
+1. Run `get_diagnostics_for_file` on touched files when supported (LSP caveat per `global/AGENTS.md` §4).
+2. Run the narrowest typecheck, build, or test command that matches the risk band (verification ladder in `global/AGENTS.md` §7).
 3. Re-check references when the target is shared or exported.
 4. Inspect `git diff` to confirm the change stayed within intended scope.
 5. If failures indicate a real regression, use **b-debug**. If they indicate test-mechanic drift, use **b-test**.
+6. **Partial-completion recovery:** if verification fails partway through a multi-file transform (e.g., a move with imports half-updated, a rename that missed a re-export), do not paper over the broken state with more edits. Either (a) finish the transform to a coherent baseline in one focused pass using the Step 2 reference map as the worklist, or (b) revert the in-flight changes (`git restore <path>`) and restart from the locked target. Never exit the skill with the tree mid-transform — surface the rollback to the user.
+7. Apply the iteration cap from `global/AGENTS.md` §7.
+
+Close with the skill-exit status block (`global/AGENTS.md` §9).
 
 ## Output format
 
-```
+```text
 ### b-refactor: [transformation]
 
-**Target**: [symbol or file]
-**Risk**: [trivial / low / medium / high]
-**Impact**: [key references or boundaries]
+**Target:** [symbol or file]
+**Risk:** [trivial / low / medium / high]   (per global/AGENTS.md §3)
+**Impact:** [key references or boundaries]
 
 #### Changes
 - `[path:line]` — [what changed]
@@ -109,8 +125,10 @@ If the work turns into a behavioral redesign instead of a mechanical transform, 
 ## Rules
 
 - Keep the task behavior-preserving; do not quietly add features while refactoring.
-- Use the trivial-local fast path only when the risk is genuinely small and the contract is untouched.
-- Use symbol-aware rename/delete tools whenever they fit the requested transformation.
-- Ask before broad directory moves or other changes that can cascade through tooling, docs, and imports.
-- Do not keep going through failing medium/high-risk verification without surfacing the blocker.
+- Use the trivial-local fast path only when the contract is untouched and the language is LSP-supported.
+- For non-LSP languages, treat every rename or safe-delete as at least **low** risk and verify with broader text-grep plus the project's existing test suite.
+- Use symbol-aware rename/delete tools whenever they fit the transformation.
+- For rename + extract, do extract first, then rename — keep transforms independently verifiable.
+- Ask before broad directory moves or other cascading changes through tooling, docs, and imports.
+- Do not push past failing medium/high-risk verification without surfacing the blocker.
 - Do not commit unless the user explicitly asks.

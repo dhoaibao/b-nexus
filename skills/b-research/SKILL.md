@@ -1,7 +1,12 @@
 ---
 name: b-research
 description: >
-  External knowledge, from quick lookup to full research. ALWAYS invoke when the user says "research", "tìm hiểu", "deep dive", "so sánh", "tổng hợp", "lookup", "tra cứu nhanh", "what's the API for", "method signature of X", or "config key for Y". Auto-detects quick vs full mode. Unlike b-debug or b-plan, it fetches docs/web info instead of tracing code or choosing implementation.
+  External knowledge, from quick lookup to multi-source synthesis. ALWAYS
+  invoke when the user asks for library/framework docs, API facts, config
+  keys, method signatures, comparisons, deep dives, or recency-sensitive
+  topics. Auto-detects depth; never asks the user to pick a mode. Unlike
+  b-debug or b-plan, it fetches docs and web information rather than tracing
+  code or choosing implementation.
 compatibility: opencode
 metadata:
   suite: b-skills
@@ -11,9 +16,7 @@ metadata:
 
 $ARGUMENTS
 
-Handle external knowledge with the lightest mode that can answer correctly. Start with
-direct lookup when possible, move to source-backed synthesis only when the question or
-evidence quality requires it.
+Handle external knowledge with the lightest depth that can answer correctly. Start with a direct lookup; auto-deepen only when evidence quality requires it.
 
 If `$ARGUMENTS` is provided, treat it as the research question and proceed directly.
 
@@ -26,66 +29,95 @@ If `$ARGUMENTS` is provided, treat it as the research question and proceed direc
 
 ## When NOT to use
 
-- Runtime bug tracing or root-cause analysis -> use **b-debug**.
-- Deciding what to build or how to sequence work -> use **b-plan**.
-- Pre-PR review of changed code -> use **b-review**.
+- Runtime bug tracing or root-cause analysis → use **b-debug**.
+- Deciding what to build or how to sequence work → use **b-plan**.
+- Pre-PR review of changed code → use **b-review**.
 
 ## Tools required
 
-- `resolve-library-id`, `query-docs` — from `context7` MCP server *(primary for library/framework API lookups)*.
-- `brave_web_search`, `brave_news_search`, `brave_image_search` — from `brave-search` MCP server *(search, news, and visual-reference discovery as needed)*.
-- `firecrawl_search`, `firecrawl_scrape`, `firecrawl_parse` — from `firecrawl` MCP server *(source-backed page and local-document reading)*.
-- `firecrawl_map`, `firecrawl_interact`, `firecrawl_interact_stop`, `firecrawl_extract` — from `firecrawl` MCP server *(optional, for JS-heavy pages or structured extraction)*.
-- `firecrawl_agent`, `firecrawl_agent_status` — from `firecrawl` MCP server *(last resort for deep autonomous research only after simpler paths fail)*.
-- `sequentialthinking` — from `sequential-thinking` MCP server *(optional, for resolving materially conflicting sources)*.
+- `context7-docs` (primary for library/framework API lookups) — including the version-pinning rule in `global/AGENTS.md` §4.
+- `brave-discovery` (page discovery).
+- `firecrawl-extraction` (default extraction tier).
+- `firecrawl-extended` *(optional, for site maps or structured field extraction)*.
+- `firecrawl-deep` *(last resort; requires explicit user approval per invocation)*.
+- `brave_news_search` *(inline, only for recency-sensitive topics)*.
+- `brave_image_search` *(inline, only for genuinely visual questions)*.
 
-Fallbacks follow the global MCP rules. If Context7 is unavailable, use official docs via search. If Firecrawl is unavailable, continue only when search results or known official sources are enough and label the answer as limited when confidence drops.
+Fallbacks: `global/AGENTS.md` §4 MCP fallback ladder.
 
-Graceful degradation: ⚠️ Partial — quick lookup remains strong with Context7 or authoritative search; deep source-backed work is weaker without page tools.
+Graceful degradation: ⚠️ Partial — lookups remain strong with Context7 or authoritative search; deep synthesis is weaker without page tools.
 
 ## Steps
 
-### Step 1 — Classify the mode
+### Step 1 — Pick the starting depth
 
-Choose the lightest mode that can answer correctly:
+Choose the lightest depth that can plausibly answer:
 
-- **Quick lookup** — one fact, one API detail, one config key, a yes/no capability, or a tiny example.
-- **Source-backed answer** — one or more concrete sources must be read before answering confidently.
-- **Deep research** — comparison, report, multi-source synthesis, recency-sensitive topic, or user-requested deep dive.
+- **Lookup** — one fact, one signature, one config key, a yes/no capability, or a tiny example.
+- **Research** — anything requiring more than one source, comparison, multi-step synthesis, or recency-sensitive answer.
 
-If the user already provided a URL, local file path, or document, go directly to extraction instead of doing open-ended search.
+If the user already provided a URL, file path, or document, go directly to extraction.
 
-### Step 2 — Gather evidence
+### Step 2 — Pin the version (library/API questions)
 
-For quick lookup:
+Before any `context7-docs` query:
 
-1. Use Context7 first for library or framework APIs.
-2. Otherwise run one focused web search.
-3. Answer immediately only when the result is authoritative and directly responsive.
-4. Cap quick mode at 2 tool calls and do not scrape in quick mode.
+1. Resolve the library version from manifests **and** lockfiles. Use `package-lock.json` / `pnpm-lock.yaml` / `yarn.lock`, `poetry.lock` / `uv.lock`, `go.sum`, `Cargo.lock`, or equivalent.
+2. In monorepos, resolve at the workspace closest to the touched file, not the repo root.
+3. If the version is ambiguous or conflicting, ask before querying.
 
-For source-backed or deep research:
+Skip this step for non-library research.
 
+### Step 3 — Gather evidence
+
+**Lookup:**
+1. `context7-docs` first for library/framework APIs.
+2. Otherwise one focused `brave-discovery` query.
+3. Answer immediately when the result is authoritative and directly responsive.
+4. **Auto-deepen to research** when the first results are stale, mutually contradict, are not authoritative, or do not directly answer. Do not retry the same shape of query forever.
+5. Do not scrape in lookup.
+
+**Research:**
 1. Prefer official docs, release notes, source repos, and vendor materials first.
-2. Use news search for recency-sensitive topics and image search only for genuinely visual questions.
-3. Scrape or parse only the highest-signal pages or local documents.
-4. Use structured extraction when the user needs fields, params, prices, or other structured data.
-5. If a page is JS-heavy, try `firecrawl_map` or `firecrawl_interact` before escalating further.
-6. Use `firecrawl_agent` only after search plus scrape/map/interact are insufficient, or when the user explicitly asks for deep autonomous research.
+2. Use `brave_news_search` only for recency-sensitive topics; use `brave_image_search` only when the question is genuinely visual.
+3. Use `firecrawl-extraction` (`firecrawl_scrape` for known URLs, `firecrawl_parse` for local documents) on the highest-signal pages.
+4. Reach for `firecrawl-extended` only for site mapping or structured-field extraction.
+5. Reach for `firecrawl-deep` only after default and extended tiers are insufficient. Surface the cost warning and obtain approval per invocation (see canonical approval ask in `global/AGENTS.md` §6).
 
-### Step 3 — Synthesize
+Honor the public-web privacy gate (`global/AGENTS.md` §6) on every external call. Reuse fetched results from earlier in the session instead of re-fetching (`global/AGENTS.md` §4 cross-turn cache).
+
+### Step 3b — Handle gated sources
+
+When the most authoritative source is paywalled, login-gated, or otherwise inaccessible (academic journals, vendor support portals, gated changelogs, private status pages):
+
+1. Do not bypass the gate — never fabricate credentials, scrape behind auth, or paste user-supplied secrets into a fetch.
+2. Try open mirrors in this order: (a) publisher's free abstract or summary, (b) cached or archived versions (e.g., Wayback Machine) — only when policy-compatible, (c) reputable secondary sources that cite the gated original.
+3. If the gated source is the only authoritative answer and no mirror exists, stop and tell the user: name the source, what it would resolve, and ask whether to (i) proceed with the best open evidence and mark single-source/medium confidence, or (ii) pause for them to supply the document via `firecrawl_parse` on a local copy.
+4. Never silently substitute a weaker source — label the limitation in the `Limitations` section.
+
+### Step 4 — Resolve source conflicts
+
+When two authoritative sources disagree:
+
+1. Prefer the one matching the pinned version (Step 2).
+2. If both match, prefer the publisher's own docs over third-party tutorials.
+3. If still ambiguous, present both with the conflict labeled and attach `Confidence: medium`.
+
+### Step 5 — Synthesize
 
 1. Answer only from gathered evidence.
-2. For quick lookup, stay concise and direct.
-3. For source-backed or deep research, cite the sources that support the answer.
-4. Note freshness or limitations when the answer depends on recent information or incomplete access.
-5. If authoritative sources materially disagree, use `sequentialthinking` when available to explain the best fit.
+2. For lookup, stay concise and direct.
+3. For research, cite the sources that support the answer.
+4. Note freshness or access limitations when relevant.
+5. Attach the **confidence signal** from `global/AGENTS.md` §3 whenever evidence is partial, single-source, or recency-sensitive. Omit the line on trivial high-confidence answers.
+
+Close the run with the skill-exit status block (`global/AGENTS.md` §9) for research-mode work; lookup answers may omit it.
 
 ## Output format
 
-### Quick lookup
+### Lookup
 
-```
+```text
 ### [topic]
 
 [1-3 sentence direct answer]
@@ -95,12 +127,14 @@ For source-backed or deep research:
 [minimal example when it helps]
 ```
 
-**Source**: [Context7 or authoritative URL]
+**Source:** [Context7 or authoritative URL]
 ```
 
-### Source-backed or deep research
+(Confidence line only when not high.)
 
-```
+### Research
+
+```text
 ## [research question]
 
 ### Answer
@@ -115,18 +149,21 @@ For source-backed or deep research:
 
 ### Sources
 - [title](URL)
-- Context7 (`library-id`) for [feature]
+- Context7 (`library-id`@`version`) for [feature]
+
+**Confidence:** high | medium | low — <one-clause reason>
 ```
 
 ## Rules
 
-- Never ask the user to choose between lookup and research; `b-research` decides and escalates itself.
-- Use the lightest mode that can answer correctly.
-- Do not send private stack traces, internal URLs, customer data, secrets, or proprietary code to public web tools without explicit approval; sanitize queries when possible.
-- Never scrape in quick mode.
-- Use Context7 first for library and framework API questions.
-- Prefer 2-4 authoritative sources over a wide pile of weak ones.
+- Never ask the user to choose between lookup and research; the skill decides and auto-deepens.
+- Use the lightest depth that can answer correctly.
+- Public-web privacy gate is owned in `global/AGENTS.md` §6; honor it on every external call.
+- Never scrape in lookup.
+- Pin the library version (manifests + lockfiles) before any `context7-docs` query.
+- Prefer 2–4 authoritative sources over a long weak list.
 - Do not force an example block for fact-only quick answers.
-- If only one authoritative source supports the answer, label it as single-source rather than pretending broader confirmation exists.
-- Do not use `firecrawl_agent` before the simpler search + scrape/map/interact path unless the user explicitly wants deep autonomous research.
+- If only one authoritative source supports the answer, label it as single-source.
+- Never use `firecrawl-deep` before exhausting default and extended tiers, and never without explicit user approval.
 - Use a `Limitations` section instead of filling factual gaps from prior model knowledge.
+- Reuse results fetched earlier in the same session; do not re-fetch identical pages.

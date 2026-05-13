@@ -1,7 +1,6 @@
 # b-skills — Skill reference
 
-Detailed contract reference for the maintained eight-skill suite. For install and high-level
-overview, see [README.md](README.md).
+Detailed contract reference for the maintained eight-skill suite. For install and high-level overview, see [README.md](README.md).
 
 ---
 
@@ -9,15 +8,14 @@ overview, see [README.md](README.md).
 
 ### b-plan
 
-Think before coding. `b-plan` exists for unclear, broad, or risky work where the main job is
-to decide scope, approach, ordering, and success criteria before editing code.
+Think before coding. `b-plan` exists for unclear, broad, or risky work where the main job is to decide scope, approach, ordering, and success criteria before editing code.
 
 **Core behavior**
-- Chooses **quick mode** for small scoped work and **full mode** for unclear, cross-file, or higher-risk work.
-- Uses the smallest blocking questions only; it does not turn every plan into an interview.
-- Produces 3-8 dependency-ordered steps with exact files or symbols when known.
+- Chooses **quick mode** for trivial scoped work and **full mode** for non-trivial work.
+- Uses the smallest blocking questions only; does not turn every plan into an interview.
+- Produces dependency-ordered steps as short as the work actually is, with exact files or symbols when known.
 - Keeps broad or unclear refactors in planning until they reduce to concrete mechanical transforms for `b-refactor`.
-- Sends unresolved external feasibility, contract, migration, or security unknowns to `b-research` instead of guessing.
+- Routes unresolved external feasibility, contract, migration, or security unknowns to `b-research` instead of guessing.
 - Treats the approved plan as the execution source of truth for later `b-implement` work.
 
 **Good triggers**
@@ -29,32 +27,34 @@ how should I approach this refactor?
 
 **Output**
 - Quick mode: short chat plan.
-- Full mode: English plan file at `.opencode/b-plans/<task-slug>.md`.
+- Full mode: English plan file at `.opencode/b-skills/b-plan/<task-slug>.md`, where `<task-slug>` follows the slug algorithm in `global/AGENTS.md` §8. Skeleton: `# title`, `Confirmed decisions`, `Planned touch points`, `Dependencies`, `Risks`, `Unknowns`, ordered `Steps`, `Verification`, `Rollback` (only when real), and `Revisions` (added when revised).
 
 **Key rules**
 - Do not implement while planning.
 - Keep quick mode lean.
-- Save only full-mode plans unless the user explicitly wants a saved quick plan.
+- Save only full-mode plans unless the user explicitly asks for a saved quick plan.
 - Surface blockers and assumptions explicitly.
+- Quick/full threshold is the **non-trivial** definition in `global/AGENTS.md` §3.
+- Approved plans are subject to the **plan staleness gate** in `global/AGENTS.md` §2.
+- Revisions go in place under `## Revisions`; never write `plan-v2.md` (`global/AGENTS.md` §2).
 
 **GitNexus use**
-- Optional only for graph-shaped planning: unfamiliar architecture, broad impact, route/API consumers, or process flow mapping.
+- Optional only for graph-shaped planning: unfamiliar architecture, broad impact, route/API consumers, or process-flow mapping.
 
 ---
 
 ### b-research
 
-All external knowledge goes through `b-research`, but it now has three practical modes
-instead of one sprawling workflow.
+External knowledge with auto-deepening depth — lookup or research.
 
 **Core behavior**
-- Uses **quick lookup** for one fact, one signature, one config key, or a tiny example.
-- Uses **source-backed answer** when one or more concrete sources must be read before answering confidently.
-- Uses **deep research** for multi-source synthesis, comparisons, recency-sensitive topics, or user-requested deep dives.
-- Uses Context7 first for library and framework APIs.
-- Uses search and page extraction only when lookup is not enough.
-- Uses `firecrawl_parse` for local docs and `firecrawl_interact` only after normal scrape/map fails on JS-heavy pages.
-- Uses `firecrawl_agent` only as a last resort or when the user explicitly wants deep autonomous research.
+- Uses **lookup** for one fact, one signature, one config key, or a yes/no.
+- Uses **research** for anything requiring more than one source, comparison, multi-step synthesis, or recency-sensitive answer.
+- Auto-deepens from lookup to research when first results are stale, contradictory, non-authoritative, or off-target. Never asks the user to choose a mode.
+- Pins library version from manifests **and** lockfiles; resolves at the closest workspace in monorepos.
+- Uses Context7 first for library and framework APIs; page extraction only when lookup is insufficient.
+- Uses `firecrawl-extraction` for local docs and known URLs; `firecrawl-extended` only for site maps or structured fields; `firecrawl-deep` only with explicit user approval per invocation (cost warning in `global/AGENTS.md` §4).
+- Reuses fetched results from earlier in the session instead of re-fetching.
 
 **Good triggers**
 ```text
@@ -64,15 +64,16 @@ tra cứu config key cho NextAuth session timeout
 ```
 
 **Output**
-- Quick lookup: direct answer, source, and a minimal example only when it helps.
-- Source-backed or deep research: answer, key findings, limitations, and cited sources.
+- Lookup: direct answer, source, and a minimal example only when it helps. Confidence line only when not high.
+- Research: answer, key findings, limitations, cited sources, confidence.
 
 **Key rules**
-- `b-research` decides the mode; it does not ask the user to choose lookup vs research.
-- Quick mode caps at 2 tool calls and does not scrape.
-- Include a minimal example only when it materially helps the answer.
-- Never send private stack traces, internal URLs, customer data, secrets, or proprietary code to public web tools without approval.
-- Prefer a few authoritative sources over a long weak list.
+- Never ask the user to choose a mode; the skill decides and auto-deepens.
+- Never scrape in lookup.
+- Pin the library version (manifests + lockfiles) before any `context7-docs` query.
+- Prefer 2–4 authoritative sources over a long weak list.
+- Resolve cross-source conflicts by preferring the publisher's docs at the pinned version; label the conflict and lower confidence when ambiguity remains.
+- Public-web privacy gate (`global/AGENTS.md` §6) applies to every external call.
 - Use `Limitations` instead of speculation.
 
 ---
@@ -82,17 +83,19 @@ tra cứu config key cho NextAuth session timeout
 `b-implement` executes approved or clearly scoped work one step at a time.
 
 **Core behavior**
-- Resolves its source of truth from an approved plan file, approved chat plan, or a small clearly scoped direct request.
-- Sends broad or ambiguous work back to `b-plan`.
-- Preserves unrelated worktree changes and edits only the files needed for the current step.
-- Uses Serena for symbol-aware edits and narrow diagnostics before broader checks.
-- Uses GitNexus only when a shared route, tool, or exported boundary makes graph context genuinely useful.
-- Verifies each step before moving on.
+- Resolves its source of truth from an approved plan file, plan slug (per the slug algorithm in `global/AGENTS.md` §8), approved chat plan, or a request meeting the **small direct request** threshold (`global/AGENTS.md` §3).
+- Routes broad or ambiguous work back to `b-plan`.
+- Preserves unrelated worktree changes and edits only files needed for the current step.
+- Uses `serena-symbol-toolkit` for symbol-aware edits and narrow diagnostics before broader checks.
+- Uses `gitnexus-radar` only when a shared route, tool, or exported boundary makes graph context genuinely useful.
+- Applies the **plan staleness gate** (`global/AGENTS.md` §2) before executing a saved plan.
+- Triggers the **plan revision protocol** (`global/AGENTS.md` §2) when the plan is wrong mid-execution.
+- Verifies each step before moving on, capped by the iteration cap in `global/AGENTS.md` §7.
 
 **Good triggers**
 ```text
 /b-implement add-rate-limit
-/b-implement .opencode/b-plans/add-rate-limit.md
+/b-implement .opencode/b-skills/b-plan/add-rate-limit.md
 implement the approved plan
 ```
 
@@ -101,8 +104,10 @@ implement the approved plan
 Plan source -> Step progress -> Changes -> Verification -> Blockers / Decisions -> Next
 ```
 
+Closes with the **skill-exit status block** from `global/AGENTS.md` §9.
+
 **Key rules**
-- Implement only approved or clearly scoped work.
+- Implement only approved or clearly scoped work; "small direct request" is the threshold in `global/AGENTS.md` §3 (≤3 files, no contract change, no sensitive path, no remaining design decision).
 - Do not refactor opportunistically while implementing a feature step.
 - Stop for new product decisions instead of inferring them.
 
@@ -118,16 +123,22 @@ Plan source -> Step progress -> Changes -> Verification -> Blockers / Decisions 
 **Core behavior**
 - Starts from the concrete symptom or error.
 - Uses an obvious-stack-trace fast path when one file or function is strongly implicated.
-- Uses Serena to trace call sites, declarations, implementations, references, and suspicious code shapes.
-- Uses cheap local checks before heavier experimentation: exact error search, diagnostics, Context7 for API misuse, and optional public-web lookups when safe.
+- Maps the path with `serena-symbol-toolkit`, picking the cheapest discovery tool for the next question.
+- Biases toward common first suspects: swallowed errors, auth gates, config drift, async ordering, shared-state leaks, off-by-one in new code, and (for perf) N+1 queries, unbounded retries, hot-loop allocations.
+- Uses cheap local checks before broader experimentation: exact error search, diagnostics, `context7-docs` for API misuse, and optional public-web lookups under the privacy gate (`global/AGENTS.md` §6).
+- Handles non-deterministic bugs explicitly: enumerates non-determinism sources before broader experimentation.
+- Handles perf bugs explicitly: measures before and after with profilers, benchmarks, or runtime tracing — never infers speed from code shape.
+- Handles **cannot-reproduce** reports explicitly: states the gap, captures state diffs, and asks before patching.
 - Confirms root cause before editing.
-- Applies the smallest fix and verifies with the narrowest relevant runtime check.
+- Applies the smallest fix and verifies with the narrowest relevant runtime check, then re-scans the diff and removes every temporary probe before reporting success.
+- Defers the "test failure vs runtime bug" decision to `global/AGENTS.md` §10.
 
 **Good triggers**
 ```text
 /b-debug login callback not firing
 why is this endpoint returning 500?
 fix this runtime bug
+the dashboard is slow after the last deploy
 ```
 
 **Output**
@@ -137,8 +148,10 @@ Symptoms -> Code path -> Hypotheses -> Root cause -> Fix -> Verification
 
 **Key rules**
 - Do not patch before the root cause is confirmed.
-- Remove temporary instrumentation before reporting success.
-- Protect private errors and internal data before using public web tools.
+- Explicitly verify probe removal before reporting success.
+- For perf bugs, report measured before/after, not adjectives.
+- For cannot-reproduce reports, surface the gap rather than speculate-fix.
+- Privacy gate (`global/AGENTS.md` §6) protects private errors and internal data before any public web tool call.
 
 **GitNexus use**
 - Optional only when the failing path is unfamiliar, broad, or process-flow-heavy.
@@ -150,17 +163,20 @@ Symptoms -> Code path -> Hypotheses -> Root cause -> Fix -> Verification
 `b-review` is the suite's PR-style changed-code review skill.
 
 **Core behavior**
-- Reads `git diff HEAD` and `git status --short` first.
-- Uses a fast path for small diffs, but never skips entry-point security, sensitive-data, or injection checks.
-- Builds a requirements baseline from `$ARGUMENTS`, an approved plan, or a short clarification.
-- Falls back to **diff-only risk review** when no baseline exists after bounded clarification.
-- Reviews the highest-risk symbols and boundaries first.
-- Checks test adequacy and observability only where the diff warrants it.
-- Reports findings first, not narrative summary first.
+- Defaults to `git diff HEAD`; supports `--range=<ref>..<ref>` for a specific commit range and uses `git log` on the range.
+- Picks **self-review** or **external review** mode per the boundary in `global/AGENTS.md` §10. Defaults to self-review when the working tree is dirty and unspecified.
+- Fast path is **risk-bucket-gated**, not line-count-gated: allowed only when changes are confined to a single non-sensitive module, no auth/billing/secrets/crypto/migration files are touched, no public contract changes, and no new external dependency. Auth/security/migration/contract touches always force standard review.
+- Builds a requirements baseline from `$ARGUMENTS`, `--baseline=<path|url>`, an approved plan, or a short clarification.
+- Falls back to clearly labeled **diff-only risk review** when no baseline exists after bounded clarification.
+- Reviews highest-risk symbols and boundaries first.
+- Runs the **security checklist** (correctness, input validation, injection, auth/authz, sensitive-data exposure, concurrency, dependency hygiene, secret handling, regex DoS, rate limits, error handling) on every changed entry point and shared boundary, even on the fast path.
+- Skips test adequacy and observability only when `--skip-tests` is present.
+- Reports findings first, ordered by the **severity rubric** in `global/AGENTS.md` §3 (BLOCKER / MAJOR / MINOR / NIT), and includes "Checked and clean" so the author sees what scope was actually inspected.
 
 **Good triggers**
 ```text
 /b-review
+/b-review --range=origin/main..HEAD
 review before PR
 what would a reviewer flag here?
 ```
@@ -173,7 +189,10 @@ Findings -> Coverage / Tests / Observability -> READY FOR PR or NEEDS FIXES
 **Key rules**
 - Do not claim requirements coverage when no baseline exists.
 - Do not run broad verification by default; use only the evidence needed.
-- If there are no findings, say so explicitly and note residual risk or skipped checks.
+- Security-checklist items are never skipped for changed entry points, sensitive paths, or shared boundaries.
+- The fast path is gated by risk bucket, not by line/file count.
+- For self-review, bias for author blind spots; for external review, be explicit about blocker-vs-style.
+- If no findings, say so explicitly and note residual risk or skipped checks; attach the confidence signal from `global/AGENTS.md` §3 when evidence is partial.
 
 **GitNexus use**
 - Optional only for broad route/API/tool/shared-flow risk.
@@ -182,16 +201,19 @@ Findings -> Coverage / Tests / Observability -> READY FOR PR or NEEDS FIXES
 
 ### b-test
 
-`b-test` owns code-level testing: writing tests, fixing test-only failures, and ranking
-coverage gaps.
+`b-test` owns code-level testing: writing tests, fixing test-only failures, and ranking coverage gaps.
 
 **Core behavior**
 - Discovers the project's test framework and narrowest runnable commands from manifests or CI.
-- Separates work into three lanes: failing test, write tests, or coverage review.
-- Uses Serena to map tests to source ownership when helpers, imports, or interfaces hide the real target.
+- Routes red tests through the **test-vs-bug decision** in `global/AGENTS.md` §10.
+- Separates work into four lanes: failing test, write tests, coverage review, or flaky test (with the flake handling procedure in `global/AGENTS.md` §10).
+- Owns DOM-rendered unit tests (jsdom, RTL, Vue Test Utils, Svelte testing-library) per the **DOM-unit vs browser-flow boundary** in `global/AGENTS.md` §10.
+- Uses `serena-symbol-toolkit` to map tests to source ownership when helpers, imports, or interfaces hide the real target.
 - Captures large failure output under `/tmp/opencode/b-skills/b-test/` instead of depending on truncated terminal output.
-- Treats snapshots, golden files, fixtures, mocks, and async timing as explicit test concerns.
-- Hands browser-driven flows to `b-e2e` and product-behavior uncertainty to `b-debug`.
+- Treats snapshots, golden files, fixtures, mocks, and async timing as explicit test concerns; updates snapshots only after the **snapshot confirmation procedure** in `global/AGENTS.md` §10.
+- Ranks coverage gaps using the rubric in the skill (required → strong → useful → opportunistic).
+- Hands real-browser flows to `b-e2e` and product-behavior uncertainty to `b-debug`.
+- Treats property-based, fuzz, and contract testing as out of scope and routes them via `b-plan` + `b-implement`.
 
 **Good triggers**
 ```text
@@ -209,40 +231,47 @@ Type -> Framework -> Findings -> Changes -> Verification -> Remaining gaps
 - Never change production code just because a test is red.
 - Never update assertions or snapshots without confirming intended behavior.
 - Keep fixture and mock changes as local as practical.
+- Never introduce a test framework or coverage runner without explicit approval.
 - Explain when broader suites were skipped and why the narrow checks were enough.
 
 ---
 
 ### b-e2e
 
-`b-e2e` uses a real browser to verify user-facing flows and optionally convert them into
-repo-native browser tests.
+`b-e2e` uses a real browser to verify user-facing flows and optionally convert them into repo-native browser tests. Two modes: **verify** and **author**.
 
 **Core behavior**
-- Requires Playwright MCP for live browser interaction.
-- Creates a session-specific artifact directory under `.opencode/b-skills/b-e2e/<run-id>/`.
-- Verifies localhost targets are reachable before navigating.
-- Clarifies only blocking state: auth/session, test data, and whether writes are allowed.
+- Uses the `playwright-browser` bundle (`global/AGENTS.md` §4): Playwright MCP when available, local Playwright CLI via `bash` as a documented fallback.
+- Creates a session-specific artifact directory under `.opencode/b-skills/b-e2e/<run-id>/` using the run-id format from `global/AGENTS.md` §8.
+- Verifies localhost targets are reachable before navigating; never starts a dev server without approval.
+- Clarifies only blocking state: auth/session, test data, whether writes are allowed.
+- Reuses or stores auth state (`storageState.json`) so repeated runs don't re-authenticate from scratch.
 - Uses accessibility snapshots before interaction.
-- Verifies state with snapshots, screenshots, console/network evidence, and responsive checks when relevant.
+- Verifies state with snapshots, screenshots, console/network evidence; multi-viewport is opt-in.
+- Defaults to functional snapshots over visual regression; visual regression baselines require approval.
+- Applies the **flake handling** procedure in `global/AGENTS.md` §10 before reporting flake.
 - When writing tests, inspects the repo's existing browser-test framework first and preserves it instead of forcing Playwright everywhere.
 
 **Good triggers**
 ```text
 /b-e2e verify checkout flow
 /b-e2e reproduce the signup UI bug
-test UI on mobile and desktop
+write a Playwright test for the new dashboard
 ```
 
 **Output**
 ```text
-URL -> Interactions -> Assertions -> Test code -> Artifacts
+Mode -> Target -> Driver -> Interactions -> Assertions -> Test code -> Artifacts
 ```
 
 **Key rules**
 - Do not start a dev server without approval.
 - Do not mutate production-like data without explicit confirmation.
-- Do not introduce Playwright test files into a repo that uses another browser-test framework unless the user approves it.
+- Do not introduce Playwright test files into a repo that uses another framework unless approved.
+- Multi-viewport checks are opt-in.
+- Visual regression baselines require approval; default to functional snapshots.
+- `*_unsafe` browser tool variants require explicit user approval per invocation (`global/AGENTS.md` §4).
+- Never commit auth-state files containing real credentials.
 - Always close the browser when done.
 
 ---
@@ -253,12 +282,15 @@ URL -> Interactions -> Assertions -> Test code -> Artifacts
 
 **Core behavior**
 - Locks the exact target before editing.
-- Uses `find_referencing_symbols` to map impact before rename or delete work.
-- Supports a **trivial local fast path** for truly small single-file refactors with no contract impact.
-- Uses GitNexus only when exported, shared, route/tool, or broader package boundaries make graph context useful.
-- Uses Serena rename/delete/body replacement tools whenever they fit the transformation.
-- Verifies with diagnostics plus the narrowest risk-appropriate check.
-- Hands behavioral redesign back to `b-plan` instead of pretending it is just a refactor.
+- Runs `find_referencing_symbols` once as the canonical impact-mapping step.
+- Classifies the refactor on the **risk rubric** in `global/AGENTS.md` §3 (trivial / low / medium / high).
+- Supports a **trivial local fast path** only when one file, no contract change, few references, behavior preserved, **and** the language is LSP-supported by Serena. Non-LSP languages auto-promote to at least **low** risk by design.
+- Uses `gitnexus-radar` only when exported, shared, route/tool, or broader package boundaries make graph context useful.
+- Uses the `serena-symbol-toolkit` rename/delete/body-replacement tools whenever they fit the transformation.
+- For **rename + extract**, does extract first under the old name, then `rename_symbol`, so each transform is independently verifiable.
+- Treats **move between files** as the highest-mechanical-risk refactor: add destination first, update every import and test path, update build config and barrel files, only then `safe_delete_symbol` the origin, then re-confirm references.
+- Verifies with diagnostics plus the narrowest risk-appropriate check (verification ladder in `global/AGENTS.md` §7).
+- Hands behavioral redesign back to `b-plan` via the handoff envelope in `global/AGENTS.md` §9, including the locked target and the reference map.
 
 **Good triggers**
 ```text
@@ -274,7 +306,9 @@ Target -> Risk -> Impact -> Changes -> Verification -> Follow-up
 
 **Key rules**
 - Keep the work behavior-preserving.
-- Use the trivial-local fast path only when the contract is clearly untouched.
+- Use the trivial-local fast path only when the contract is clearly untouched and the language is LSP-supported.
+- For non-LSP languages, treat every rename or safe-delete as at least **low** risk.
+- For rename + extract, do extract first, then rename.
 - Ask before broad directory moves or similar cascading changes.
 
 **GitNexus use**
@@ -284,8 +318,7 @@ Target -> Risk -> Impact -> Changes -> Verification -> Follow-up
 
 ## Repository layout and maintenance
 
-This repository is the install-only source layout for the suite. OpenCode does not load
-the checked-in `skills/` or `commands/` directories directly from this repo root.
+This repository is the install-only source layout for the suite. OpenCode does not load the checked-in `skills/` or `commands/` directories directly from this repo root.
 
 ### Repository source files
 - `AGENTS.md` — maintainer guidance for this source repo.
@@ -295,25 +328,34 @@ the checked-in `skills/` or `commands/` directories directly from this repo root
 - `scripts/validate-skills.sh` — suite validator for frontmatter, required sections, stale phrases, docs coverage, and global-rule guardrails.
 
 ### Runtime artifacts
-- `.opencode/b-plans/` — saved plans from `b-plan`.
-- `.opencode/b-skills/<skill>/<run-id>/` — run artifacts.
+- `.opencode/b-skills/b-plan/<task-slug>.md` — saved plans from `b-plan` (legacy `.opencode/b-plans/` is deprecated). `<task-slug>` derives from `global/AGENTS.md` §8.
+- `.opencode/b-skills/<skill>/<run-id>/` — run artifacts, with `run-id = <YYYYMMDD-HHMMSS>-<slug>`.
 - `/tmp/opencode/b-skills/<skill>/<slug>.log` — large command output and temporary logs.
-- Multi-artifact runs report or maintain a manifest with `artifacts`, `commands`, `generated_files`, `cleanup`, and `notes`.
+- Multi-artifact runs include a `manifest.json` per the schema in `global/AGENTS.md` §8.
 
 ### Runtime global conventions
 - One active skill at a time.
-- Trigger precedence is explicit: browser flow -> `b-e2e`; likely product bug -> `b-debug`; named behavior-preserving transform -> `b-refactor`; unclear scope -> `b-plan`; external-knowledge blocker -> `b-research`.
-- After `b-plan` approval, the approved plan is the execution source of truth for multi-step implementation.
-- Cross-skill handoffs include `source`, `goal`, `decisions`, `assumptions`, `files`, `verification`, `blockers`, and `next skill`.
-- Clarification loops are capped unless a real decision gate remains.
-- Public web tools must not receive private stack traces, internal URLs, customer data, secrets, or proprietary code without explicit approval.
-- Verification follows the ladder: narrow check -> broader affected-area check -> full check only when scope or risk justifies it.
+- Trigger precedence is explicit: browser flow → `b-e2e`; DOM-rendered unit test → `b-test`; likely product bug → `b-debug` (per the test-vs-bug decision in `global/AGENTS.md` §10); named behavior-preserving transform → `b-refactor`; unclear scope → `b-plan`; external-knowledge blocker → `b-research`.
+- After `b-plan` approval, the approved plan is the execution source of truth for multi-step implementation, subject to the **plan staleness gate** and **plan revision protocol** in `global/AGENTS.md` §2.
+- Cross-skill handoffs use the **handoff envelope** in `global/AGENTS.md` §9 (`source`, `goal`, `decisions`, `assumptions`, `files`, `verification`, `blockers`, `next-skill`).
+- Non-trivial skill runs end with the **skill-exit status block** in `global/AGENTS.md` §9.
+- Clarification loops are capped (max 2 rounds) unless a real decision gate remains.
+- Public-web privacy gate, sensitive-file safety, worktree safety, and git safety are owned in `global/AGENTS.md` §6.
+- Approval-required actions use the **canonical approval ask** template in `global/AGENTS.md` §6.
+- Verification follows the ladder: narrow check → broader affected-area check → full check only when scope or risk justifies it. The iteration cap (3 fix/verify loops per step) is in `global/AGENTS.md` §7.
+- Severity (BLOCKER / MAJOR / MINOR / NIT), risk (trivial / low / medium / high), the **non-trivial** definition, the **small direct request** threshold (≤3 files), and the **confidence signal** all live in `global/AGENTS.md` §3.
+- Tool-budget overflow surfaces a one-line `12/12 reached. Continue?` notice and stops (`global/AGENTS.md` §4).
+- Empty-state defaults (no diff, no plan, no test framework, no MCP) are owned in `global/AGENTS.md` §7.
+- Fallback labeling uses `[degraded: <reason>]` consistently across skills (`global/AGENTS.md` §4).
+- Session-start preflight and crash/resume rules are owned in `global/AGENTS.md` §11.
 
 ### Tool model
 - Native tools stay first for exact strings, manifests, prose, configs, and small reads.
-- Serena is primary hands for symbols, references, diagnostics, and symbol-aware edits.
-- GitNexus is optional radar for graph-shaped questions only when indexed, fresh, and target-aware.
+- Skills reference **MCP bundles** by name (`serena-symbol-toolkit`, `gitnexus-radar`, `context7-docs`, `brave-discovery`, `firecrawl-extraction`/`firecrawl-extended`/`firecrawl-deep`, `playwright-browser`). Bundle definitions, fallback ladder, cost gates, and language-coverage caveats are owned in `global/AGENTS.md` §4.
+- Serena is **primary hands** for symbols, references, diagnostics, and symbol-aware edits.
+- GitNexus is **optional radar** for graph-shaped questions only when indexed, fresh, and target-aware.
 - Runtime evidence outranks graph evidence; graph evidence outranks search snippets.
+- `sequential-thinking` is not bundled; reach for it inline only when three or more plausible hypotheses remain with equal cheapest-verification cost.
 
 ### Maintenance rules
 - Keep command wrappers thin.
