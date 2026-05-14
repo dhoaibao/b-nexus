@@ -8,10 +8,19 @@ A lean 8-skill suite for **OpenCode**, optimized around **Serena for symbol-awar
 curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-skills/main/install.sh | bash
 ```
 
+Preview an install without writing into `~/.config/opencode/`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-skills/main/install.sh | bash -s -- --dry-run
+```
+
 The installer deploys this suite into your global OpenCode config directory:
 - `~/.config/opencode/skills/`
 - `~/.config/opencode/commands/`
-- `~/.config/opencode/AGENTS.md`
+- `~/.config/opencode/AGENTS.b-skills.md`
+- `~/.config/opencode/AGENTS.md` *(only when missing or when you approve replacement)*
+
+If `~/.config/opencode/AGENTS.md` already exists and you do **not** approve replacement, the installer keeps that file, writes the suite snapshot to `AGENTS.b-skills.md`, and exits with an activation-pending status plus next steps. Full suite behavior requires either replacing `AGENTS.md` or manually merging the snapshot into the active file.
 
 This repository is the **install-only source layout** for that deployment. OpenCode does **not** load the checked-in `skills/` or `commands/` directories directly from this repo root; `install.sh` copies them into the correct `~/.config/opencode/` paths.
 
@@ -50,13 +59,20 @@ You can inspect and maintain the suite from this source repository, which contai
 
 `/b-plan` supports **quick mode** for trivial scoped tasks and **full mode** for non-trivial work. It owns broad or unclear refactors until they reduce to concrete mechanical steps, at which point `/b-refactor` becomes the safer executor. After plan approval, `/b-implement` is the default executor for multi-step work.
 
+### Decision boundaries
+
+- `b-plan` vs `b-implement`: use `b-plan` for multi-file or decision-heavy work; use `b-implement` when the change is already scoped and obvious.
+- `b-implement` vs `b-refactor`: use `b-refactor` when the primary job is a behavior-preserving rename, extract, move, inline, or delete.
+- `b-test` vs `b-debug`: a red test with known-correct product behavior stays in `b-test`; a red test that reveals wrong runtime behavior goes to `b-debug`.
+- `b-review` default vs `--repo-audit`: review a diff or range by default; use `--repo-audit` for a reviewer-style pass over a named repository area.
+
 ### Runtime conventions
 
-In this source repo, the shared runtime rules are authored in `global/AGENTS.md` and installed as `~/.config/opencode/AGENTS.md`; installed skill prose should reference `AGENTS.md`. The headlines:
+In this source repo, the shared runtime rules are authored in `global/AGENTS.md` and installed as `~/.config/opencode/AGENTS.b-skills.md`; the installer only replaces `~/.config/opencode/AGENTS.md` when it is missing or you approve replacement. Installed skill prose should still reference `AGENTS.md`, so a preserved third-party `AGENTS.md` leaves the suite in an activation-pending state until you merge or replace it. The headlines:
 
 - **Definitions** (`§3`): "non-trivial", **small direct request** (≤3 files), **severity** (BLOCKER/MAJOR/MINOR/NIT), **risk** (trivial/low/medium/high), and the **confidence signal** every partial-evidence answer carries.
 - **MCP bundles** (`§4`): skills reference named bundles — `serena-symbol-toolkit`, `gitnexus-radar`, `context7-docs`, `brave-discovery`, `firecrawl-extraction` / `firecrawl-extended` / `firecrawl-deep`, `playwright-browser`. Bundle definitions own session-init, fallback ladder, language-coverage caveats, and cost/approval gates.
-- **Tool-budget review gate** (`§4`): around the 12th MCP call, emit a one-line notice and reassess; continue only within the same active thread, and ask before starting a new tool-heavy thread or pushing past the hard review gate.
+- **Tool-use heuristics** (`§4`): around the 12th MCP call, narrow the active thread or summarize what remains unknown instead of blindly continuing to fan out.
 - **Safety gates** (`§6`): privacy gate, sensitive-file safety, worktree safety, git safety, and the **canonical approval ask** template.
 - **Iteration cap** (`§7`): maximum of 3 fix/verify loops per step before surfacing the blocker.
 - **Empty-state defaults** (`§7`): explicit defaults for missing diff, missing plan, missing framework, or unavailable MCPs.
@@ -81,6 +97,8 @@ Routing and safety highlights:
 - GitNexus is optional radar; Serena is primary hands.
 - Cross-skill handoffs use the **handoff envelope** in `global/AGENTS.md` §9.
 - Non-trivial skill runs close with the **skill-exit status block** in `global/AGENTS.md` §9.
+- The installer always writes a suite-owned runtime snapshot to `~/.config/opencode/AGENTS.b-skills.md`, backs up changed config files, and preserves an existing `~/.config/opencode/AGENTS.md` unless replacement is approved.
+- Preserve mode is intentionally not reported as full success: the installer exits with activation-pending guidance until the active `AGENTS.md` is replaced or manually merged.
 
 See [REFERENCE.md](REFERENCE.md) for detailed skill contracts and maintenance conventions.
 
@@ -106,6 +124,7 @@ b-skills/
 ├── REFERENCE.md
 ├── install.sh
 ├── scripts/
+│   ├── smoke-install.sh
 │   └── validate-skills.sh
 └── skills/
     ├── b-plan/SKILL.md
@@ -121,7 +140,7 @@ b-skills/
 This tree is the source repository layout used by `install.sh`, not a directly discoverable OpenCode runtime layout. The installer copies:
 - `skills/` → `~/.config/opencode/skills/`
 - `commands/` → `~/.config/opencode/commands/`
-- `global/AGENTS.md` → `~/.config/opencode/AGENTS.md`
+- `global/AGENTS.md` → `~/.config/opencode/AGENTS.b-skills.md` and optionally `~/.config/opencode/AGENTS.md`
 
 Installed skill prose references `AGENTS.md`, while this repository keeps the source copy at `global/AGENTS.md`.
 
@@ -180,10 +199,11 @@ OpenCode integration:
 ## Repository maintenance
 
 - `AGENTS.md` is maintainer guidance for working on this source repo locally.
-- `global/AGENTS.md` is the runtime rule source installed as `~/.config/opencode/AGENTS.md` by `install.sh`.
+- `global/AGENTS.md` is the runtime rule source installed as `~/.config/opencode/AGENTS.b-skills.md` by `install.sh`, and optionally applied to the main `~/.config/opencode/AGENTS.md`.
 - Skills live in `skills/<name>/SKILL.md`.
 - Commands live in `commands/<name>.md`.
 - `install.sh` is responsible for deploying and pruning suite-managed files under `~/.config/opencode/`.
+- `scripts/smoke-install.sh` runs isolated installer smoke tests against a temp HOME and repo snapshot.
 - `scripts/validate-skills.sh` checks frontmatter, required sections, stale tool names, old artifact paths, GitNexus scope drift, runtime-global leakage, and README/REFERENCE coverage.
 - Any skill change requires updating both `README.md` and `REFERENCE.md` in the same commit.
 - Run `scripts/validate-skills.sh` before installing or committing skill changes.

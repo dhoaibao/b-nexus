@@ -34,6 +34,11 @@ If `$ARGUMENTS` is provided, treat it as the refactoring instruction and proceed
 - The task is a test-only failure or test rewrite → use **b-test**.
 - The request is only an external API lookup → use **b-research**.
 
+## Boundary examples
+
+- **Use b-refactor:** "Extract `parseOptions` from `handleArgs` without changing behavior."
+- **Use b-plan or b-implement instead:** "Simplify checkout retries so the product gives up sooner" because the request changes behavior, not just structure.
+
 ## Tools required
 
 - `bash` — inspect git state and run project-specific checks.

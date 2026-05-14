@@ -1,6 +1,6 @@
 # b-skills — OpenCode Runtime Contract
 
-> Single home for routing, definitions, MCP bundles, tool priority, safety, evidence, execution discipline, artifacts, output, cross-cutting decisions, and session lifecycle. Skills must reference this file instead of restating shared rules.
+> Shared runtime rules for routing, tool choice, safety, evidence, outputs, and handoffs. Skills should reference this file instead of duplicating policy.
 
 ---
 
@@ -268,16 +268,15 @@ Bundled but optional. The default MCP install includes `sequential-thinking`, bu
 
 When any fallback fires, attach a `[degraded: <reason>]` tag to the affected step or finding in the final report. Use exactly this format so output stays scannable across skills.
 
-### Per-skill tool budget
+### Tool-use heuristics
 
-- A skill run should normally surface progress by **12 MCP tool calls** and reassess whether the same active thread still needs more tool use.
-- At call 12: emit a one-line budget notice (`Tool budget: 12/12 reached. Remaining work: <list>`). Continue only when the remaining work stays within the same active investigation, edit, or verification thread.
-- After call 12, do not start a new tool-heavy thread without first asking whether to continue.
-- If a run reaches **16 MCP tool calls** without closing the active thread or hitting a natural decision point, stop and ask whether to continue.
+- Around **12 MCP calls** in one skill run, pause and summarize what is still unknown before adding more discovery.
+- Do not open a second tool-heavy thread until the current investigation, edit, or verification thread is closed or the user asks to expand scope.
+- If sustained tool use is not increasing evidence quality, narrow the next check or stop and ask whether to continue.
 - `firecrawl-deep` invocations require user approval each time.
-- `gitnexus-radar` should rarely exceed 2 calls in one skill run; further graph questions usually mean the wrong skill was chosen.
-- Cross-turn cache: if the same library/URL/symbol was just fetched in this session, reuse the result instead of re-fetching.
-- The verification iteration cap (§7) applies in addition.
+- `gitnexus-radar` should usually stay to 1-2 calls per run; more often means the question should move back to Serena or native tools.
+- Reuse recently fetched URLs, docs, and symbol results instead of re-fetching them.
+- The verification iteration cap (§7) still applies.
 
 ---
 
@@ -532,14 +531,14 @@ Rerun the suspected test up to 2 times in isolation. If it passes some runs and 
 
 1. `git status --short` — note dirty state; preserve unrelated changes (§6).
 2. Check for an approved plan under `.opencode/b-skills/b-plan/` matching the current request.
-3. Confirm MCP availability lazily on first use (do not preflight all bundles up front).
-4. Acknowledge dirty state explicitly if it could affect the request.
+3. Confirm MCP availability lazily on first use.
+4. Acknowledge dirty state only when it could affect the request.
 
 ### Crash/resume
 
 - If a prior session left a partially complete run directory under `.opencode/b-skills/<skill>/<run-id>/`, resume from its manifest's last `complete` artifact rather than restarting.
 - If no manifest exists, treat the directory as orphaned; do not delete it without asking.
-- For saved plans, the staleness gate (§2) decides whether to resume or re-plan.
+- For saved plans, use the staleness gate (§2) to decide whether to resume or re-plan.
 
 ### Cross-skill conventions
 

@@ -27,6 +27,10 @@ plan the auth migration
 how should I approach this refactor?
 ```
 
+**Boundary examples**
+- `b-plan`: "Plan the auth migration across middleware, API routes, and session state."
+- `b-implement` instead: "Add a help link to Settings" when the behavior is already obvious and safely scoped.
+
 **Output**
 - Quick mode: short chat plan.
 - Full mode: English plan file at `.opencode/b-skills/b-plan/<task-slug>.md`, where `<task-slug>` follows the slug algorithm in `global/AGENTS.md` §8. Saved plans remain canonical repo-local source-of-truth files even when non-plan runtime artifacts would fall back to a non-worktree path. Skeleton: `# title`, `Confirmed decisions`, `Planned touch points`, `Dependencies`, `Risks`, `Unknowns`, checkbox-style `Steps`, `Verification`, `Rollback` (only when real), and `Revisions` (added when revised).
@@ -103,6 +107,10 @@ tra cứu config key cho NextAuth session timeout
 implement the approved plan
 ```
 
+**Boundary examples**
+- `b-implement`: "Implement the approved rate-limit plan" or "wire the new settings copy into the existing page."
+- `b-refactor` instead: "Rename `UserService` to `UserRepository` everywhere" when the work is primarily mechanical.
+
 **Output**
 ```text
 Plan source -> Step progress -> Changes -> Verification -> Blockers / Decisions -> Next
@@ -144,6 +152,10 @@ why is this endpoint returning 500?
 fix this runtime bug
 the dashboard is slow after the last deploy
 ```
+
+**Boundary examples**
+- `b-debug`: "This endpoint started returning 500 after the deploy."
+- `b-test` instead: "The snapshot changed after the copy update" when production behavior is already confirmed correct.
 
 **Output**
 ```text
@@ -188,6 +200,10 @@ review before PR
 what would a reviewer flag here?
 ```
 
+**Boundary examples**
+- Default `b-review`: review a diff, branch range, or working tree before PR.
+- `--repo-audit`: audit a named repository surface such as the installer, runtime contract, or one subsystem.
+
 **Output**
 ```text
 Findings -> Coverage / Tests / Observability -> READY FOR PR or NEEDS FIXES
@@ -229,6 +245,11 @@ Findings -> Coverage / Tests / Observability -> READY FOR PR or NEEDS FIXES
 /b-test write regression tests for retry logic
 /b-test evaluate API coverage
 ```
+
+**Boundary examples**
+- `b-test`: "Fix the Vitest mock setup" or "add regression tests for retry backoff" when intended behavior is already known.
+- `b-debug` instead: "The new regression test proves the API now returns the wrong shape."
+- `b-e2e` instead: "Verify the signup flow in a real browser."
 
 **Output**
 ```text
@@ -308,6 +329,10 @@ Mode -> Target -> Driver -> Interactions -> Assertions -> Test code -> Artifacts
 /b-refactor delete unused legacy auth helper
 ```
 
+**Boundary examples**
+- `b-refactor`: "Extract `parseOptions` from `handleArgs` without changing behavior."
+- `b-plan` or `b-implement` instead: "Simplify checkout retries so the product gives up sooner" because the behavior changes.
+
 **Output**
 ```text
 Target -> Risk -> Impact -> Changes -> Verification -> Follow-up
@@ -331,9 +356,10 @@ This repository is the install-only source layout for the suite. OpenCode does n
 
 ### Repository source files
 - `AGENTS.md` — maintainer guidance for this source repo.
-- `global/AGENTS.md` — source copy of the runtime global rules, installed as OpenCode's main `AGENTS.md`; installed skill prose should cite `AGENTS.md`.
+- `global/AGENTS.md` — source copy of the runtime global rules, installed as `AGENTS.b-skills.md` and optionally applied to OpenCode's main `AGENTS.md`; installed skill prose should cite `AGENTS.md`.
 - `skills/<name>/SKILL.md` — skill sources.
 - `commands/<name>.md` — thin slash-command wrappers.
+- `scripts/smoke-install.sh` — isolated installer smoke checks against a temp HOME and repo snapshot.
 - `scripts/validate-skills.sh` — suite validator for frontmatter, required sections, stale phrases, docs coverage, and global-rule guardrails.
 
 ### Runtime artifacts
@@ -354,7 +380,7 @@ This repository is the install-only source layout for the suite. OpenCode does n
 - Approval-required actions use the **canonical approval ask** template in `global/AGENTS.md` §6.
 - Verification follows the ladder: narrow check → broader affected-area check → full check only when scope or risk justifies it. The iteration cap (3 fix/verify loops per step) is in `global/AGENTS.md` §7.
 - Severity (BLOCKER / MAJOR / MINOR / NIT), risk (trivial / low / medium / high), the **non-trivial** definition, the **small direct request** threshold (≤3 files), and the **confidence signal** all live in `global/AGENTS.md` §3.
-- Tool-budget review gate surfaces a one-line notice around `12/12 reached`, continues only within the same active thread, and asks before opening a new tool-heavy thread or pushing past the hard review gate (`global/AGENTS.md` §4).
+- Tool-use heuristics nudge the agent to narrow scope or summarize remaining unknowns after sustained MCP use instead of following brittle hard call ceilings (`global/AGENTS.md` §4).
 - Empty-state defaults (no diff, no plan, no test framework, no MCP) are owned in `global/AGENTS.md` §7.
 - Fallback labeling uses `[degraded: <reason>]` consistently across skills (`global/AGENTS.md` §4).
 - Session-start preflight and crash/resume rules are owned in `global/AGENTS.md` §11.
@@ -366,6 +392,14 @@ This repository is the install-only source layout for the suite. OpenCode does n
 - GitNexus is **optional radar** for graph-shaped questions only when indexed, fresh, and target-aware.
 - Runtime evidence outranks graph evidence; graph evidence outranks search snippets.
 - `sequential-thinking` is bundled but optional; reach for it inline only when three or more plausible hypotheses remain with equal cheapest-verification cost.
+
+### Installer behavior
+- `install.sh` always installs the suite runtime snapshot at `~/.config/opencode/AGENTS.b-skills.md`.
+- `install.sh` replaces `~/.config/opencode/AGENTS.md` only when it is missing or the user explicitly approves replacement.
+- If replacement is not approved, `install.sh` preserves the existing `AGENTS.md`, writes the suite snapshot, and exits with an activation-pending status plus follow-up instructions; it does not claim the suite runtime contract is active.
+- `install.sh` supports `--dry-run` / `B_SKILLS_DRY_RUN=Y` to preview config and runtime-rule changes without writing them.
+- Changed `opencode.json` and `AGENTS.md` files are backed up with a timestamped `.bak-*` suffix before overwrite.
+- `~/.config/opencode/b-skills-install.json` records what the suite manages in the user's OpenCode config, including whether runtime activation is `active` or `pending`.
 
 ### Maintenance rules
 - Keep command wrappers thin.

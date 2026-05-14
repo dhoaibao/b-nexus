@@ -9,9 +9,16 @@
 #   B_SKILLS_DIR   — local clone path (default: $HOME/.b-skills)
 #   B_SKILLS_REF   — git ref to check out after clone/pull (default: leave on default branch)
 #   B_SKILLS_INSTALL_MCP — Y to install MCP defaults; otherwise skipped
+#   B_SKILLS_DRY_RUN — Y to preview file/config changes without writing into OpenCode config
+#   B_SKILLS_REPLACE_AGENTS — Y to replace ~/.config/opencode/AGENTS.md without prompting; N to preserve it
 #   BRAVE_API_KEY  — Brave Search MCP API key
 #   CONTEXT7_API_KEY — Context7 MCP API key
 #   FIRECRAWL_API_KEY — Firecrawl MCP API key
+#
+# Optional CLI flags:
+#   --dry-run         Preview install changes without writing them
+#   --replace-agents  Replace ~/.config/opencode/AGENTS.md without prompting
+#   --preserve-agents Never replace ~/.config/opencode/AGENTS.md
 
 set -euo pipefail
 
@@ -23,7 +30,9 @@ readonly SKILLS_SRC="$LOCAL_REPO/skills"
 readonly COMMANDS_SRC="$LOCAL_REPO/commands"
 readonly RULES_SRC="$LOCAL_REPO/global/AGENTS.md"
 readonly RULES_DST="$OPENCODE_DIR/AGENTS.md"
+readonly RULES_SNAPSHOT_DST="$OPENCODE_DIR/AGENTS.b-skills.md"
 readonly CONFIG_FILE="$OPENCODE_DIR/opencode.json"
+readonly INSTALL_MANIFEST="$OPENCODE_DIR/b-skills-install.json"
 readonly TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 
 log()     { printf '%s
@@ -36,18 +45,42 @@ warn()    { printf '⚠️  %s
 die()     { printf '❌ %s
 ' "$*" >&2; exit 1; }
 
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --dry-run)
+      B_SKILLS_DRY_RUN=Y
+      ;;
+    --replace-agents)
+      B_SKILLS_REPLACE_AGENTS=Y
+      ;;
+    --preserve-agents)
+      B_SKILLS_REPLACE_AGENTS=N
+      ;;
+    *)
+      die "Unknown argument: $1"
+      ;;
+  esac
+  shift
+done
+
 trap 'rc=$?; [ $rc -ne 0 ] && warn "install.sh failed at line $LINENO (exit $rc)"' EXIT
 
 BRAVE_API_KEY_VALUE="${BRAVE_API_KEY:-}"
 CONTEXT7_API_KEY_VALUE="${CONTEXT7_API_KEY:-}"
 FIRECRAWL_API_KEY_VALUE="${FIRECRAWL_API_KEY:-}"
 INSTALL_MCPS_VALUE="${B_SKILLS_INSTALL_MCP:-}"
+DRY_RUN_VALUE="${B_SKILLS_DRY_RUN:-N}"
+REPLACE_AGENTS_VALUE="${B_SKILLS_REPLACE_AGENTS:-}"
 CUSTOM_PROVIDER_ENABLED_VALUE="N"
 CUSTOM_PROVIDER_ID_VALUE=""
 CUSTOM_PROVIDER_NAME_VALUE=""
 CUSTOM_PROVIDER_BASE_URL_VALUE=""
 CUSTOM_PROVIDER_API_KEY_VALUE=""
 CUSTOM_PROVIDER_MODELS_VALUE=""
+AGENTS_INSTALL_ACTION="preserve"
+RUNTIME_ACTIVATION_STATE="active"
+RULES_BACKUP_PATH="none"
+CONFIG_BACKUP_PATH="none"
 
 require_bin() {
   command -v "$1" >/dev/null 2>&1 || die "Required binary not found: $1"
@@ -64,7 +97,7 @@ is_placeholder_value() {
 }
 
 prompt_available() {
-  [ -r /dev/tty ] && [ -w /dev/tty ]
+  [ -r /dev/tty ] && [ -w /dev/tty ] && ( exec 3<>/dev/tty ) >/dev/null 2>&1
 }
 
 wants_mcp_install() {
@@ -77,6 +110,260 @@ wants_mcp_install() {
       return 1
       ;;
   esac
+}
+
+wants_no() {
+  local value="${1:-}"
+  case "$value" in
+    n|N|no|NO|No)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+dry_run_enabled() {
+  wants_mcp_install "$DRY_RUN_VALUE"
+}
+
+ensure_dir() {
+  local dir_path="$1"
+  if dry_run_enabled; then
+    log "[dry-run] mkdir -p $dir_path"
+    return 0
+  fi
+
+  mkdir -p "$dir_path"
+}
+
+show_diff() {
+  local before_file="$1" after_file="$2" label="$3"
+  env BEFORE_FILE="$before_file" AFTER_FILE="$after_file" LABEL="$label" python3 - <<'PYEOF'
+import difflib
+import os
+from pathlib import Path
+
+before_path = Path(os.environ["BEFORE_FILE"])
+after_path = Path(os.environ["AFTER_FILE"])
+label = os.environ["LABEL"]
+
+before_lines = before_path.read_text().splitlines()
+after_lines = after_path.read_text().splitlines()
+
+diff = list(
+    difflib.unified_diff(
+        before_lines,
+        after_lines,
+        fromfile=f"{label} (current)",
+        tofile=f"{label} (new)",
+        lineterm="",
+    )
+)
+
+if diff:
+    print("\n".join(diff))
+PYEOF
+}
+
+backup_file_if_needed() {
+  local file_path="$1"
+  local backup_path="${file_path}.bak-${TIMESTAMP}"
+
+  [ -f "$file_path" ] || {
+    printf 'none'
+    return 0
+  }
+
+  if dry_run_enabled; then
+    log "[dry-run] backup $file_path -> $backup_path"
+    printf '%s' "$backup_path"
+    return 0
+  fi
+
+  cp "$file_path" "$backup_path"
+  printf '%s' "$backup_path"
+}
+
+write_file_from_source() {
+  local source_file="$1" target_file="$2" label="$3" backup_existing="${4:-N}"
+  local before_file after_file
+
+  [ -f "$source_file" ] || die "Missing source file: $source_file"
+
+  ensure_dir "$(dirname "$target_file")"
+
+  if [ -f "$target_file" ] && cmp -s "$source_file" "$target_file"; then
+    log "✅ $label unchanged"
+    return 0
+  fi
+
+  before_file=$(mktemp)
+  after_file=$(mktemp)
+
+  if [ -f "$target_file" ]; then
+    cp "$target_file" "$before_file"
+  else
+    : > "$before_file"
+  fi
+  cp "$source_file" "$after_file"
+
+  log "Preview for $label"
+  show_diff "$before_file" "$after_file" "$label"
+
+  if dry_run_enabled; then
+    log "[dry-run] write $target_file"
+    rm -f "$before_file" "$after_file"
+    return 0
+  fi
+
+  if [ "$backup_existing" = "Y" ]; then
+    backup_file_if_needed "$target_file" >/dev/null
+  fi
+
+  cp "$source_file" "$target_file"
+  rm -f "$before_file" "$after_file"
+  log "✅ $label updated"
+}
+
+write_text_file() {
+  local target_file="$1" content="$2" label="$3" backup_existing="${4:-N}"
+  local before_file after_file
+
+  ensure_dir "$(dirname "$target_file")"
+
+  before_file=$(mktemp)
+  after_file=$(mktemp)
+
+  if [ -f "$target_file" ]; then
+    cp "$target_file" "$before_file"
+  else
+    : > "$before_file"
+  fi
+
+  printf '%s\n' "$content" > "$after_file"
+
+  if cmp -s "$before_file" "$after_file"; then
+    rm -f "$before_file" "$after_file"
+    log "✅ $label unchanged"
+    return 0
+  fi
+
+  log "Preview for $label"
+  show_diff "$before_file" "$after_file" "$label"
+
+  if dry_run_enabled; then
+    log "[dry-run] write $target_file"
+    rm -f "$before_file" "$after_file"
+    return 0
+  fi
+
+  if [ "$backup_existing" = "Y" ]; then
+    backup_file_if_needed "$target_file" >/dev/null
+  fi
+
+  printf '%s\n' "$content" > "$target_file"
+  rm -f "$before_file" "$after_file"
+  log "✅ $label updated"
+}
+
+decide_agents_install_action() {
+  local entered_value
+
+  if [ ! -f "$RULES_DST" ]; then
+    AGENTS_INSTALL_ACTION="replace"
+    return 0
+  fi
+
+  if cmp -s "$RULES_SRC" "$RULES_DST"; then
+    AGENTS_INSTALL_ACTION="unchanged"
+    return 0
+  fi
+
+  if wants_mcp_install "$REPLACE_AGENTS_VALUE"; then
+    AGENTS_INSTALL_ACTION="replace"
+    return 0
+  fi
+
+  if wants_no "$REPLACE_AGENTS_VALUE"; then
+    AGENTS_INSTALL_ACTION="preserve"
+    RUNTIME_ACTIVATION_STATE="pending"
+    return 0
+  fi
+
+  if ! prompt_available; then
+    AGENTS_INSTALL_ACTION="preserve"
+    RUNTIME_ACTIVATION_STATE="pending"
+    return 0
+  fi
+
+  printf 'Replace existing OpenCode AGENTS.md with the b-skills runtime contract? [y/N]: ' > /dev/tty
+  if IFS= read -r entered_value < /dev/tty; then
+    :
+  else
+    entered_value=""
+  fi
+
+  if wants_mcp_install "$entered_value"; then
+    AGENTS_INSTALL_ACTION="replace"
+    RUNTIME_ACTIVATION_STATE="active"
+  else
+    AGENTS_INSTALL_ACTION="preserve"
+    RUNTIME_ACTIVATION_STATE="pending"
+  fi
+}
+
+write_install_manifest() {
+  local manifest_content
+  manifest_content=$(env \
+    TIMESTAMP="$TIMESTAMP" \
+    DRY_RUN_VALUE="$DRY_RUN_VALUE" \
+    AGENTS_INSTALL_ACTION="$AGENTS_INSTALL_ACTION" \
+    RUNTIME_ACTIVATION_STATE="$RUNTIME_ACTIVATION_STATE" \
+    RULES_SNAPSHOT_DST="$RULES_SNAPSHOT_DST" \
+    RULES_DST="$RULES_DST" \
+    CONFIG_FILE="$CONFIG_FILE" \
+    RULES_BACKUP_PATH="$RULES_BACKUP_PATH" \
+    CONFIG_BACKUP_PATH="$CONFIG_BACKUP_PATH" \
+    INSTALL_MCPS_VALUE="$INSTALL_MCPS_VALUE" \
+    CUSTOM_PROVIDER_ENABLED_VALUE="$CUSTOM_PROVIDER_ENABLED_VALUE" \
+    CUSTOM_PROVIDER_ID_VALUE="$CUSTOM_PROVIDER_ID_VALUE" \
+    python3 - <<'PYEOF'
+import json
+import os
+
+def is_yes(value):
+    return (value or "").strip().lower() in {"y", "yes"}
+
+payload = {
+    "suite": "b-skills",
+    "installedAt": os.environ["TIMESTAMP"],
+    "dryRun": is_yes(os.environ.get("DRY_RUN_VALUE", "")),
+    "agentsAction": os.environ.get("AGENTS_INSTALL_ACTION", "preserve"),
+    "activationState": os.environ.get("RUNTIME_ACTIVATION_STATE", "active"),
+    "managedPaths": {
+        "skillsDir": "~/.config/opencode/skills",
+        "commandsDir": "~/.config/opencode/commands",
+        "suiteRules": os.environ["RULES_SNAPSHOT_DST"],
+        "globalAgents": os.environ["RULES_DST"],
+        "config": os.environ["CONFIG_FILE"],
+    },
+    "backups": {
+        "globalAgents": os.environ.get("RULES_BACKUP_PATH", "none"),
+        "config": os.environ.get("CONFIG_BACKUP_PATH", "none"),
+    },
+    "managedConfig": {
+        "mcpDefaults": is_yes(os.environ.get("INSTALL_MCPS_VALUE", "")),
+        "customProvider": os.environ.get("CUSTOM_PROVIDER_ID_VALUE", "") if is_yes(os.environ.get("CUSTOM_PROVIDER_ENABLED_VALUE", "")) else "none",
+    },
+}
+
+print(json.dumps(payload, indent=2))
+PYEOF
+  )
+
+  write_text_file "$INSTALL_MANIFEST" "$manifest_content" "b-skills install manifest"
 }
 
 prompt_mcp_install_if_needed() {
@@ -433,7 +720,13 @@ sync_directory() {
   [ -d "$source_dir" ] || die "sync_directory: source missing: $source_dir"
   [ "$source_dir" = "$target_dir" ] && die "sync_directory: source and target identical"
 
-  mkdir -p "$(dirname "$target_dir")"
+  ensure_dir "$(dirname "$target_dir")"
+
+  if dry_run_enabled; then
+    log "[dry-run] sync $source_dir -> $target_dir"
+    return 0
+  fi
+
   rm -rf "$target_dir"
   mkdir -p "$target_dir"
   cp -R "$source_dir"/. "$target_dir"/
@@ -478,7 +771,11 @@ prune_stale_skills() {
     is_b_skills_skill_dir "$installed_dir" || continue
     skill_name=$(basename "$installed_dir")
     if [ ! -d "$source_dir/$skill_name" ] || [ ! -f "$source_dir/$skill_name/SKILL.md" ]; then
-      rm -rf "$installed_dir"
+      if dry_run_enabled; then
+        log "[dry-run] remove stale skill $installed_dir"
+      else
+        rm -rf "$installed_dir"
+      fi
       removed=$((removed + 1))
     fi
   done
@@ -496,7 +793,11 @@ prune_stale_commands() {
     is_b_skills_command_file "$installed_file" || continue
     command_name=$(basename "$installed_file")
     if [ ! -f "$source_dir/$command_name" ]; then
-      rm -f "$installed_file"
+      if dry_run_enabled; then
+        log "[dry-run] remove stale command $installed_file"
+      else
+        rm -f "$installed_file"
+      fi
       removed=$((removed + 1))
     fi
   done
@@ -505,9 +806,19 @@ prune_stale_commands() {
 }
 
 merge_opencode_config() {
-  mkdir -p "$(dirname "$CONFIG_FILE")"
+  ensure_dir "$(dirname "$CONFIG_FILE")"
   local existing
-  existing=$(cat "$CONFIG_FILE" 2>/dev/null || echo '{}')
+  existing=$(python3 - "$CONFIG_FILE" <<'PYEOF'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+try:
+    print(path.read_text(), end="")
+except FileNotFoundError:
+    print("{}", end="")
+PYEOF
+  )
 
   local merged
   merged=$(env \
@@ -824,10 +1135,122 @@ print(json.dumps(config, indent=2))
 PYEOF
 )
 
-  local tmp="${CONFIG_FILE}.tmp-${TIMESTAMP}"
-  printf '%s
-' "$merged" > "$tmp"
-  mv "$tmp" "$CONFIG_FILE"
+  if [ -f "$CONFIG_FILE" ]; then
+    local normalized_existing
+    normalized_existing=$(env CONFIG_FILE="$CONFIG_FILE" EXISTING="$existing" python3 - <<'PYEOF'
+import json
+import os
+
+existing_raw = os.environ.get("EXISTING", "{}")
+
+def strip_jsonc_comments(text):
+    result = []
+    in_string = False
+    string_char = ""
+    escaped = False
+    i = 0
+
+    while i < len(text):
+        char = text[i]
+        next_char = text[i + 1] if i + 1 < len(text) else ""
+
+        if in_string:
+            result.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == string_char:
+                in_string = False
+            i += 1
+            continue
+
+        if char == '"':
+            in_string = True
+            string_char = char
+            result.append(char)
+            i += 1
+            continue
+
+        if char == "/" and next_char == "/":
+            i += 2
+            while i < len(text) and text[i] not in "\r\n":
+                i += 1
+            continue
+
+        if char == "/" and next_char == "*":
+            i += 2
+            while i + 1 < len(text) and text[i:i + 2] != "*/":
+                i += 1
+            i += 2 if i + 1 < len(text) else 0
+            continue
+
+        result.append(char)
+        i += 1
+
+    return "".join(result)
+
+def strip_trailing_commas(text):
+    result = []
+    in_string = False
+    string_char = ""
+    escaped = False
+    i = 0
+
+    while i < len(text):
+        char = text[i]
+
+        if in_string:
+            result.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == string_char:
+                in_string = False
+            i += 1
+            continue
+
+        if char == '"':
+            in_string = True
+            string_char = char
+            result.append(char)
+            i += 1
+            continue
+
+        if char == ",":
+            j = i + 1
+            while j < len(text) and text[j] in " \t\r\n":
+                j += 1
+            if j < len(text) and text[j] in "]}":
+                i += 1
+                continue
+
+        result.append(char)
+        i += 1
+
+    return "".join(result)
+
+try:
+    parsed = json.loads(existing_raw)
+except json.JSONDecodeError:
+    parsed = json.loads(strip_trailing_commas(strip_jsonc_comments(existing_raw)).strip() or "{}")
+
+print(json.dumps(parsed, indent=2))
+PYEOF
+    )
+
+    if [ "$normalized_existing" = "$merged" ]; then
+      log "✅ OpenCode config unchanged"
+      return 0
+    fi
+  fi
+
+  write_text_file "$CONFIG_FILE" "$merged" "OpenCode config" Y
+  if [ -f "$CONFIG_FILE" ] && ! dry_run_enabled; then
+    CONFIG_BACKUP_PATH="${CONFIG_FILE}.bak-${TIMESTAMP}"
+    [ -f "$CONFIG_BACKUP_PATH" ] || CONFIG_BACKUP_PATH="none"
+  fi
 }
 
 section "Sync b-skills repo"
@@ -849,7 +1272,7 @@ fi
 
 section "Install OpenCode skills"
 [ -d "$SKILLS_SRC" ] || die "Missing skills source directory: $SKILLS_SRC"
-mkdir -p "$OPENCODE_DIR/skills"
+ensure_dir "$OPENCODE_DIR/skills"
 synced_skills=0
 for skill_dir in "$SKILLS_SRC"/*/; do
   [ -d "$skill_dir" ] || continue
@@ -865,11 +1288,15 @@ log "$skills_summary"
 
 section "Install OpenCode commands"
 [ -d "$COMMANDS_SRC" ] || die "Missing commands source directory: $COMMANDS_SRC"
-mkdir -p "$OPENCODE_DIR/commands"
+ensure_dir "$OPENCODE_DIR/commands"
 synced_commands=0
 for command_file in "$COMMANDS_SRC"/*.md; do
   [ -f "$command_file" ] || continue
-  cp "$command_file" "$OPENCODE_DIR/commands/"
+  if dry_run_enabled; then
+    log "[dry-run] copy $command_file -> $OPENCODE_DIR/commands/"
+  else
+    cp "$command_file" "$OPENCODE_DIR/commands/"
+  fi
   synced_commands=$((synced_commands + 1))
 done
 pruned_commands=$(prune_stale_commands "$COMMANDS_SRC" "$OPENCODE_DIR/commands")
@@ -877,10 +1304,30 @@ commands_summary="✅ Commands synced: $synced_commands"
 [ "$pruned_commands" -gt 0 ] && commands_summary="$commands_summary, $pruned_commands stale removed"
 log "$commands_summary"
 
-section "Install AGENTS.md"
-mkdir -p "$(dirname "$RULES_DST")"
-cp "$RULES_SRC" "$RULES_DST"
-log "✅ AGENTS.md installed"
+section "Install runtime rules"
+decide_agents_install_action
+write_file_from_source "$RULES_SRC" "$RULES_SNAPSHOT_DST" "b-skills runtime rules snapshot"
+
+case "$AGENTS_INSTALL_ACTION" in
+  replace)
+    if [ -f "$RULES_DST" ] && ! dry_run_enabled; then
+      RULES_BACKUP_PATH="$(backup_file_if_needed "$RULES_DST")"
+    elif [ -f "$RULES_DST" ]; then
+      RULES_BACKUP_PATH="${RULES_DST}.bak-${TIMESTAMP}"
+    fi
+    write_file_from_source "$RULES_SRC" "$RULES_DST" "OpenCode AGENTS.md"
+    RUNTIME_ACTIVATION_STATE="active"
+    ;;
+  unchanged)
+    log "✅ OpenCode AGENTS.md already matches b-skills"
+    RUNTIME_ACTIVATION_STATE="active"
+    ;;
+  preserve)
+    log "⏭ Preserved existing OpenCode AGENTS.md"
+    log "   b-skills runtime rules snapshot: $RULES_SNAPSHOT_DST"
+    RUNTIME_ACTIVATION_STATE="pending"
+    ;;
+esac
 
 section "MCP setup"
 prompt_mcp_install_if_needed
@@ -892,7 +1339,7 @@ section "Provider setup"
 collect_custom_provider_config
 
 merge_opencode_config
-log "✅ Config updated"
+write_install_manifest
 
 section "MCP defaults"
 if wants_mcp_install "$INSTALL_MCPS_VALUE"; then
@@ -917,10 +1364,34 @@ else
 fi
 
 section "Done"
-log "✅ b-skills installed successfully for OpenCode."
+if [ "$RUNTIME_ACTIVATION_STATE" = "pending" ]; then
+  log "⚠️  b-skills files were installed, but the runtime contract is not active yet."
+elif dry_run_enabled; then
+  log "✅ b-skills install preview completed."
+else
+  log "✅ b-skills installed successfully for OpenCode."
+fi
 log "   Skills:       $OPENCODE_DIR/skills"
 log "   Commands:     $OPENCODE_DIR/commands"
-  log "   AGENTS.md:    $RULES_DST"
+log "   Suite rules:  $RULES_SNAPSHOT_DST"
+log "   AGENTS.md:    $RULES_DST ($AGENTS_INSTALL_ACTION)"
 log "   Config:       $CONFIG_FILE"
+if [ "$RULES_BACKUP_PATH" != "none" ]; then
+  log "   AGENTS backup: $RULES_BACKUP_PATH"
+fi
+if [ "$CONFIG_BACKUP_PATH" != "none" ]; then
+  log "   Config backup: $CONFIG_BACKUP_PATH"
+fi
+if dry_run_enabled; then
+  log "   Manifest:     $INSTALL_MANIFEST (preview only; not written)"
+else
+  log "   Manifest:     $INSTALL_MANIFEST"
+fi
+
+if [ "$RUNTIME_ACTIVATION_STATE" = "pending" ]; then
+  log "   Next step:    rerun with --replace-agents, or manually merge $RULES_SNAPSHOT_DST into $RULES_DST"
+  trap - EXIT
+  exit 2
+fi
 
 trap - EXIT

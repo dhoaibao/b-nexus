@@ -37,6 +37,12 @@ If `$ARGUMENTS` is provided, treat it as the test task or failing symptom and pr
 - The task is only an external docs or testing-framework lookup → use **b-research**.
 - The task is property-based, fuzzing, or contract testing — these are **out of scope** for this skill; treat them as bespoke implementation work via **b-plan** + **b-implement**.
 
+## Boundary examples
+
+- **Use b-test:** "Fix the Vitest mock setup" or "add regression tests for retry backoff" when the intended behavior is already known.
+- **Use b-debug instead:** "The new regression test proves the API now returns the wrong shape" because the red test is evidence of a product bug.
+- **Use b-e2e instead:** "Verify the signup flow in a real browser" even if the repo also has unit tests.
+
 ## Tools required
 
 - `bash` — run project test and coverage commands, inspect failure output.

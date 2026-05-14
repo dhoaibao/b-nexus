@@ -41,6 +41,11 @@ If `$ARGUMENTS` is provided, treat it as the requirements pointer or summary.
 - The task is external docs or API lookup → use **b-research**.
 - The request is plan review, UX critique, or research synthesis review rather than code-review-style risk assessment.
 
+## Boundary examples
+
+- **Use default b-review:** "Review my current diff before PR" or `--range=origin/main..HEAD` when the subject is changed code.
+- **Use `--repo-audit`:** "Audit the installer and runtime contract" when the request is a reviewer-style pass over a named repository area instead of one diff.
+
 ## Tools required
 
 - `bash` — inspect `git diff`, `git status`, `git log`, and narrow verification commands.

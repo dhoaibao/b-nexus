@@ -33,6 +33,11 @@ If `$ARGUMENTS` is present, treat it as the plan path, plan slug, approved chat 
 - The task is only tests → use **b-test**.
 - Something is broken and root cause is not confirmed → use **b-debug**.
 
+## Boundary examples
+
+- **Use b-implement:** "Implement the approved rate-limiting plan" or "wire the new settings copy into the existing page."
+- **Use b-refactor instead:** "Rename `UserService` to `UserRepository` across the codebase" because the primary job is a mechanical transform.
+
 ## Tools required
 
 - `bash` — inspect status, diff, and run verification commands.

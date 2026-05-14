@@ -34,6 +34,11 @@ If `$ARGUMENTS` includes a symptom, error, or stack trace, start from it directl
 - The task is external docs or API lookup only → use **b-research**.
 - The task is a new feature or scoped implementation request → use **b-plan** or **b-implement**.
 
+## Boundary examples
+
+- **Use b-debug:** "This endpoint started returning 500 after the deploy" or "the dashboard got slower after yesterday's merge."
+- **Use b-test instead:** "The snapshot changed after the copy update" when production behavior is already known to be correct.
+
 ## Tools required
 
 - `serena-symbol-toolkit` *(preferred for tracing and focused fixes)*

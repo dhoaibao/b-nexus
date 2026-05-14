@@ -6,9 +6,9 @@ Guidelines for creating, editing, and maintaining the install-only OpenCode skil
 
 - This file is maintainer guidance for the source repository.
 - Runtime suite behavior lives in `global/AGENTS.md` and the individual `skills/*/SKILL.md` files.
-- `install.sh` deploys the runtime files into `~/.config/opencode/`.
+- `install.sh` deploys the runtime files into `~/.config/opencode/`, always writes `AGENTS.b-skills.md`, and only replaces the main `AGENTS.md` when missing or approved.
 
-When authoring runtime-facing skill prose, reference `AGENTS.md`. In this source repo, that runtime file is authored at `global/AGENTS.md` and copied into place by `install.sh`.
+When authoring runtime-facing skill prose, reference `AGENTS.md`. In this source repo, that runtime file is authored at `global/AGENTS.md`, installed as the suite snapshot at `AGENTS.b-skills.md`, and optionally applied to the main OpenCode `AGENTS.md` by `install.sh`.
 
 ## Quick links
 
@@ -17,7 +17,7 @@ When authoring runtime-facing skill prose, reference `AGENTS.md`. In this source
 - `skills/b-implement/SKILL.md` — Approved-plan execution
 - `skills/b-debug/SKILL.md` — Hypothesis-driven debugging
 - `skills/b-review/SKILL.md` — Pre-PR changed-code review
-- `global/AGENTS.md` — Runtime rules source installed as OpenCode's global `AGENTS.md`
+- `global/AGENTS.md` — Runtime rules source installed as `AGENTS.b-skills.md` and optionally applied to OpenCode's main `AGENTS.md`
 - `commands/` — Thin slash-command wrappers that load the matching skills
 
 ---
@@ -236,4 +236,4 @@ Before merging any skill file change, verify:
 5. **No trigger keyword regression** — before rewriting a description, list all current trigger keywords and verify all survive in the new version
 6. **Suite validator passes** — run `scripts/validate-skills.sh` before installing or committing skill changes
 7. **No avoidable churn** — steps should not force repeated Serena preflights, optional MCP escalation, or skill switches when the current skill can complete with bounded evidence
-8. **No duplicated global concepts** — slug algorithm, skill-exit status block, handoff envelope, manifest schema, canonical approval ask, fallback labeling, tool-budget overflow, empty-state defaults, plan staleness/revision gates, and the DOM-unit vs browser-flow boundary all live in `global/AGENTS.md`. Skills reference them; they do not restate them.
+8. **No duplicated global concepts** — slug algorithm, skill-exit status block, handoff envelope, manifest schema, canonical approval ask, fallback labeling, tool-use heuristics, empty-state defaults, plan staleness/revision gates, and the DOM-unit vs browser-flow boundary all live in `global/AGENTS.md`. Skills reference them; they do not restate them.

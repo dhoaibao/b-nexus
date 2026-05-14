@@ -36,6 +36,11 @@ If `$ARGUMENTS` is present, treat it as the task description and proceed. Ask on
 - The blocker is external docs or library behavior → use **b-research**.
 - Something is broken → use **b-debug**.
 
+## Boundary examples
+
+- **Use b-plan:** "Plan the auth migration across API routes, middleware, and session handling."
+- **Use b-implement instead:** "Add a help link to the settings page" when the behavior is obvious and the change stays within the small direct request threshold.
+
 ## Tools required
 
 - `serena-symbol-toolkit` *(preferred for planning against existing code)*
