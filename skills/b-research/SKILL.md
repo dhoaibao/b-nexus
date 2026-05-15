@@ -39,7 +39,7 @@ If `$ARGUMENTS` is provided, treat it as the research question and proceed direc
 - `brave-discovery` (page discovery).
 - `firecrawl-extraction` (default extraction tier).
 - `firecrawl-extended` *(optional, for site maps or structured field extraction)*.
-- `firecrawl-deep` *(last resort; requires explicit user approval per invocation)*.
+- `firecrawl-deep` *(last resort; requires explicit user approval per invocation, or a run-scoped capped pre-authorization per `AGENTS.md` §4)*.
 
 Fallbacks: `AGENTS.md` §4. Graceful degradation: ⚠️ Partial — lookups remain strong with Context7 or authoritative search; synthesis is weaker without extraction.
 
@@ -61,6 +61,8 @@ Before any `context7-docs` query:
 1. Resolve the library version from manifests **and** lockfiles. Use `package-lock.json` / `pnpm-lock.yaml` / `yarn.lock`, `poetry.lock` / `uv.lock`, `go.sum`, `Cargo.lock`, or equivalent.
 2. In monorepos, resolve at the workspace closest to the touched file, not the repo root.
 3. If the version is ambiguous or conflicting, ask before querying.
+4. **Unpinned / floating libraries.** If the manifest specifies a floating range and no lockfile exists (greenfield repo, just-installed deps, scratch project), state the floating range explicitly and query the **latest stable** version. Mark the answer with `Confidence: medium — version unpinned, latest assumed` so the user knows the answer can drift. Never silently pick a version.
+5. **Conflicting authoritative versions.** If the docs source serves a different version than the pinned one (e.g., Context7 only has `v3`, repo is on `v2`), do not silently substitute. State the version mismatch in `Limitations` and either ask the user to switch sources or proceed with `Confidence: low` and a labeled `version-mismatch` note.
 
 Skip this step for non-library research.
 
@@ -78,7 +80,7 @@ Skip this step for non-library research.
 2. Use `brave_news_search` only for recency-sensitive topics; use `brave_image_search` only when the question is genuinely visual.
 3. Use `firecrawl-extraction` (`firecrawl_scrape` for known URLs, `firecrawl_parse` for local documents) on the highest-signal pages.
 4. Reach for `firecrawl-extended` only for site mapping or structured-field extraction.
-5. Use `firecrawl-deep` only after lower tiers fail; surface cost and get approval per invocation (`AGENTS.md` §6).
+5. Use `firecrawl-deep` only after lower tiers fail; surface cost and get approval per invocation (`AGENTS.md` §6). If the user has granted a run-scoped capped pre-authorization (`AGENTS.md` §4), use it within the cap, decrement on each call, and report the remaining count in the status block.
 
 Honor the public-web privacy gate (`AGENTS.md` §6) on every external call. Reuse fetched results (`AGENTS.md` §4).
 
@@ -161,6 +163,6 @@ Close the run with the skill-exit status block (`AGENTS.md` §9) for research-mo
 - Prefer 2–4 authoritative sources over a long weak list.
 - Do not force an example block for fact-only quick answers.
 - If only one authoritative source supports the answer, label it as single-source.
-- Never use `firecrawl-deep` before exhausting default and extended tiers, and never without explicit user approval.
+- Never use `firecrawl-deep` before exhausting default and extended tiers, and never without explicit user approval. The default is **per-invocation approval**. A user may substitute a **run-scoped capped pre-authorization** ("approved up to N uses for this run") under the rules in `AGENTS.md` §4 — record the cap in the status block `notes` / handoff `carve-outs`, decrement on each use, and never exceed the cap. Carve-outs never override §6 safety gates.
 - Use a `Limitations` section instead of filling factual gaps from prior model knowledge.
 - Reuse results fetched earlier in the same session; do not re-fetch identical pages.

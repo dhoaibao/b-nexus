@@ -96,61 +96,19 @@ For prose-heavy or config-heavy edits, name stable anchors such as headings, key
 
 For saved plans, format execution steps as Markdown task-list items so progress can be updated in place during implementation.
 
-For full-mode plans, follow this saved-plan skeleton. New saved plans include durable frontmatter from `AGENTS.md` §2 before the Markdown body:
+**Quick-mode** chat plans follow the quick-plan template in `skills/b-plan/reference.md`. **Full-mode** saved plans follow the saved-plan skeleton in the same reference, including durable frontmatter from `AGENTS.md` §2. Do not invent ad-hoc plan shapes; both templates exist so progress and approval are mechanically inspectable.
+
+Full-mode steps are written as Markdown task-list items so `b-implement` can update progress in place:
 
 ```markdown
----
-slug: <task-slug>
-status: draft
-created_at: <YYYY-MM-DD>
-approved_at: null
-approved_by: null
-approved_head: null
-risk: <trivial | low | medium | high>
-touch_points:
-  - <path>
----
-
-# <task title>
-
-## Goal
-<one paragraph stating the end state>
-
-## Confirmed decisions
-- <decision> — <one-line rationale>
-
-## Planned touch points
-- `<path>` — <what changes here>
-
-## Dependencies
-- <upstream constraint, feature flag, migration order, external readiness>
-
-## Risks
-- <risk> — <mitigation or accepted residual>
-
-## Unknowns
-- <open question> — <how it will be resolved or who owns it>
-
 ## Steps
 - [ ] **<imperative step title>**
   - Changes: <files or symbols>
   - Why now: <ordering reason>
   - Done when: <verification>
-...
-
-## Verification
-- <project-specific command or procedure>
-
-## Rollback
-- <how to revert if Step N fails after merge>   (only when real)
-
-## Revisions
-- <YYYY-MM-DD> — <one-line delta>   (added when the plan is revised)
 ```
 
-Add deployment notes only when they are real: feature flags, migration order, external dependency readiness, or rollback risk.
-
-If the task involves field mapping or protocol translation, add a small mapping outline instead of burying it in prose.
+If the task depends on another plan, record it in `Dependencies` per the multi-plan rule in `skills/b-plan/reference.md`.
 
 ### Step 6 — Deliver the plan
 
@@ -167,12 +125,10 @@ If the task involves field mapping or protocol translation, add a small mapping 
 
 The plan is complete only when a fresh agent could execute it without re-deriving the design.
 
-### Step 7 — Revisions (if the user asks to revise)
+### Step 7 — Revise or supersede (if the user asks to change an approved plan)
 
-Follow the **plan revision protocol** in `AGENTS.md` §2:
-- Edit the plan file in place.
-- Append the change to the `## Revisions` section with the date and a one-line delta.
-- Re-request approval only when the revision changes confirmed decisions, planned touch points, or steps.
+- **Revise** when the goal and most touch points survive. Follow the **plan revision protocol** in `AGENTS.md` §2: edit the plan file in place, append a one-line `## Revisions` entry, re-request approval only when the revision touches `Confirmed decisions`, `Planned touch points`, or `Steps`.
+- **Supersede** when the goal itself changed or the approach is being replaced wholesale. Follow the supersede protocol in `skills/b-plan/reference.md`: set the old plan's `status: superseded`, create a new plan with a distinct slug, and reference the superseded plan in the new plan's `Dependencies` or `Goal`. Do not delete superseded plans.
 
 Close the run with the skill-exit status block (`AGENTS.md` §9).
 

@@ -60,7 +60,14 @@ Fallbacks: `AGENTS.md` §4. If optional bundles fail, continue narrower and labe
 2. Run `git status --short` to surface uncommitted changes alongside committed ones.
 3. **Empty-state** (`AGENTS.md` §7): if there is no diff and `--repo-audit` is not present, ask which commit, branch, or range to review. Do not silently fall back.
 4. If the diff is very large, ask the user which area to prioritize first.
-5. Pick **self-review** (`--self` or author = user) or **external review** (`--external` or author ≠ user) per the boundary in `AGENTS.md` §10. Default to **self-review** when unspecified and the working tree is dirty.
+5. **WIP / in-progress branches.** When the branch contains WIP commits (commit messages starting with `WIP`, `wip:`, `fixup!`, `squash!`) or uncommitted dirty state on top of recent commits, default to reviewing the **cumulative diff** rather than the latest commit alone. Resolve the comparison base in this order, stopping at the first that succeeds:
+   1. `--range=<base>..<head>` if the user supplied it.
+   2. The upstream tracking branch: `git rev-parse --abbrev-ref @{upstream}` → use `git merge-base @{upstream} HEAD`.
+   3. The repo's default branch as reported by `git symbolic-ref refs/remotes/origin/HEAD` (typically `origin/main` or `origin/master`) → use `git merge-base <default> HEAD`.
+   4. If none of the above resolves (detached HEAD, no upstream, no remote default), fall back to **working-tree diff** (`git diff HEAD`) and state in the report's `Scope` that no branch base was discoverable.
+
+   State the chosen base (or its absence) explicitly in `Scope`. Switch to per-commit review only when the user asks for it.
+6. Pick **self-review** (`--self` or author = user) or **external review** (`--external` or author ≠ user) per the boundary in `AGENTS.md` §10. Default to **self-review** when unspecified and the working tree is dirty.
 
 ### Step 2 — Pick the review depth
 
@@ -114,9 +121,11 @@ Skip entirely when `--skip-tests` is present.
 ### Step 5 — Report
 
 1. Findings first, ordered by severity from `AGENTS.md` §3 (BLOCKER / MAJOR / MINOR / NIT).
-2. Include **Checked and clean** — risk areas inspected with no finding — so the author sees what scope was actually covered.
+2. Include **Checked and clean** — risk areas inspected with no finding — so the author sees what scope was actually covered. Cap at **5 entries**, highest-risk first; do not pad with low-risk inspections.
 3. If there are no findings, say so explicitly and note residual risk or skipped verification.
 4. Attach the confidence signal from `AGENTS.md` §3 when review depended on partial evidence.
+
+**Research escalation.** If the review requires external knowledge to judge correctness (suspicious third-party API usage, unfamiliar library behavior, CVE plausibility), do **not** drift into open-ended research inline. Either resolve it with a single `context7-docs` lookup or emit a handoff envelope to **b-research** with the specific question and resume the review with the answer in hand.
 
 Close with the skill-exit status block (`AGENTS.md` §9).
 
@@ -158,7 +167,7 @@ Close with the skill-exit status block (`AGENTS.md` §9).
 - Do not run broad automated checks by default; use only the narrow evidence needed.
 - Security checklist items are never skipped for changed entry points, sensitive paths, or shared boundaries — even on the fast path.
 - The fast path is gated by **risk bucket**, not by line/file count. Auth/security/migration/contract touches always force standard review.
-- Always include "Checked and clean" so the author sees what scope was actually reviewed.
+- Always include "Checked and clean" so the author sees what scope was actually reviewed. Cap at 5 entries, highest-risk first.
 - In `--repo-audit` mode, name the audited surface explicitly and avoid implying full-repository coverage unless you actually inspected the full repository.
 - In `--repo-audit` mode, use a target-specific checklist and report which checklist was applied.
 - Treat lockfile, generated, snapshot, golden, vendored, and minified changes as derived artifacts unless the source or approved generation step is clear.

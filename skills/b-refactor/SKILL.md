@@ -61,8 +61,11 @@ Fallbacks: `AGENTS.md` §4. Serena LSP caveat applies; non-LSP rename/safe-delet
    - Few or no external references.
    - Behavior clearly preserved.
    - Language is **LSP-supported by Serena**.
+   - **No generated-code consumers** of the symbol (see below).
 
    Non-LSP languages (Bash, YAML, Markdown, Lua, many DSLs) auto-promote to **low** risk because rename/safe-delete results are not authoritative.
+
+   **Generated-code carve-out.** If the symbol is consumed by generated code (GraphQL clients, Prisma/ORM types, OpenAPI clients, protobuf stubs, `*.generated.*` files, codegen output committed under `node_modules`/`vendor`), the refactor auto-promotes to at least **medium** risk regardless of the local file count. The reference map (Step 2) must include generated consumers, and verification must regenerate them or confirm the generator source already reflects the new name.
 4. For medium or high-risk refactors, optionally use `gitnexus-radar` to scope blast radius before editing. Discover the baseline verification command from project scripts or CI config. If baseline checks are already failing, stop and ask.
 5. For non-LSP languages, generated glue, dynamic dispatch, config-driven references, or text/prose references outside Serena's graph, add targeted text searches to the verification worklist before editing.
 
@@ -86,6 +89,18 @@ Choose the smallest matching transformation:
 Use `apply_patch` only for import updates, config, prose, or non-symbol glue, following the patch discipline in `AGENTS.md` §6.
 
 If the work turns into a behavioral redesign instead of a mechanical transform, stop and hand it back to **b-plan** via the handoff envelope in `AGENTS.md` §9. Include the locked target, the reference map produced in Step 2, and the specific decision that turned mechanical.
+
+**Split-across-runs.** If the reference map shows the refactor is too large to verify in one coherent pass (e.g., a move touching 40+ files across unrelated modules), do not attempt it as one run. Stop and hand back to **b-plan** with the reference map and a proposed split:
+
+```text
+[handoff to b-plan]
+proposed split:
+- Run 1: <slice with stable verification boundary>
+- Run 2: <next slice, dependent on Run 1 merging>
+- Run N: ...
+```
+
+Each slice must end with the tree in a coherent, verifiable state. Slices that depend on a prior slice merging go in the new plan's `Dependencies` per `skills/b-plan/reference.md`.
 
 ### Step 4 — Verify
 

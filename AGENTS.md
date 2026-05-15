@@ -77,7 +77,7 @@ skills/<name>/
 commands/<name>.md     # Matching slash-command wrapper (required in this repo)
 ```
 
-For this repo, each skill currently uses a single `SKILL.md` file plus a thin command wrapper. Add extra files only when they materially improve maintenance.
+For this repo, each skill uses a single `SKILL.md` file plus a thin command wrapper. Add extra files (`reference.md`, `examples.md`, `scripts/`) only when they materially improve maintenance — for example, externalize long templates to `reference.md` so `SKILL.md` stays scannable under context pressure (see `skills/b-plan/reference.md`).
 
 ---
 
@@ -202,8 +202,8 @@ All skills live in `skills/<name>/SKILL.md`. When changing skill files:
 | Change type | Action |
 |---|---|
 | **Create** new skill | Create `skills/<name>/SKILL.md` and `commands/<name>.md` |
-| **Update** skill | Edit `skills/<name>/SKILL.md` and keep `commands/<name>.md` aligned |
-| **Delete** skill | Delete `skills/<name>/SKILL.md`, `commands/<name>.md`, and the directory if empty |
+| **Update** skill | Edit `skills/<name>/SKILL.md` and keep `commands/<name>.md` aligned. If the change adds or modifies a long template/skeleton, externalize it to `skills/<name>/reference.md` and link from `SKILL.md` |
+| **Delete** skill | Delete `skills/<name>/SKILL.md`, `commands/<name>.md`, any `reference.md`/`examples.md`/`scripts/`, and the directory if empty |
 
 **`global/AGENTS.md` sync** — when runtime behavior changes, update `global/AGENTS.md` in the same commit and keep any related repo docs aligned.
 

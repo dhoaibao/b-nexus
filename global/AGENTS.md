@@ -37,6 +37,7 @@ Keep one active skill until its stop condition is hit. Do not switch skills for 
 - A new request mid-flow does **not** auto-cancel the active skill. State the conflict in one line, ask the user whether to pause, queue, or abandon, then proceed.
 - An explicit `/<skill>` command from the user always overrides. Emit a handoff envelope (§9) before switching.
 - A required sub-task (e.g., a research blocker discovered during `b-implement`) is a handoff, not a parallel run. Pause, hand off, resume — never both skills active.
+- **Concurrency adjudication.** If the active skill is mid-iteration-cap (§7) or mid-transform (`b-implement` / `b-refactor`), the default is **queue** — finish the current verified step, emit a status block, then switch. If the active skill is mid-discovery only (no edits yet), the default is **pause**. The user may override either default; if they do, record the override in the handoff envelope.
 
 ### Clarification budget
 
@@ -258,7 +259,7 @@ Skills reference bundles by name instead of repeating tool lists.
 #### `firecrawl-deep` (last-resort tier, requires explicit user approval)
 
 - **Tools:** `firecrawl_interact`, `firecrawl_agent`.
-- **Cost warning:** can run for minutes and burn substantial credit. Exhaust lower tiers, then get approval per invocation.
+- **Cost warning:** can run for minutes and burn substantial credit. Exhaust lower tiers, then get approval per invocation by default. A user may grant a run-scoped, capped pre-authorization in lieu of per-invocation asks; see "Tool-use heuristics" in this section for the exact rules.
 
 #### `playwright-browser`
 
@@ -292,10 +293,24 @@ When fallback changes the intended tool path, evidence source, or verification r
 - Do not open a second tool-heavy thread until the current investigation, edit, or verification thread is closed or the user asks to expand scope.
 - If sustained tool use is not increasing evidence quality, narrow the next check or stop and ask whether to continue.
 - Classify failures before retry/fallback: unavailable, auth/permission, rate-limit, timeout, stale index/cache, unsupported content, malformed request. Retry only transient or fixable-by-narrowing failures; stop for auth failures.
-- `firecrawl-deep` invocations require user approval each time.
+- `firecrawl-deep` invocations require user approval **per invocation by default**. **Run-scoped pre-authorization carve-out:** the per-invocation default may be relaxed only when the user issues an explicit, scoped grant (e.g., "approved: use deep mode up to 3 times for this research pass") that names **both** (a) a numeric invocation cap and (b) the current run. Without an explicit cap, the carve-out is invalid and the per-invocation rule still applies. Record the granted cap in the status block `notes` and the handoff envelope `carve-outs` field; decrement on each use and surface the remaining count in the next status block. The carve-out expires when the run ends, when the cap is exhausted, or when the user revokes it — whichever comes first. The carve-out never overrides §6 safety gates (privacy, sensitive files, destructive actions).
 - `gitnexus-radar` should usually stay to 1-2 calls per run; more often means the question should move back to Serena or native tools.
 - Reuse recently fetched URLs, docs, and symbol results instead of re-fetching them.
 - The verification iteration cap (§7) still applies.
+
+### Run cost signal
+
+When a non-trivial run consumes notable budget, include a one-line cost summary in the status block `notes` field:
+
+`cost: gitnexus=2, serena=14, context7=1, firecrawl-deep=1, iterations=2/3`
+
+Only include counters that were actually used. Skip entirely on trivial runs. This lets the next skill in a chain see whether to slow down before adding more tool work.
+
+### Global bundle/path guards (runtime, not just maintainer norm)
+
+- A skill **must not** invent a new MCP bundle name. Every bundle reference must resolve to a definition in this section.
+- A skill **must not** write to a path outside §8. If a use case needs a new path, surface it as a `needs-input` blocker rather than picking one ad hoc.
+- A skill **must not** redefine an approval template, fallback label, iteration cap, severity, risk, confidence signal, slug algorithm, run-id format, manifest schema, status block, or handoff envelope. Reference the canonical section.
 
 ---
 
@@ -463,6 +478,25 @@ Examples:
 
 `<YYYYMMDD-HHMMSS>-<task-slug>`. All skills use this format.
 
+### Run-id continuity across handoffs
+
+When one skill hands off to another for the same logical task, the receiving skill **reuses** the source skill's `<run-id>` and writes its own artifacts under `.opencode/b-skills/<receiving-skill>/<run-id>/`. Continuity rules:
+
+- A new `<run-id>` is minted only on a fresh user task, not on a handoff.
+- The handoff envelope (§9) must carry the `run-id` **whenever one exists** — i.e., whenever the source skill wrote artifacts or itself inherited a `run-id` from an earlier handoff. Pure chat-only handoffs that have produced no artifacts (e.g., a quick-mode `b-plan` handing off to `b-implement` with the plan kept in chat) may omit the `run-id` field; the receiving skill mints one if and when it first writes an artifact.
+- If the receiving skill creates artifacts, it cross-links the source run directory in its own `manifest.json` `source_run` field (e.g., `".opencode/b-skills/b-plan/<run-id>/"`).
+- When a chain of skills (e.g., `b-plan -> b-implement -> b-review`) all act on the same task and any one of them has written artifacts, every subsequent run directory shares the same `<run-id>` even though each lives under a different `<skill>` subdirectory.
+
+### Non-plan artifact naming
+
+Files inside a run directory follow these conventions so they're predictable across skills:
+- `report.md` — the skill's final human-readable report.
+- `manifest.json` — the run manifest (schema below).
+- `<topic>.log` — captured command output (e.g., `pnpm-test.log`, `playwright-trace.log`).
+- `<topic>.snapshot.{txt|json}` — captured tool snapshots (a11y trees, diagnostics dumps).
+- `screenshot-<step>.png` — browser screenshots, numbered by interaction order.
+- Anything else: lowercase-kebab-case with an explicit content suffix.
+
 ### Paths
 
 - **Plans:** `.opencode/b-skills/b-plan/<task-slug>.md` (canonical) after applying the `.opencode/.gitignore` guard in §6. Saved plans remain repo-local source-of-truth files. The legacy `.opencode/b-plans/` is deprecated; do not write there.
@@ -489,10 +523,12 @@ Any run that produces more than one artifact must include `manifest.json` at the
   "run_id": "<YYYYMMDD-HHMMSS>-<task-slug>",
   "skill": "<b-skill-name>",
   "status": "complete | blocked | partial",
+  "source_run": "<relative path to upstream skill's run dir, or null>",
   "artifacts": ["<relative-path>", "..."],
   "commands": ["<command run>", "..."],
   "generated_files": ["<source path edited or created>", "..."],
   "cleanup": "<what was cleaned up, or 'none'>",
+  "cost": "<one-line cost summary, see §4, or null>",
   "notes": "<one-line summary>"
 }
 ```
@@ -525,14 +561,40 @@ State values:
 ```text
 [status]
 skill: <b-skill-name>
+run-id: <YYYYMMDD-HHMMSS>-<task-slug>   (include on any run that wrote artifacts or is part of a handoff chain; omit on pure-chat runs with no artifacts)
 state: complete | blocked | needs-input | handed-off
 artifacts: <comma-separated paths or 'none'>
 next: <skill name or 'none'>
 blockers: <one-line list or 'none'>
+cause: <cause-class>   (required when state is 'blocked'; omit otherwise)
 confidence: high | medium | low — <reason>   (omit when high and evidence is direct)
+notes: <cost summary, pre-auth carve-outs, or other run-scoped notes>   (omit the line entirely when empty)
 ```
 
+Required fields are `skill`, `state`, `artifacts`, `next`, `blockers`. Every other field is **omit-when-empty**: skip the whole line rather than emit a placeholder. The `confidence` line, when present, always sits immediately above `notes` so downstream skills can find it at a fixed offset.
+
+Skill prose that says "close with the skill-exit status block" inherits this schema verbatim; skills must not embed their own copy of the block in output templates.
+
 For trivial runs (a one-line answer, a tiny edit), the block can be omitted.
+
+### Error envelope (failure cause-class)
+
+When `state: blocked`, the `cause` field uses one of these canonical classes so downstream tooling and skills can branch without parsing prose:
+
+| Cause class | Meaning |
+|---|---|
+| `tool_unavailable` | A required MCP/CLI/server was missing or unreachable. |
+| `auth_required` | An auth/permission step blocks progress (user action needed). |
+| `user_blocked` | Waiting on a user decision or approval. |
+| `iteration_cap` | Hit the §7 cap without resolution; needs new approach or user input. |
+| `external_outage` | Third-party service down, registry outage, network failure. |
+| `stale_index` | Graph/cache stale and fallback would lose evidence quality. |
+| `policy_block` | Action was refused by a safety gate (§6) without approval. |
+| `evidence_gap` | Required evidence (test, repro, baseline) is missing and cannot be synthesized. |
+| `conflict` | Approved plan conflicts with current repo state or another active artifact. |
+| `unsupported` | The request is outside the suite's capability (e.g., no browser available for `b-e2e`). |
+
+A single `cause` per status block. If multiple classes apply, pick the one the user can act on first; mention the others in `blockers`.
 
 ### Handoff envelope
 
@@ -541,14 +603,18 @@ When a skill hands off to another skill, emit this fenced block in chat **before
 ```text
 [handoff]
 source: <current skill>
+run-id: <YYYYMMDD-HHMMSS>-<task-slug>   (include when the source skill wrote artifacts; omit on chat-only handoffs)
 goal: <one-line goal for the next skill>
 decisions: <confirmed decisions or 'none'>
 assumptions: <open assumptions or 'none'>
 files: <relevant paths or 'none'>
 verification: <expected check or 'none'>
 blockers: <known blockers or 'none'>
+carve-outs: <pre-authorized approvals scoped to this run>   (omit the line entirely when empty)
 next-skill: <b-skill-name>
 ```
+
+Required fields are `source`, `goal`, `decisions`, `assumptions`, `files`, `verification`, `blockers`, `next-skill`. `run-id` and `carve-outs` are **omit-when-empty**. The `run-id` propagates per §8 so the receiving skill writes artifacts under the same run.
 
 ### Standard report shape
 

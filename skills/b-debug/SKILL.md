@@ -74,7 +74,7 @@ Start with the cheapest verification:
 - For known public errors, optionally use `brave-discovery` + `firecrawl-extraction` after honoring the privacy gate (`AGENTS.md` §6).
 - Local diagnostics: `get_diagnostics_for_file`.
 - A narrow repro command already in the project.
-- Targeted temporary logging at one choke point.
+- Targeted temporary logging at one choke point. **Tag every temporary probe** with the exact marker `// b-debug-probe` (or the language-appropriate comment form, e.g., `# b-debug-probe`, `<!-- b-debug-probe -->`) so probes are greppable at cleanup time and cannot survive accidentally.
 - For perf bugs: profiler, `time`/`hyperfine`, runtime tracing, or a tight benchmark — never guess from code shape alone.
 - For non-deterministic bugs: forced ordering, fake clock, stress loop. Repro must demonstrate the failure under conditions you control before claiming root cause.
 
@@ -92,12 +92,14 @@ Keep the fix narrow:
 
 Do not roll broader cleanup or unrelated refactors into the bug fix.
 
+**Redesign hand-off:** if the confirmed root cause requires a structural change (new abstraction, contract change, ordering rework across modules) rather than a localized fix, stop. Emit a handoff envelope (`AGENTS.md` §9) to **b-plan** with the root-cause statement, evidence, and the minimal-fix attempted (if any). Do not silently expand a debug pass into a redesign.
+
 ### Step 5 — Verify and remove probes
 
 1. Run the narrowest relevant command that proves the symptom changed.
 2. For non-deterministic bugs, also run the stress repro from Step 3 long enough to gain confidence the race no longer triggers.
 3. For perf bugs, re-run the benchmark and report the before/after delta, not just "feels faster."
-4. **Re-scan the diff** for every temporary probe added during Step 3: `console.log`, `print`, breakpoints, extra metrics, debug flags, fake clocks, profiler hooks. Remove each one that was not part of the final fix and re-run verification.
+4. **Re-scan the diff** for every temporary probe added during Step 3. First grep for the `b-debug-probe` tag across the diff and remove every match. Then re-scan for untagged probes (`console.log`, `print`, breakpoints, extra metrics, debug flags, fake clocks, profiler hooks) and remove anything that was not part of the final fix. Re-run verification after removal.
 5. If the fix affects config or process startup, tell the user whether a restart or reload is required.
 6. If the fix touched several files or a shared boundary, emit a handoff envelope (`AGENTS.md` §9) recommending **b-review**.
 

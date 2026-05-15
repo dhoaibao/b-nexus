@@ -98,6 +98,8 @@ Classify failures:
 
 **Mid-step rollback:** if a partial edit has left the tree in a broken state (compile failure, import cycle, half-renamed symbol) and the next iteration cannot move forward without first restoring a coherent baseline, stop attempting to push through. Either (a) finish the edit to a coherent state in one more focused pass, or (b) manually roll back only the edits made in the current step using patch-based reversals. If a file-level restore is truly required, stop and ask for approval first because it can discard unrelated user changes in the same path. Never leave the working tree mid-transform across a skill exit — surface the rollback explicitly to the user.
 
+**Cascading failures:** if fixing the current step's failure introduces a new failure in a previously-passing area, treat the cascade as evidence that the plan or the step's scope is wrong, not as another iteration. After **one** attempted cascade fix that doesn't restore green, stop. Either trigger the plan revision protocol (`AGENTS.md` §2), hand off to **b-debug** for root-cause, or surface the cascade to the user. Do not burn the iteration cap chasing cascades.
+
 Apply the iteration cap from `AGENTS.md` §7.
 
 ### Step 5 — Record progress and finish cleanly
@@ -107,6 +109,8 @@ After a step passes verification:
 - For frontmatter plans, set `status: in-progress` after the first completed step and `status: complete` only when every approved step is done.
 - Keep the diff limited to approved scope.
 - Continue to the next step only if there is one.
+
+**Step atomicity:** a step is normally an independently-verifiable unit and should pass its own check before the next step begins. The exception is a **tightly coupled group** (e.g., split a function and immediately update its one caller) where intermediate verification would fail by design. The plan must mark such groups explicitly ("Steps 3a–3c verify together"); otherwise treat each step as atomic. Never silently merge atomic steps to dodge a failing check.
 
 At the end:
 - Inspect `git diff`.

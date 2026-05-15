@@ -108,7 +108,9 @@ b-skills/
 │   ├── smoke-install.sh
 │   └── validate-skills.sh
 └── skills/
-    ├── b-plan/SKILL.md
+    ├── b-plan/
+    │   ├── SKILL.md
+    │   └── reference.md          # long-form templates (saved-plan skeleton, quick-plan template, supersede/multi-plan rules)
     ├── b-research/SKILL.md
     ├── b-implement/SKILL.md
     ├── b-refactor/SKILL.md
@@ -117,6 +119,8 @@ b-skills/
     ├── b-e2e/SKILL.md
     └── b-review/SKILL.md
 ```
+
+Skills are normally a single `SKILL.md`. Optional support files (`reference.md`, `examples.md`, `scripts/`) are added only when externalizing content materially improves maintenance — for example, when a template is long enough to crowd out core instructions under context pressure. See `AGENTS.md` "Skill directory structure template" for the full convention.
 
 This tree is the source repository layout used by `install.sh`, not a directly discoverable OpenCode runtime layout. The installer copies:
 - `skills/` → `~/.config/opencode/skills/`
@@ -140,7 +144,7 @@ Skills reference **MCP bundles** defined in `global/AGENTS.md` §4 instead of re
 | `brave-discovery` | `brave-search` | Page discovery only. `brave_news_search` / `brave_image_search` are used inline when a skill explicitly needs news or visual evidence. |
 | `firecrawl-extraction` | `firecrawl` | Default tier: `firecrawl_scrape`, `firecrawl_parse`. |
 | `firecrawl-extended` | `firecrawl` | Conditional tier: `firecrawl_map`, `firecrawl_extract` for site maps and structured fields. |
-| `firecrawl-deep` | `firecrawl` | Last-resort tier: `firecrawl_interact`, `firecrawl_agent`. Cost warning — minutes-scale, **requires explicit user approval per invocation**. |
+| `firecrawl-deep` | `firecrawl` | Last-resort tier: `firecrawl_interact`, `firecrawl_agent`. Cost warning — minutes-scale. **Per-invocation approval by default**; a run-scoped capped pre-authorization may be granted in lieu of per-call asks per `global/AGENTS.md` §4. |
 | `playwright-browser` | `playwright` MCP, or local Playwright CLI via `bash` as fallback | Browser automation. `*_unsafe` variants are excluded from the default toolkit and require approval. |
 | `gitnexus-radar` *(optional)* | `gitnexus` | Optional graph radar — only when indexed, fresh, and target-aware. Never an edit layer. |
 
@@ -159,7 +163,7 @@ Skills reference **MCP bundles** defined in `global/AGENTS.md` §4 instead of re
 - Do not ask both tools the same question. A normal handoff is `GitNexus narrow → Serena inspect/edit`.
 - Go back to GitNexus only if Serena reveals a new graph question, such as an unexpected shared boundary or consumer contract.
 
-OpenCode integration: Serena starts without auto-opening the dashboard and owns symbol/reference/structural edits; native tools handle strings, manifests, prose, configs, and commands. Cost-gated tools (`firecrawl-deep`, browser `*_unsafe`) require approval per invocation. Evidence hierarchy and confidence labeling live in `global/AGENTS.md` §5/§3.
+OpenCode integration: Serena starts without auto-opening the dashboard and owns symbol/reference/structural edits; native tools handle strings, manifests, prose, configs, and commands. Cost-gated tools (`firecrawl-deep`, browser `*_unsafe`) require approval per invocation by default; `firecrawl-deep` additionally supports a run-scoped capped pre-authorization (`global/AGENTS.md` §4). Evidence hierarchy and confidence labeling live in `global/AGENTS.md` §5/§3.
 
 ---
 

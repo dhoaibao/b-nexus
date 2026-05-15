@@ -46,6 +46,7 @@ Fallbacks: `AGENTS.md` §4. Prefer Playwright MCP, then local Playwright CLI if 
 3. Before touching `localhost`, verify the server is reachable. Do not start a dev server without approval (canonical approval ask in `AGENTS.md` §6).
 4. Clarify only what blocks the flow: auth/session state, test data, and whether writes are allowed.
 5. **Auth state reuse:** load approved safe stored auth state when available. If auth is needed and no state exists, ask before saving reusable post-login state. Without opt-in, use ephemeral/current-run state only.
+6. **Expired stored auth.** If a stored auth state loads but the post-load snapshot lands on a login page, session-expired banner, or 401/403, treat the state as expired. Do **not** silently re-authenticate. Ask the user whether to (a) re-auth and refresh the stored state, (b) re-auth ephemerally for this run only, or (c) abort.
 
 ### Step 2 — Pick the mode
 
@@ -65,6 +66,7 @@ If the user wants both ("verify it then write a test"), do verify first, then tr
 7. **Viewport check defaults.** Test only the requested viewport unless the user explicitly asks for multi-viewport, the task is responsive-layout work, or the changed UI is intended for both mobile and desktop. For responsive UI work, check one representative mobile and one representative desktop viewport unless the user narrows scope.
 8. If a step looks flaky, apply the flake handling rule in `AGENTS.md` §10 before reporting flake.
 9. Distinguish **functional snapshot** (assert state or text content) from **visual regression** (pixel diff). Use the former by default; do not introduce visual regression baselines without approval.
+10. **Accessibility checks.** When the verify run covers a user-facing flow, include a focused a11y check on the changed surface: inspect the accessibility snapshot for missing roles/labels on the interacted elements, confirm focus order through the flow, and report any blocker-level a11y issues (unlabeled controls, focus traps, role/label mismatch) as findings. Full WCAG audits are out of scope unless requested; only flag what the snapshot already reveals.
 
 ### Step 3A — Author or fix browser tests (author mode)
 

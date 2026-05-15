@@ -94,6 +94,12 @@ If the failure might reflect a real product bug and the correct behavior is not 
 
 Discover the existing coverage command before inventing one; ask before adding a runner. Add top gaps only when the user wants implementation.
 
+**Stop heuristic.** Coverage review is *bounded*, not exhaustive. Stop when **any** is true:
+- All priority-1 gaps are closed (changed behavior is covered).
+- The next gap is priority-3 or lower and the user has not asked for opportunistic work.
+- 5 gaps have been added in one run and no priority-1 remains — surface the rest as a follow-up list.
+Never loop through priority-4 gaps autonomously.
+
 **Advanced tests** — property-based, fuzz, and contract tests stay here only when the repo already has an established runner and pattern. If the framework, boundary contract, generator strategy, or CI cost needs design, hand off to **b-plan** instead of inventing it inside a test edit.
 
 Prefer `serena-symbol-toolkit` insertions for existing test bodies. Use `apply_patch` when creating a new test file or when a small non-symbol edit is clearer, following the patch discipline in `AGENTS.md` §6.
@@ -143,3 +149,4 @@ Close with the skill-exit status block (`AGENTS.md` §9).
 - Keep fixture, mock, and setup changes as local as practical.
 - State when broader suite coverage was skipped and why the narrower check was sufficient.
 - Never introduce a test framework or coverage runner without explicit approval.
+- **Test utilities** (factories, builders, custom matchers, shared fixtures) belong here when they are added, edited, or extended to support a test in scope. Mechanical relocation/rename of an existing test utility is **b-refactor**, not **b-test**.

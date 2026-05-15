@@ -52,7 +52,7 @@ External knowledge with auto-deepening depth — lookup or research.
 - Treats a user-provided URL, file, or document as **direct-source lookup** when one bounded source is likely sufficient; extraction is allowed in that lookup lane.
 - Pins library version from manifests **and** lockfiles; resolves at the closest workspace in monorepos.
 - Uses Context7 first for library and framework APIs; search discovers candidate sources, while final claims require Context7, direct extraction, or another primary source unless explicitly labeled snippet-only and low confidence.
-- Uses `firecrawl-extraction` for local docs and known URLs; `firecrawl-extended` only for site maps or structured fields; `firecrawl-deep` only with explicit user approval per invocation (cost warning in `global/AGENTS.md` §4).
+- Uses `firecrawl-extraction` for local docs and known URLs; `firecrawl-extended` only for site maps or structured fields; `firecrawl-deep` only with explicit user approval per invocation, or under a run-scoped capped pre-authorization (`global/AGENTS.md` §4 cost warning).
 - Reuses fetched results from earlier in the session instead of re-fetching.
 
 **Output**
@@ -84,7 +84,8 @@ External knowledge with auto-deepening depth — lookup or research.
 - Uses `gitnexus-radar` only when a shared route, tool, or exported boundary makes graph context genuinely useful.
 - Applies the **plan staleness gate** (`global/AGENTS.md` §2) before executing a saved plan.
 - Triggers the **plan revision protocol** (`global/AGENTS.md` §2) when the plan is wrong mid-execution.
-- Verifies each step before moving on, capped by the iteration cap in `global/AGENTS.md` §7.
+- Verifies each step before moving on, capped by the iteration cap in `global/AGENTS.md` §7. Treats each step as **atomic** — independently verifiable — unless the plan explicitly marks a **tightly coupled group** (e.g., "Steps 3a–3c verify together") where intermediate verification would fail by design; never silently merges atomic steps to dodge a failing check.
+- Detects **cascading failures**: when fixing the current step's failure introduces a new failure in a previously-passing area, allows one attempted cascade fix only, then stops and either triggers the plan revision protocol (`global/AGENTS.md` §2), hands off to `b-debug` for root-cause, or surfaces the cascade to the user. Cascades are not absorbed by the iteration cap.
 - Follows global `apply_patch` discipline: fresh target slice, small hunks, stale-context retry after missing expected lines.
 - Updates saved-plan task-list progress in place when the plan uses checkbox-style steps.
 - Updates frontmatter progress (`approved` → `in-progress` → `complete`) without stripping metadata.
@@ -123,7 +124,9 @@ Closes with the **skill-exit status block** from `global/AGENTS.md` §9.
 - Handles perf bugs explicitly: measures before and after with profilers, benchmarks, or runtime tracing — never infers speed from code shape.
 - Handles **cannot-reproduce** reports explicitly: states the gap, captures state diffs, and asks before patching.
 - Confirms root cause before editing.
-- Applies the smallest fix under global `apply_patch` discipline when manual edits are needed, verifies with the narrowest relevant runtime check, then re-scans the diff and removes every temporary probe before reporting success.
+- **Tags every temporary probe** with a greppable marker (`b-debug-probe` in the language-appropriate comment form: `// b-debug-probe`, `# b-debug-probe`, `<!-- b-debug-probe -->`) so probes are recoverable at cleanup.
+- Applies the smallest fix under global `apply_patch` discipline when manual edits are needed, verifies with the narrowest relevant runtime check, then re-scans the diff: first greps for the `b-debug-probe` tag and removes every match, then scans for untagged probes (`console.log`, `print`, breakpoints, fake clocks, profiler hooks) before reporting success.
+- Hands off to `b-plan` when the confirmed root cause requires a structural redesign (new abstraction, contract change, cross-module ordering rework) rather than a localized fix; does not silently expand a debug pass into a redesign.
 - Defers the "test failure vs runtime bug" decision to `global/AGENTS.md` §10.
 
 **Output**
@@ -196,7 +199,8 @@ Findings -> Coverage / Tests / Observability -> READY FOR PR or NEEDS FIXES
 - Uses `serena-symbol-toolkit` to map tests to source ownership when helpers, imports, or interfaces hide the real target.
 - Captures large failure output under `/tmp/opencode/b-skills/b-test/` instead of depending on truncated terminal output.
 - Treats snapshots, golden files, fixtures, mocks, and async timing as explicit test concerns; updates snapshots only after the **snapshot confirmation procedure** in `global/AGENTS.md` §10.
-- Ranks coverage gaps using the rubric in the skill (required → strong → useful → opportunistic).
+- Ranks coverage gaps using the rubric in the skill (required → strong → useful → opportunistic) and applies a **bounded stop heuristic**: stops when all priority-1 gaps (changed behavior) are closed, or when the next gap is priority-3 or lower without explicit user request, or when 5 gaps have been added in one run with no priority-1 remaining. Never loops through priority-4 gaps autonomously.
+- Owns **test utilities** (factories, builders, custom matchers, shared fixtures) when they are added, edited, or extended to support an in-scope test. Mechanical relocation/rename of an existing test utility belongs to `b-refactor`.
 - Hands real-browser flows to `b-e2e`; hands product-behavior uncertainty or confirmed product fixes out of the test lane to `b-debug` or `b-implement` with the failing evidence.
 - Keeps property-based, fuzz, and contract tests in `b-test` only when the repo already has an established runner and pattern; new strategies or frameworks route to `b-plan` first.
 - Uses global `apply_patch` discipline for new test files and small non-symbol edits.
@@ -226,7 +230,9 @@ Type -> Framework -> Findings -> Changes -> Verification -> Remaining gaps
 - Verifies localhost targets are reachable before navigating; never starts a dev server without approval.
 - Clarifies only blocking state: auth/session, test data, whether writes are allowed.
 - Reuses approved stored auth state (`storageState.json`) when available, but saves reusable post-login auth state only with explicit user opt-in and in a non-worktree path by default.
+- Detects **expired stored auth** (post-load snapshot lands on a login page, session-expired banner, or 401/403) and never silently re-authenticates: asks the user to choose between refreshing the stored state, re-auth ephemerally for this run only, or aborting.
 - Uses accessibility snapshots before interaction.
+- Runs a **focused accessibility check** in verify mode on the changed/interacted surface: inspects the accessibility snapshot for missing roles/labels on interacted elements, confirms focus order through the flow, and reports blocker-level a11y issues (unlabeled controls, focus traps, role/label mismatch) as findings. Full WCAG audits remain out of scope unless requested.
 - Verifies state with snapshots, screenshots, console/network evidence. Multi-viewport remains opt-in except responsive UI work or UI intended for both mobile and desktop, where one representative mobile and desktop viewport are checked by default.
 - Defaults to functional snapshots over visual regression; visual regression baselines require approval.
 - Applies the **flake handling** procedure in `global/AGENTS.md` §10 before reporting flake.
@@ -258,7 +264,8 @@ Mode -> Target -> Driver -> Interactions -> Assertions -> Test code -> Artifacts
 - Locks the exact target before editing.
 - Runs `find_referencing_symbols` as the primary graph-backed static impact-mapping step, while treating dynamic, config-driven, generated, and prose references as outside that proof unless separately searched.
 - Classifies the refactor on the **risk rubric** in `global/AGENTS.md` §3 (trivial / low / medium / high).
-- Supports a **trivial local fast path** only when one file, no contract change, few references, behavior preserved, **and** the language is LSP-supported by Serena. Non-LSP languages auto-promote to at least **low** risk by design.
+- Supports a **trivial local fast path** only when one file, no contract change, few references, behavior preserved, the language is LSP-supported by Serena, **and** no generated-code consumers depend on the target. Non-LSP languages auto-promote to at least **low** risk by design.
+- Applies a **generated-code carve-out**: when the target is consumed by generated code (GraphQL clients, Prisma/ORM types, OpenAPI clients, protobuf stubs, `*.generated.*` files, committed codegen output), the refactor auto-promotes to at least **medium** risk regardless of local file count, the reference map must include generated consumers, and verification must regenerate them or confirm the generator source already reflects the change.
 - Treats vague "simplify" requests as planning work until the exact behavior-preserving transform is locked.
 - Uses `gitnexus-radar` only when exported, shared, route/tool, or broader package boundaries make graph context useful.
 - Uses the `serena-symbol-toolkit` rename/delete/body-replacement tools whenever they fit the transformation.
@@ -267,6 +274,7 @@ Mode -> Target -> Driver -> Interactions -> Assertions -> Test code -> Artifacts
 - Treats **move between files** as the highest-mechanical-risk refactor: add destination first, update every import and test path, update build config and barrel files, only then `safe_delete_symbol` the origin, then re-confirm references.
 - Verifies with diagnostics plus the narrowest risk-appropriate check (verification ladder in `global/AGENTS.md` §7).
 - Hands behavioral redesign back to `b-plan` via the handoff envelope in `global/AGENTS.md` §9, including the locked target and the reference map.
+- **Splits across runs** when the reference map shows the refactor is too large to verify in one coherent pass: stops, hands back to `b-plan` with the reference map and a proposed slice list, where each slice ends with the tree in a coherent verifiable state and slices that depend on a prior merge go into the new plan's `Dependencies`.
 
 **Output**
 ```text
@@ -311,8 +319,8 @@ This repository is the install-only source layout for the suite. OpenCode does n
 - Trigger precedence is explicit: browser flow → `b-e2e`; DOM-rendered unit test → `b-test`; likely product bug → `b-debug` (per the test-vs-bug decision in `global/AGENTS.md` §10); named behavior-preserving transform → `b-refactor`; unclear scope → `b-plan`; external-knowledge blocker → `b-research`.
 - After `b-plan` approval, the approved plan is the execution source of truth for multi-step implementation, subject to the **plan staleness gate** and **plan revision protocol** in `global/AGENTS.md` §2.
 - New saved plans carry durable frontmatter for approval state, approved git HEAD, risk, and touch points; legacy plans remain valid with explicit current-chat approval.
-- Cross-skill handoffs use the **handoff envelope** in `global/AGENTS.md` §9 (`source`, `goal`, `decisions`, `assumptions`, `files`, `verification`, `blockers`, `next-skill`).
-- Non-trivial skill runs end with the **skill-exit status block** in `global/AGENTS.md` §9.
+- Cross-skill handoffs use the **handoff envelope** in `global/AGENTS.md` §9 (`source`, `run-id`, `goal`, `decisions`, `assumptions`, `files`, `verification`, `blockers`, `carve-outs`, `next-skill`). `run-id` and `carve-outs` are omit-when-empty; the `run-id` propagates per §8 so the receiving skill writes artifacts under the same run directory.
+- Non-trivial skill runs end with the **skill-exit status block** in `global/AGENTS.md` §9 (`skill`, `run-id`, `state`, `artifacts`, `next`, `blockers`, `cause`, `confidence`, `notes`). Required fields: `skill`, `state`, `artifacts`, `next`, `blockers`. Conditional: `cause` is present only when `state: blocked` (using a canonical cause class in §9) and omitted otherwise. Omit-when-empty: `run-id`, `confidence`, and `notes`.
 - Clarification loops are capped (max 2 rounds) unless a real decision gate remains.
 - Public-web privacy gate, sensitive-file safety, worktree safety, and git safety are owned in `global/AGENTS.md` §6.
 - Approval-required actions use the **canonical approval ask** template in `global/AGENTS.md` §6.
