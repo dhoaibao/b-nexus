@@ -83,9 +83,9 @@ In this source repo, the shared runtime rules are authored in `global/AGENTS.md`
 - **Session lifecycle** (`§11`): preflight and crash/resume rules.
 
 Artifact paths:
-- Plans: `.opencode/b-skills/b-plan/<task-slug>.md` (legacy `.opencode/b-plans/` is deprecated). New saved plans include frontmatter for durable approval state, timestamps, approved git HEAD, risk, and touch points. Saved plans remain the canonical repo-local source of truth even when non-plan runtime artifacts would fall back to `~/.config/opencode/...` or `/tmp/opencode/...`. `<task-slug>` follows the slug algorithm in `global/AGENTS.md` §8.
-- Skill artifacts: `.opencode/b-skills/<skill>/<run-id>/` for repo-local non-sensitive artifacts when `.opencode/` is already git-ignored; otherwise use `~/.config/opencode/b-skills/<skill>/<run-id>/` or `/tmp/opencode/b-skills/<skill>/<run-id>/`. E2E auth/session state should use the non-worktree path by default. `run-id = <YYYYMMDD-HHMMSS>-<slug>`.
-- Saved reports: `.opencode/b-skills/<skill>/<run-id>/report.md` for explicit review/research reports when repo-local `.opencode/` is ignored; otherwise use the non-worktree fallback path that matches sensitivity and retention needs.
+- Plans: `.opencode/b-skills/b-plan/<task-slug>.md` after applying the `.opencode/.gitignore` guard in `global/AGENTS.md` §6 (legacy `.opencode/b-plans/` is deprecated). New saved plans include frontmatter for durable approval state, timestamps, approved git HEAD, risk, and touch points. Saved plans remain the canonical repo-local source of truth. `<task-slug>` follows the slug algorithm in `global/AGENTS.md` §8.
+- Skill artifacts: `.opencode/b-skills/<skill>/<run-id>/` for repo-local non-sensitive artifacts after applying the `.opencode/.gitignore` guard in `global/AGENTS.md` §6. E2E auth/session state should use the non-worktree path by default. `run-id = <YYYYMMDD-HHMMSS>-<slug>`.
+- Saved reports: `.opencode/b-skills/<skill>/<run-id>/report.md` for explicit review/research reports after applying the `.opencode/.gitignore` guard in `global/AGENTS.md` §6.
 - Temporary command output: `/tmp/opencode/b-skills/<skill>/<slug>.log`.
 - Multi-artifact runs include a `manifest.json` per the schema in `global/AGENTS.md` §8.
 

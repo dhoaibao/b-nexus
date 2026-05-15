@@ -365,8 +365,8 @@ Skills do not restate this. They reference §6.
 ### Repo-local artifact safety
 
 - Saved plans under `.opencode/b-skills/b-plan/` are canonical source-of-truth files, not runtime artifacts; this section does not reroute them.
-- Before writing repo-local artifacts under `.opencode/` inside the current worktree, verify that the path is ignored by git.
-- If repo-local `.opencode/` is not ignored, do not store auth/session state or other sensitive run artifacts there. Use `~/.config/opencode/b-skills/...` or `/tmp/opencode/b-skills/...` instead, or ask.
+- Before any suite write under repo-local `.opencode/`, including saved plans, ensure the root `.opencode/` directory has an ignore guard: if `.opencode/` does not exist, create it with `.opencode/.gitignore` containing `*`; if `.opencode/` exists without `.gitignore`, create `.opencode/.gitignore` containing `*`; if `.opencode/.gitignore` already exists, leave it unchanged.
+- Do not store auth/session state or other sensitive run artifacts under repo-local `.opencode/` unless the user explicitly opts into repo-local persistence. Use `~/.config/opencode/b-skills/...` or `/tmp/opencode/b-skills/...` instead by default.
 - Persisting reusable browser auth/session state requires explicit user opt-in, even outside the worktree. Without opt-in, use an ephemeral browser session or current-run temporary state only.
 - Never store real browser auth/session state under a tracked worktree path.
 
@@ -464,9 +464,9 @@ Examples:
 
 ### Paths
 
-- **Plans:** `.opencode/b-skills/b-plan/<task-slug>.md` (canonical). Saved plans remain repo-local source-of-truth files even when runtime artifacts would fall back to a non-worktree path. The legacy `.opencode/b-plans/` is deprecated; do not write there.
-- **Skill artifacts:** `.opencode/b-skills/<skill>/<run-id>/` for repo-local non-sensitive artifacts when `.opencode/` is already git-ignored in the current worktree.
-- **Saved reports:** `.opencode/b-skills/<skill>/<run-id>/report.md` for explicit review/research reports when repo-local `.opencode/` is ignored; otherwise use `~/.config/opencode/b-skills/<skill>/<run-id>/report.md` or `/tmp/opencode/b-skills/<skill>/<run-id>/report.md` depending on sensitivity and retention needs.
+- **Plans:** `.opencode/b-skills/b-plan/<task-slug>.md` (canonical) after applying the `.opencode/.gitignore` guard in §6. Saved plans remain repo-local source-of-truth files. The legacy `.opencode/b-plans/` is deprecated; do not write there.
+- **Skill artifacts:** `.opencode/b-skills/<skill>/<run-id>/` for repo-local non-sensitive artifacts after applying the `.opencode/.gitignore` guard in §6.
+- **Saved reports:** `.opencode/b-skills/<skill>/<run-id>/report.md` for explicit review/research reports after applying the `.opencode/.gitignore` guard in §6.
 - **Sensitive artifacts:** browser auth/session state and similar secrets default to `~/.config/opencode/b-skills/<skill>/<run-id>/` or `/tmp/opencode/b-skills/<skill>/<run-id>/`; never store them in a tracked worktree path.
 - **Temporary logs:** `/tmp/opencode/b-skills/<skill>/<slug>.log`.
 

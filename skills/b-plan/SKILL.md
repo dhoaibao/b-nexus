@@ -59,7 +59,7 @@ Graceful degradation: ✅ Possible — planning still works with native reads pl
 Use the **non-trivial** definition (`AGENTS.md` §3) as the threshold:
 
 - **Quick mode**: the task is trivial — single area, no public contract, no sensitive path, low risk. Return a concise chat plan with a verification step.
-- **Full mode**: anything **non-trivial**, or where a real structural choice exists. Write a saved plan to `.opencode/b-skills/b-plan/<task-slug>.md` using the slug algorithm in `AGENTS.md` §8. Saved plans are canonical source-of-truth files and are not rerouted by the repo-local runtime-artifact fallback.
+- **Full mode**: anything **non-trivial**, or where a real structural choice exists. Apply the `.opencode/.gitignore` guard from `AGENTS.md` §6, then write a saved plan to `.opencode/b-skills/b-plan/<task-slug>.md` using the slug algorithm in `AGENTS.md` §8. Saved plans are canonical source-of-truth files and are not rerouted by the repo-local runtime-artifact fallback.
 
 Choose the mode yourself. Only ask when both modes are genuinely valid and the user's preference changes the output.
 
@@ -169,7 +169,7 @@ If the task involves field mapping or protocol translation, add a small mapping 
 - Hand approved execution to **b-implement** via the handoff envelope in `AGENTS.md` §9.
 
 **Full mode:**
-- Write an English plan to `.opencode/b-skills/b-plan/<task-slug>.md`.
+- Apply the `.opencode/.gitignore` guard from `AGENTS.md` §6, then write an English plan to `.opencode/b-skills/b-plan/<task-slug>.md`.
 - Show the saved path.
 - Ask for approval.
 - If approval arrives in the same planning run, update the plan frontmatter in place: `status: approved`, `approved_at: <timestamp>`, `approved_by: user`, and `approved_head: <git-sha>` when the repo has a git HEAD.
@@ -189,7 +189,7 @@ Close the run with the skill-exit status block (`AGENTS.md` §9).
 
 - Do not implement while planning.
 - Keep quick plans lean; do not turn every small task into a full document.
-- Save only full-mode plans to `.opencode/b-skills/b-plan/`. The legacy `.opencode/b-plans/` path is deprecated; do not write there.
+- Save only full-mode plans to `.opencode/b-skills/b-plan/` after applying the `.opencode/.gitignore` guard from `AGENTS.md` §6. The legacy `.opencode/b-plans/` path is deprecated; do not write there.
 - Include the durable plan frontmatter from `AGENTS.md` §2 in new saved plans; legacy plans without frontmatter remain valid when explicitly approved in chat.
 - Use the slug algorithm in `AGENTS.md` §8; do not invent ad-hoc filenames.
 - Surface blocking unknowns instead of hiding them in vague prose.

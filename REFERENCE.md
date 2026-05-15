@@ -34,7 +34,7 @@ how should I approach this refactor?
 
 **Output**
 - Quick mode: short chat plan.
-- Full mode: English plan file at `.opencode/b-skills/b-plan/<task-slug>.md`, where `<task-slug>` follows the slug algorithm in `global/AGENTS.md` §8. Saved plans remain canonical repo-local source-of-truth files even when non-plan runtime artifacts would fall back to a non-worktree path. Skeleton: durable frontmatter, `# title`, `Confirmed decisions`, `Planned touch points`, `Dependencies`, `Risks`, `Unknowns`, checkbox-style `Steps`, `Verification`, `Rollback` (only when real), and `Revisions` (added when revised).
+- Full mode: English plan file at `.opencode/b-skills/b-plan/<task-slug>.md` after applying the `.opencode/.gitignore` guard in `global/AGENTS.md` §6, where `<task-slug>` follows the slug algorithm in `global/AGENTS.md` §8. Saved plans remain canonical repo-local source-of-truth files. Skeleton: durable frontmatter, `# title`, `Confirmed decisions`, `Planned touch points`, `Dependencies`, `Risks`, `Unknowns`, checkbox-style `Steps`, `Verification`, `Rollback` (only when real), and `Revisions` (added when revised).
 
 **Key rules**
 - Do not implement while planning.
@@ -285,7 +285,7 @@ Type -> Framework -> Findings -> Changes -> Verification -> Remaining gaps
 **Core behavior**
 - Uses the `playwright-browser` bundle (`global/AGENTS.md` §4): Playwright MCP when available, local Playwright CLI via `bash` as a documented fallback.
 - Creates a session-specific artifact directory under `.opencode/b-skills/b-e2e/<run-id>/` using the run-id format from `global/AGENTS.md` §8.
-- Uses repo-local `.opencode/...` artifact paths only when that path is already git-ignored; otherwise falls back to `~/.config/opencode/b-skills/...` or `/tmp/opencode/b-skills/...`.
+- Uses repo-local `.opencode/...` artifact paths for non-sensitive artifacts after applying the `.opencode/.gitignore` guard from `global/AGENTS.md` §6; sensitive artifacts and auth/session state still default to `~/.config/opencode/b-skills/...` or `/tmp/opencode/b-skills/...`.
 - Verifies localhost targets are reachable before navigating; never starts a dev server without approval.
 - Clarifies only blocking state: auth/session, test data, whether writes are allowed.
 - Reuses approved stored auth state (`storageState.json`) when available, but saves reusable post-login auth state only with explicit user opt-in and in a non-worktree path by default.
@@ -379,9 +379,9 @@ This repository is the install-only source layout for the suite. OpenCode does n
 - `scripts/validate-skills.sh` — suite validator for frontmatter, required sections, stale phrases, docs coverage, and global-rule guardrails.
 
 ### Runtime artifacts
-- `.opencode/b-skills/b-plan/<task-slug>.md` — saved plans from `b-plan` (legacy `.opencode/b-plans/` is deprecated). These remain canonical repo-local source-of-truth files. `<task-slug>` derives from `global/AGENTS.md` §8.
-- `.opencode/b-skills/<skill>/<run-id>/` — repo-local non-sensitive run artifacts when `.opencode/` is git-ignored, with `run-id = <YYYYMMDD-HHMMSS>-<slug>`.
-- `.opencode/b-skills/<skill>/<run-id>/report.md` — saved review/research reports when repo-local `.opencode/` is git-ignored; otherwise use the non-worktree fallback path that matches sensitivity and retention needs.
+- `.opencode/b-skills/b-plan/<task-slug>.md` — saved plans from `b-plan` after applying the `.opencode/.gitignore` guard from `global/AGENTS.md` §6 (legacy `.opencode/b-plans/` is deprecated). These remain canonical repo-local source-of-truth files. `<task-slug>` derives from `global/AGENTS.md` §8.
+- `.opencode/b-skills/<skill>/<run-id>/` — repo-local non-sensitive run artifacts after applying the `.opencode/.gitignore` guard from `global/AGENTS.md` §6, with `run-id = <YYYYMMDD-HHMMSS>-<slug>`.
+- `.opencode/b-skills/<skill>/<run-id>/report.md` — saved review/research reports after applying the `.opencode/.gitignore` guard from `global/AGENTS.md` §6.
 - `~/.config/opencode/b-skills/<skill>/<run-id>/` or `/tmp/opencode/b-skills/<skill>/<run-id>/` — non-worktree artifacts for sensitive browser/session state.
 - `/tmp/opencode/b-skills/<skill>/<slug>.log` — large command output and temporary logs.
 - Multi-artifact runs include a `manifest.json` per the schema in `global/AGENTS.md` §8.

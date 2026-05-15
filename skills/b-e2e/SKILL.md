@@ -43,11 +43,11 @@ Graceful degradation: ⚠️ Partial — MCP path is fastest; CLI fallback works
 
 ### Step 1 — Prepare the run
 
-1. Create a session-specific artifact directory using the run-id format from `AGENTS.md` §8. Use `.opencode/b-skills/b-e2e/<run-id>/` only when `.opencode/` is already ignored by git in the current repo; otherwise use `~/.config/opencode/b-skills/b-e2e/<run-id>/` for persistent artifacts or `/tmp/opencode/b-skills/b-e2e/<run-id>/` for disposable ones.
+1. Create a session-specific artifact directory using the run-id format from `AGENTS.md` §8. For repo-local non-sensitive artifacts, first apply the `.opencode/.gitignore` guard from `AGENTS.md` §6, then use `.opencode/b-skills/b-e2e/<run-id>/`. Use `~/.config/opencode/b-skills/b-e2e/<run-id>/` or `/tmp/opencode/b-skills/b-e2e/<run-id>/` for sensitive artifacts or auth/session state unless the user explicitly opts into repo-local persistence.
 2. Determine the **target**: a URL, an extension surface, a local app, or an authenticated entry point. Record the target type.
 3. Before touching `localhost`, verify the server is reachable. Do not start a dev server without approval (canonical approval ask in `AGENTS.md` §6).
 4. Clarify only what blocks the flow: auth/session state, test data, and whether writes are allowed.
-5. **Auth state reuse:** if a safe stored auth state file already exists (for example under `~/.config/opencode/b-skills/b-e2e/.../storage-state.json`) and the user has approved using it, load it instead of re-authenticating. If no auth state exists and the flow needs auth, ask before saving reusable post-login state. Without opt-in, use an ephemeral session or current-run temporary state only. Do not create real auth state under repo-local `.opencode/...` unless that path is already ignored and the user explicitly wants repo-local persistence.
+5. **Auth state reuse:** if a safe stored auth state file already exists (for example under `~/.config/opencode/b-skills/b-e2e/.../storage-state.json`) and the user has approved using it, load it instead of re-authenticating. If no auth state exists and the flow needs auth, ask before saving reusable post-login state. Without opt-in, use an ephemeral session or current-run temporary state only. Do not create real auth state under repo-local `.opencode/...` unless the user explicitly wants repo-local persistence.
 
 ### Step 2 — Pick the mode
 
@@ -108,7 +108,7 @@ Close with the skill-exit status block (`AGENTS.md` §9).
 - [none / file updated / file created]
 
 #### Artifacts
-- `.opencode/b-skills/b-e2e/<run-id>/` or a non-worktree fallback path
+- `.opencode/b-skills/b-e2e/<run-id>/` for non-sensitive artifacts, or a non-worktree path for sensitive artifacts
 ```
 
 ## Rules
