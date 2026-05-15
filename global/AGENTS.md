@@ -181,7 +181,7 @@ Skip the line on trivial high-confidence answers (a single docs lookup with a di
 
 ### Tool priority
 
-Use the lightest capable tool that can answer reliably. Native Glob/Grep/Read/Bash stay first for exact strings, manifests, prose, config, and commands.
+Use the lightest reliable tool. Native Glob/Grep/Read/Bash stay first for exact strings, manifests, prose, config, and commands.
 
 | Task shape | First choice | Then narrow with |
 |---|---|---|
@@ -212,16 +212,16 @@ Rely on GitNexus only when the repo is indexed, not stale, and the target file o
 
 ### MCP bundles
 
-Skills reference bundles by name rather than enumerating tool lists.
+Skills reference bundles by name instead of repeating tool lists.
 
 #### `serena-symbol-toolkit`
 
 - **Server:** `serena`
-- **Session init (once per session, only when symbol-aware work first becomes necessary):** `check_onboarding_performed`, then `onboarding` (only if the preflight returned false).
+- **Session init:** once per session, only when symbol-aware work first becomes necessary: `check_onboarding_performed`, then `onboarding` if needed.
 - **Discovery:** `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `find_declaration`, `find_implementations`, `search_for_pattern`.
 - **Verification:** `get_diagnostics_for_file`.
 - **Edits:** `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol`.
-- **LSP coverage caveat:** strong for TS/JS, Python, and similar; weak/absent for Bash, YAML, Markdown, Lua, and many DSLs. Treat renames/safe-deletes/diagnostics from non-LSP languages as **not authoritative** — widen verification.
+- **LSP caveat:** strong for TS/JS, Python, and similar; weak for Bash, YAML, Markdown, Lua, and many DSLs. Treat non-LSP renames/safe-deletes/diagnostics as **not authoritative**; widen verification.
 
 #### `gitnexus-radar`
 
@@ -234,7 +234,7 @@ Skills reference bundles by name rather than enumerating tool lists.
 
 - **Server:** `context7`
 - **Tools:** `resolve-library-id`, `query-docs`.
-- **Version-pinning rule:** before querying, pin the library version from manifests **and lockfiles**. Check `package-lock.json`/`pnpm-lock.yaml`/`yarn.lock`, `poetry.lock`/`uv.lock`, `go.sum`, `Cargo.lock`, or equivalent. In monorepos, resolve the version at the workspace closest to the touched file, not the repo root. If the version is ambiguous or conflicting, ask before querying.
+- **Version pinning:** before querying, pin from manifests **and lockfiles** (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `poetry.lock`, `uv.lock`, `go.sum`, `Cargo.lock`, etc.). In monorepos, use the closest workspace. Ask when versions conflict.
 - **Fallback:** if Context7 cannot answer, prefer the library's own documentation URL pattern (e.g., `<library>.dev/docs/`) over generic web search.
 
 #### `brave-discovery`
@@ -242,7 +242,7 @@ Skills reference bundles by name rather than enumerating tool lists.
 - **Server:** `brave-search`
 - **Tools:** `brave_web_search`.
 - **Role:** page discovery only. Pass discovered URLs to `firecrawl-extraction` for content.
-- `brave_news_search` / `brave_image_search` are not part of the bundle; use inline only when news or visual evidence is explicitly required.
+- `brave_news_search` / `brave_image_search` are outside the bundle; use only when news or visual evidence is explicit.
 
 #### `firecrawl-extraction` (default tier)
 
@@ -258,24 +258,22 @@ Skills reference bundles by name rather than enumerating tool lists.
 #### `firecrawl-deep` (last-resort tier, requires explicit user approval)
 
 - **Tools:** `firecrawl_interact`, `firecrawl_agent`.
-- **Cost warning:** can run for minutes and burn substantial credit. Surface the cost and obtain approval before invoking. Exhaust default and extended tiers first.
+- **Cost warning:** can run for minutes and burn substantial credit. Exhaust lower tiers, then get approval per invocation.
 
 #### `playwright-browser`
 
 - **Server:** `playwright` MCP (preferred when available).
-- **Fallback:** local Playwright CLI via Bash (`npx playwright …`) when the project already has Playwright installed.
-- **Tools used in skill prose:** snapshot, navigate, click, type, fill, select, hover, drag/drop, upload, dialog handling, tabs, wait, resize, screenshot, evaluate, network, console, close.
-- **Restricted:** any `*_unsafe` tool (such as code-execution variants) is excluded from the default toolkit and requires explicit user approval per invocation.
+- **Fallback:** local Playwright CLI via Bash (`npx playwright …`) when already installed.
+- **Tools used in skill prose:** snapshot, navigate, click, type/fill/select, hover, drag/drop/upload, dialogs, tabs, wait, resize, screenshot, evaluate, network, console, close.
+- **Restricted:** any `*_unsafe` tool requires explicit approval per invocation.
 
 #### Sequential-thinking
 
-Bundled but optional. The default MCP install includes `sequential-thinking`, but most runs should not invoke it. Use the `sequential-thinking` MCP only when **three or more** plausible hypotheses remain with equal cheapest-verification cost.
+Bundled but optional. Use only when **three or more** plausible hypotheses remain with equal cheapest-verification cost.
 
 ### MCP availability and fallback ladder
 
-1. Assume the bundle is available; do not preflight unless prior failure suggests otherwise.
-2. On failure, retry once with a narrower call.
-3. On second failure, fall back per the ladder and label the limitation in the final report.
+Assume bundles are available; do not preflight. On failure, retry once narrower, then fall back and label the limitation.
 
 **Fallback ladder:**
 - `serena-symbol-toolkit` unavailable → native Glob/Grep/Read + `apply_patch`. Treat renames and safe-deletes as high-risk; widen verification.
@@ -286,14 +284,14 @@ Bundled but optional. The default MCP install includes `sequential-thinking`, bu
 
 ### Fallback labeling
 
-When any fallback fires, attach a `[degraded: <reason>]` tag to the affected step or finding in the final report. Use exactly this format so output stays scannable across skills.
+When fallback changes the intended tool path, evidence source, or verification route, tag the affected step or finding as `[degraded: <reason>]`.
 
 ### Tool-use heuristics
 
-- Around **12 MCP calls** in one skill run, pause and summarize what is still unknown before adding more discovery.
+- Around **12 MCP calls** in one skill run, pause and summarize remaining unknowns before more discovery.
 - Do not open a second tool-heavy thread until the current investigation, edit, or verification thread is closed or the user asks to expand scope.
 - If sustained tool use is not increasing evidence quality, narrow the next check or stop and ask whether to continue.
-- Classify tool failures before retrying or falling back: unavailable, auth/permission denied, rate-limited, timed out, stale index/cache, unsupported language/content type, or malformed request. Retry only when the class is plausibly transient or narrower input can fix it; stop for auth/permission failures unless the user provides corrected access.
+- Classify failures before retry/fallback: unavailable, auth/permission, rate-limit, timeout, stale index/cache, unsupported content, malformed request. Retry only transient or fixable-by-narrowing failures; stop for auth failures.
 - `firecrawl-deep` invocations require user approval each time.
 - `gitnexus-radar` should usually stay to 1-2 calls per run; more often means the question should move back to Serena or native tools.
 - Reuse recently fetched URLs, docs, and symbol results instead of re-fetching them.
@@ -303,20 +301,17 @@ When any fallback fires, attach a `[degraded: <reason>]` tag to the affected ste
 
 ## 5. Evidence standards
 
-Use this evidence hierarchy:
-- **Runtime evidence:** tests, builds, logs, browser state, network calls.
-- **Symbol evidence:** Serena bodies, declarations, references, diagnostics, edits.
-- **Graph evidence:** GitNexus routes, processes, impact, consumers.
-- **Text evidence:** exact matches from native tools.
-- **Search snippets:** triage only until scraped, documented, or otherwise confirmed.
+Evidence hierarchy: **runtime** (tests, builds, logs, browser/network) > **symbol** (Serena bodies, declarations, references, diagnostics, edits) > **graph** (GitNexus routes, processes, impact, consumers) > **text** (exact native matches) > **search snippets** (triage only).
 
-Graph evidence is useful for review or exploration; it does not prove edits are safe. Stale graph output is not evidence (see §4 freshness gate).
-
-Search snippets are discovery evidence, not final proof. If snippets are the only available evidence after fallbacks, label the answer snippet-only with `Confidence: low` and name the missing primary source or extraction step.
+Graph evidence helps review/exploration but does not prove edits are safe. Stale graph output is not evidence (see §4 freshness gate). Search snippets are discovery only; if they are the final source after fallbacks, label snippet-only with `Confidence: low` and name the missing primary source or extraction step.
 
 When two authoritative sources disagree (e.g., two versions of vendor docs), prefer the one matching the pinned version (§4); if still ambiguous, present both with the conflict labeled and a `Confidence: medium` line.
 
-When a final answer is derived from anything weaker than runtime or symbol evidence, attach the **confidence signal** from §3.
+When final evidence is weaker than runtime or symbol evidence, attach the §3 confidence signal.
+
+### Token budget
+
+Keep runtime prose short. Preserve explicit safety gates, schemas, routing boundaries, and verification requirements; compress examples, duplicated rationale, and restated global concepts into § references.
 
 ---
 
@@ -324,18 +319,18 @@ When a final answer is derived from anything weaker than runtime or symbol evide
 
 ### Approval-required actions
 
-Approval required before installs, dev servers, migrations, destructive commands, production-like or staging writes, broad refactors, commits, or any operation that could mutate shared environments.
+Approval required before installs, dev servers, migrations, destructive commands, production/staging-like writes, broad refactors, commits, or shared-environment mutation.
 
 ### Command risk classes
 
 Classify commands before running them so approval gates are consistent:
 
-- **read-only** — inspect files, git status/diff/log, list dependencies, run non-mutating diagnostics. No approval unless sensitive files would be read.
-- **project-write** — edit source, tests, docs, generated artifacts, or local config inside the approved scope. Allowed only after the relevant skill scope is approved.
-- **dependency-write** — install, remove, update, or regenerate dependencies or lockfiles. Requires approval.
-- **environment-write** — start/stop dev servers, containers, emulators, databases, background jobs, or browser sessions with persisted auth. Requires approval when it mutates local/shared state or runs long-lived processes.
-- **external-write** — call APIs, staging/prod systems, queues, payment providers, email/SMS, or analytics with mutating effects. Requires explicit approval naming the target environment.
-- **destructive** — delete data/files/branches, reset state, rewrite history, clean worktrees, or drop databases. Requires explicit approval and must never target unrelated user work.
+- **read-only** — inspect files/git/deps or run non-mutating diagnostics. No approval unless sensitive files would be read.
+- **project-write** — edit approved source, tests, docs, generated artifacts, or local config.
+- **dependency-write** — install/remove/update deps or regenerate lockfiles. Requires approval.
+- **environment-write** — start/stop servers, containers, emulators, DBs, jobs, or persisted-auth browser sessions. Requires approval when long-lived or mutating.
+- **external-write** — mutate APIs, staging/prod, queues, payments, email/SMS, or analytics. Requires approval naming the environment.
+- **destructive** — delete data/files/branches, reset state, rewrite history, clean worktrees, or drop DBs. Requires explicit approval and never targets unrelated user work.
 
 ### Canonical approval ask
 
@@ -351,7 +346,7 @@ Example: `[approval] Run pnpm install — Effect: writes node_modules and update
 
 ### Public web privacy gate
 
-- Never send private stack traces, internal URLs, customer data, secrets, or proprietary code to `brave-discovery`, `firecrawl-*`, or any other public web tool without explicit approval.
+- Never send private stack traces, internal URLs, customer data, secrets, or proprietary code to public web tools without explicit approval.
 - Sanitize queries when a sanitized form can answer the question.
 - If sanitizing would remove the essential signal, stop and ask.
 
@@ -364,18 +359,18 @@ Skills do not restate this. They reference §6.
 
 ### Repo-local artifact safety
 
-- Saved plans under `.opencode/b-skills/b-plan/` are canonical source-of-truth files, not runtime artifacts; this section does not reroute them.
-- Before any suite write under repo-local `.opencode/`, including saved plans, ensure the root `.opencode/` directory has an ignore guard: if `.opencode/` does not exist, create it with `.opencode/.gitignore` containing `*`; if `.opencode/` exists without `.gitignore`, create `.opencode/.gitignore` containing `*`; if `.opencode/.gitignore` already exists, leave it unchanged.
+- Saved plans under `.opencode/b-skills/b-plan/` are canonical source-of-truth files, not runtime artifacts; do not reroute them.
+- Before any suite write under repo-local `.opencode/`, including saved plans, ensure the root ignore guard: create `.opencode/.gitignore` containing `*` when `.opencode/` or that file is missing; leave an existing `.opencode/.gitignore` unchanged.
 - Do not store auth/session state or other sensitive run artifacts under repo-local `.opencode/` unless the user explicitly opts into repo-local persistence. Use `~/.config/opencode/b-skills/...` or `/tmp/opencode/b-skills/...` instead by default.
-- Persisting reusable browser auth/session state requires explicit user opt-in, even outside the worktree. Without opt-in, use an ephemeral browser session or current-run temporary state only.
+- Persisting reusable browser auth/session state requires explicit opt-in, even outside the worktree; otherwise use ephemeral/current-run state only.
 - Never store real browser auth/session state under a tracked worktree path.
 
 ### Generated files and lockfiles
 
-- Treat generated, vendored, minified, snapshot, golden, and lock files as derived artifacts unless the user explicitly asked to change them or the approved task requires it.
-- Update lockfiles only as part of an approved dependency-write action.
-- Update snapshots or golden files only after the intended behavior is stated and justified by a source change or product decision (§10).
-- When generated output is checked in, prefer changing the source and running the repo's existing generator; if the generator is unavailable, label the manual update as partial evidence.
+- Treat generated, vendored, minified, snapshot, golden, and lock files as derived unless explicitly requested or required.
+- Update lockfiles only after approved dependency-write.
+- Update snapshots/goldens only after stating intended behavior and citing the source change or product decision (§10).
+- Prefer changing generator sources; if unavailable, label manual generated updates as partial evidence.
 
 ### Worktree safety
 
@@ -409,7 +404,7 @@ Security, data-loss, or production-impacting issues found in touched code may be
 
 ### Verification ladder
 
-- Discover baseline commands in this order: explicit plan or user command, project scripts, CI config, repo docs, language-native defaults already present in the repo, then one clarification question. Do not invent new tooling as a side effect of verification.
+- Discover baseline commands in this order: explicit plan/user command, project scripts, CI config, repo docs, existing language defaults, then one clarification. Do not invent tooling as verification.
 - Narrow local check first (touched file diagnostics, single test).
 - Broader affected-area check second (module tests, type/build narrowed to changed area).
 - Full project check only when scope or risk justifies it (high-risk per §3, or shared contracts).
@@ -417,7 +412,7 @@ Security, data-loss, or production-impacting issues found in touched code may be
 ### Long-running commands
 
 - Prefer bounded foreground commands with explicit timeouts.
-- Starting background jobs, dev servers, containers, emulators, or watch modes requires approval under §6 when they are long-lived or mutate local/shared state.
+- Starting background jobs, dev servers, containers, emulators, or watch modes requires approval when long-lived or mutating local/shared state.
 - If a long-running command is approved, record what was started, how it was stopped, and any remaining process or cleanup action in the final report.
 
 ### Iteration cap
@@ -430,7 +425,7 @@ If command output is truncated or times out, save the full output under `/tmp/op
 
 ### Verification provenance
 
-Every non-trivial final report must list the verification evidence actually used: commands run, diagnostics checked, browser state inspected, sources fetched, and any checks skipped or unavailable. If a command timed out or produced truncated output, include the saved log path or state that no full log was available.
+Every non-trivial final report lists evidence used: commands, diagnostics, browser state, sources, and skipped/unavailable checks. If output timed out/truncated, include the saved log path or say no full log exists.
 
 ### Empty-state defaults
 

@@ -16,7 +16,7 @@ metadata:
 
 $ARGUMENTS
 
-Own code-level test work: write tests, fix test-only failures, and evaluate coverage without treating every red test as proof that production code is wrong.
+Own code-level tests: write coverage, fix test-only failures, and avoid treating every red test as product failure.
 
 If `$ARGUMENTS` is provided, treat it as the test task or failing symptom and proceed directly.
 
@@ -37,12 +37,6 @@ If `$ARGUMENTS` is provided, treat it as the test task or failing symptom and pr
 - The task is only an external docs or testing-framework lookup → use **b-research**.
 - The task is designing a new property-based, fuzzing, or contract-testing strategy/framework → use **b-plan** first. Adding a small test in an already-established project pattern may stay in **b-test**.
 
-## Boundary examples
-
-- **Use b-test:** "Fix the Vitest mock setup" or "add regression tests for retry backoff" when the intended behavior is already known.
-- **Use b-debug instead:** "The new regression test proves the API now returns the wrong shape" because the red test is evidence of a product bug.
-- **Use b-e2e instead:** "Verify the signup flow in a real browser" even if the repo also has unit tests.
-
 ## Tools required
 
 - `bash` — run project test and coverage commands, inspect failure output.
@@ -50,9 +44,7 @@ If `$ARGUMENTS` is provided, treat it as the test task or failing symptom and pr
 - `serena-symbol-toolkit` *(preferred for mapping tests to source behavior and editing existing test code)*
 - `context7-docs` *(optional, for verifying testing-framework APIs or matcher behavior)*
 
-Fallbacks: `AGENTS.md` §4 MCP fallback ladder. Without Serena, discover tests with native tools and edit carefully with `apply_patch`. The Serena LSP coverage caveat applies.
-
-Graceful degradation: ✅ Possible — the core workflow still works with native file tools, `bash`, and `apply_patch`.
+Fallbacks: `AGENTS.md` §4. Without Serena, use native discovery plus careful `apply_patch`; LSP caveat applies. Graceful degradation: ✅ Possible with native tools, `bash`, and `apply_patch`.
 
 ## Steps
 
@@ -69,7 +61,7 @@ Graceful degradation: ✅ Possible — the core workflow still works with native
 
 Use `AGENTS.md` §10 (test failure vs runtime bug) to pick the lane:
 
-- **Failing test** — fix the test, fixture, or setup when production behavior is confirmed correct. If the test confirms a real product bug, stop the test-lane edit and hand off to **b-debug** or **b-implement** with the intended behavior and failing test evidence.
+- **Failing test** — fix test/fixture/setup when production behavior is confirmed correct. If it proves a product bug, hand off to **b-debug** or **b-implement** with evidence.
 - **Write tests** — add new regression, unit, or integration coverage for known behavior.
 - **Coverage review** — identify the highest-value missing tests and optionally add the top ones.
 - **Flaky test** — apply the flake handling procedure in `AGENTS.md` §10 before rewriting or skipping.
@@ -100,7 +92,7 @@ If the failure might reflect a real product bug and the correct behavior is not 
 | **3 — useful** | Widely referenced internal symbols (high fan-in) without a regression test. |
 | **4 — opportunistic** | Edge cases of branches already partially covered. |
 
-Discover the project's existing coverage command before inventing one. If the repo has no coverage runner, ask before adding one. Optionally add the top 1–3 missing tests when the user wants implementation, not just analysis.
+Discover the existing coverage command before inventing one; ask before adding a runner. Add top gaps only when the user wants implementation.
 
 **Advanced tests** — property-based, fuzz, and contract tests stay here only when the repo already has an established runner and pattern. If the framework, boundary contract, generator strategy, or CI cost needs design, hand off to **b-plan** instead of inventing it inside a test edit.
 

@@ -16,7 +16,7 @@ metadata:
 
 $ARGUMENTS
 
-Trace the bug, confirm root cause, apply the smallest safe fix, verify, and remove probes. Do not patch before the cause is explicit.
+Trace, confirm root cause, fix minimally, verify, and remove probes. Do not patch before the cause is explicit.
 
 If `$ARGUMENTS` includes a symptom, error, or stack trace, start from it directly. If the user asked only for diagnosis, stop after the confirmed root cause and proposed fix.
 
@@ -34,11 +34,6 @@ If `$ARGUMENTS` includes a symptom, error, or stack trace, start from it directl
 - The task is external docs or API lookup only → use **b-research**.
 - The task is a new feature or scoped implementation request → use **b-plan** or **b-implement**.
 
-## Boundary examples
-
-- **Use b-debug:** "This endpoint started returning 500 after the deploy" or "the dashboard got slower after yesterday's merge."
-- **Use b-test instead:** "The snapshot changed after the copy update" when production behavior is already known to be correct.
-
 ## Tools required
 
 - `serena-symbol-toolkit` *(preferred for tracing and focused fixes)*
@@ -47,20 +42,13 @@ If `$ARGUMENTS` includes a symptom, error, or stack trace, start from it directl
 - `brave-discovery` + `firecrawl-extraction` *(optional, for known public errors; honor `AGENTS.md` §6 privacy gate)*
 - Native search and `bash` — exact error strings, config keys, repeated patterns, narrow source reads, reproduction commands, profilers.
 
-Fallbacks: `AGENTS.md` §4 MCP fallback ladder.
-
-Graceful degradation: ✅ Possible — native analysis still works; cross-file tracing is slower without Serena.
+Fallbacks: `AGENTS.md` §4. Graceful degradation: ✅ Possible — native analysis works, but cross-file tracing is slower without Serena.
 
 ## Steps
 
 ### Step 1 — Frame the symptom
 
-Collect only what is needed to begin:
-- Exact error or observable failure.
-- Expected vs actual behavior.
-- Reproduction notes.
-- Determinism: reproducible every run, intermittent, or one-shot.
-- For perf bugs: workload shape, baseline timing, threshold or SLO that was violated.
+Collect only the needed start state: exact failure, expected vs actual, repro notes, determinism, and for perf bugs workload/baseline/threshold.
 
 If the bug is currently production-impacting or risks data loss/security exposure, take a mitigation-first branch: identify the safest immediate containment option (disable path, rollback candidate, feature flag, traffic drain, or user-visible workaround), ask for approval before any shared-environment action, then continue root-cause analysis from the contained state.
 
@@ -72,14 +60,7 @@ Use `gitnexus-radar` only when the path is unfamiliar, graph-shaped, or route/co
 
 Then use `serena-symbol-toolkit` to confirm owners, references, and code shape. Pick the cheapest discovery tool that closes the next question (`AGENTS.md` §4).
 
-**First-suspect heuristic** — bias toward these patterns before broader experimentation:
-- Swallowed errors and silent catches.
-- Auth/authz gates and middleware short-circuits.
-- Config drift and environment-variable defaults.
-- Async ordering, missing `await`, race-prone callbacks.
-- Shared-state leaks across requests, tests, or threads.
-- Off-by-one and boundary conditions in newly added code.
-- For perf bugs: N+1 queries, unbounded retries, hot-loop allocations, blocking I/O on the request path.
+**First-suspect heuristic:** swallowed errors, auth/authz gates, config drift, async ordering/missing `await`, shared-state leaks, new boundary errors; for perf, N+1 queries, unbounded retries, hot-loop allocations, blocking I/O.
 
 For non-deterministic bugs, enumerate the candidate non-determinism sources first (shared state, async ordering, time, network, randomness, environment).
 
@@ -106,9 +87,7 @@ State the root cause explicitly before editing:
 ### Step 4 — Apply the minimal fix
 
 Keep the fix narrow:
-- Use `serena-symbol-toolkit` edits when the change is symbol-scoped.
-- Use `apply_patch` for small line-level fixes inside a larger symbol.
-- Add a brief comment only when the fix would otherwise be non-obvious.
+- Use Serena for symbol-scoped edits, `apply_patch` for small line fixes, and comments only when the fix is non-obvious.
 
 Do not roll broader cleanup or unrelated refactors into the bug fix.
 

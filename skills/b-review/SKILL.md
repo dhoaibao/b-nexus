@@ -15,7 +15,7 @@ metadata:
 
 $ARGUMENTS
 
-Review changed code the way a strong reviewer would: prioritize blockers, verify the diff matches intended behavior, and surface real regression or security risk before PR.
+Review changed code: prioritize blockers, verify intent, and surface regression/security risk before PR.
 
 If `$ARGUMENTS` is provided, treat it as the requirements pointer or summary.
 
@@ -41,11 +41,6 @@ If `$ARGUMENTS` is provided, treat it as the requirements pointer or summary.
 - The task is external docs or API lookup → use **b-research**.
 - The request is plan review, UX critique, or research synthesis review rather than code-review-style risk assessment.
 
-## Boundary examples
-
-- **Use default b-review:** "Review my current diff before PR" or `--range=origin/main..HEAD` when the subject is changed code.
-- **Use `--repo-audit`:** "Audit the installer and runtime contract" when the request is a reviewer-style pass over a named repository area instead of one diff.
-
 ## Tools required
 
 - `bash` — inspect `git diff`, `git status`, `git log`, and narrow verification commands.
@@ -54,9 +49,7 @@ If `$ARGUMENTS` is provided, treat it as the requirements pointer or summary.
 - `context7-docs` *(optional, for suspicious third-party API usage in the diff)*
 - `brave-discovery` + `firecrawl-extraction` *(optional, for focused CVE or risky-pattern lookups; honor `AGENTS.md` §6 privacy gate)*
 
-Fallbacks: `AGENTS.md` §4 MCP fallback ladder. If optional bundles are unavailable, continue with a narrower manual review and label the limitation only when it affects confidence.
-
-Graceful degradation: ✅ Possible — review still works with `bash`, native file tools, and focused source inspection.
+Fallbacks: `AGENTS.md` §4. If optional bundles fail, continue narrower and label only when confidence is affected. Graceful degradation: ✅ Possible with `bash`, native tools, and focused source reads.
 
 ## Steps
 
@@ -73,7 +66,7 @@ Graceful degradation: ✅ Possible — review still works with `bash`, native fi
 
 Use risk bucket, not raw line count, as the gate:
 
-- **Fast path** — allowed only when **all** of:
+- **Fast path** — only when **all** hold:
   - All changes are confined to a single non-sensitive module or feature area.
   - No auth, authz, billing, secrets, crypto, or migration files touched.
   - No public contract changed (exported API, route, CLI flag, schema).
@@ -104,17 +97,7 @@ Use a surface-specific checklist when the audit target implies one: installer/up
 
 Optionally use `gitnexus-radar` once when the diff is graph-shaped or contract-heavy. Initialize Serena per `AGENTS.md` §4 only when symbol-aware inspection adds value.
 
-**Security checklist** (run on changed entry points, sensitive paths, and shared boundaries — never skipped, even on the fast path):
-- Correctness against stated behavior.
-- Input validation, output encoding, injection risk (SQL, command, template, regex, log).
-- Auth/authz changes — who can call this now; is the principal checked?
-- Sensitive-data exposure — logs, error messages, telemetry, response shapes.
-- Concurrency — race conditions, lock scope, write ordering, retry idempotency.
-- Dependency hygiene — new packages, version bumps, transitive risk, license shifts.
-- Secret handling — env vars, key rotation paths, files that may now be committed.
-- Regex DoS — user-supplied input feeding backtracking patterns.
-- Rate limiting and resource bounds for new entry points or queues.
-- Error handling — swallowed errors, leaky stack traces, fallback behavior under partial failure.
+**Security checklist** (run on changed entry points, sensitive paths, and shared boundaries, even on fast path): correctness, validation/encoding/injection, auth/authz, sensitive data, concurrency/idempotency, dependencies, secrets, regex DoS, resource bounds, error handling.
 
 **Generated and lockfile policy:** for generated files, snapshots, golden files, vendored/minified code, and lockfiles, verify the source change or approved generator/dependency action that produced them. If no source or approved generation step exists, flag the artifact change as suspicious rather than reviewing it as hand-written code.
 
@@ -180,6 +163,6 @@ Close with the skill-exit status block (`AGENTS.md` §9).
 - In `--repo-audit` mode, use a target-specific checklist and report which checklist was applied.
 - Treat lockfile, generated, snapshot, golden, vendored, and minified changes as derived artifacts unless the source or approved generation step is clear.
 - For self-review, be harsher on author bias; for external review, be explicit about blocker-vs-style. Concretely:
-  - **Self-review** — re-derive intent from the diff alone instead of trusting "I meant to do this"; explicitly question test cases the author skipped, error paths the author treated as "won't happen," and naming the author rationalized late; bias toward MAJOR/BLOCKER over NIT when the author's own confidence may be inflated.
-  - **External review** — never suggest stylistic rewrites disguised as findings; clearly separate BLOCKER/MAJOR (must change before merge) from MINOR/NIT (author may decline); give the author the benefit of the doubt on idiomatic choices unless they affect correctness, security, or contract.
+  - **Self-review** — re-derive intent from diff; question skipped tests, "won't happen" error paths, and late naming; bias toward real MAJOR/BLOCKER risk.
+  - **External review** — do not disguise style as findings; separate must-fix from optional issues; defer idiom unless correctness/security/contract is affected.
 - If the logic cannot be confirmed confidently, say so and attach the confidence signal.

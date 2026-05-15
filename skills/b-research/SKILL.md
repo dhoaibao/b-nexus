@@ -16,7 +16,7 @@ metadata:
 
 $ARGUMENTS
 
-Handle external knowledge with the lightest depth that can answer correctly. Start with a direct lookup; auto-deepen only when evidence quality requires it.
+Handle external knowledge at the lightest reliable depth. Start with lookup; auto-deepen only when evidence requires it.
 
 If `$ARGUMENTS` is provided, treat it as the research question and proceed directly.
 
@@ -41,9 +41,7 @@ If `$ARGUMENTS` is provided, treat it as the research question and proceed direc
 - `firecrawl-extended` *(optional, for site maps or structured field extraction)*.
 - `firecrawl-deep` *(last resort; requires explicit user approval per invocation)*.
 
-Fallbacks: `AGENTS.md` §4 MCP fallback ladder.
-
-Graceful degradation: ⚠️ Partial — lookups remain strong with Context7 or authoritative search; deep synthesis is weaker without page tools.
+Fallbacks: `AGENTS.md` §4. Graceful degradation: ⚠️ Partial — lookups remain strong with Context7 or authoritative search; synthesis is weaker without extraction.
 
 ## Steps
 
@@ -54,7 +52,7 @@ Choose the lightest depth that can plausibly answer:
 - **Lookup** — one fact, one signature, one config key, a yes/no capability, or a tiny example.
 - **Research** — anything requiring more than one source, comparison, multi-step synthesis, or recency-sensitive answer.
 
-If the user already provided a URL, file path, or document, decide between **direct-source lookup** and broader research: extract that one source immediately when it is likely sufficient, otherwise continue into research.
+If the user provided a URL, file, or document, extract it immediately when likely sufficient; otherwise continue into research.
 
 ### Step 2 — Pin the version (library/API questions)
 
@@ -73,16 +71,16 @@ Skip this step for non-library research.
 2. Otherwise one focused `brave-discovery` query to find the highest-signal authoritative source.
 3. Answer immediately only when the result is backed by Context7, a direct-source extraction, or another primary source already in hand.
 4. **Auto-deepen to research** when the first results are stale, mutually contradict, are not authoritative, or do not directly answer. Do not retry the same shape of query forever.
-5. Do not scrape a broad result set in **open-ended** lookup. If a search snippet would otherwise be the final evidence, extract at most one highest-signal authoritative source or label the answer snippet-only with `Confidence: low` per `AGENTS.md` §5. A **direct-source lookup** from a user-provided URL, file path, or document may extract that one source immediately.
+5. Do not scrape broad result sets for **open-ended** lookup. If a snippet would be final evidence, extract one highest-signal source or label snippet-only with `Confidence: low` (`AGENTS.md` §5). Direct-source lookup may extract the provided source immediately.
 
 **Research:**
 1. Prefer official docs, release notes, source repos, and vendor materials first.
 2. Use `brave_news_search` only for recency-sensitive topics; use `brave_image_search` only when the question is genuinely visual.
 3. Use `firecrawl-extraction` (`firecrawl_scrape` for known URLs, `firecrawl_parse` for local documents) on the highest-signal pages.
 4. Reach for `firecrawl-extended` only for site mapping or structured-field extraction.
-5. Reach for `firecrawl-deep` only after default and extended tiers are insufficient. Surface the cost warning and obtain approval per invocation (see canonical approval ask in `AGENTS.md` §6).
+5. Use `firecrawl-deep` only after lower tiers fail; surface cost and get approval per invocation (`AGENTS.md` §6).
 
-Honor the public-web privacy gate (`AGENTS.md` §6) on every external call. Reuse fetched results from earlier in the session instead of re-fetching (`AGENTS.md` §4 cross-turn cache).
+Honor the public-web privacy gate (`AGENTS.md` §6) on every external call. Reuse fetched results (`AGENTS.md` §4).
 
 ### Step 3b — Handle gated sources
 

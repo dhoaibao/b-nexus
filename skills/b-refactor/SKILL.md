@@ -16,7 +16,7 @@ metadata:
 
 $ARGUMENTS
 
-Handle behavior-preserving mechanical code changes: lock the exact target, map the impact radius, apply the smallest safe transformation, and verify references still hold.
+Handle behavior-preserving mechanical changes: lock target, map impact, transform safely, and verify references.
 
 If `$ARGUMENTS` is provided, treat it as the refactoring instruction and proceed directly.
 
@@ -34,20 +34,13 @@ If `$ARGUMENTS` is provided, treat it as the refactoring instruction and proceed
 - The task is a test-only failure or test rewrite → use **b-test**.
 - The request is only an external API lookup → use **b-research**.
 
-## Boundary examples
-
-- **Use b-refactor:** "Extract `parseOptions` from `handleArgs` without changing behavior."
-- **Use b-plan or b-implement instead:** "Simplify checkout retries so the product gives up sooner" because the request changes behavior, not just structure.
-
 ## Tools required
 
 - `bash` — inspect git state and run project-specific checks.
 - `serena-symbol-toolkit` *(preferred for exact target locking, reference mapping, and symbol-aware edits)*
 - `gitnexus-radar` *(optional, for broad exported/shared impact)*
 
-Fallbacks: `AGENTS.md` §4 MCP fallback ladder. Serena's LSP-coverage caveat applies — for non-LSP languages, treat every rename, safe-delete, and diagnostics result as **not authoritative** and widen verification.
-
-Graceful degradation: ⚠️ Partial — small local refactors remain possible with native search plus `apply_patch`, but cross-file renames and safe deletes are riskier without symbol-aware tooling.
+Fallbacks: `AGENTS.md` §4. Serena LSP caveat applies; non-LSP rename/safe-delete/diagnostics are **not authoritative**. Graceful degradation: ⚠️ Partial — local refactors work with native search + `apply_patch`; cross-file work is riskier.
 
 ## Steps
 
@@ -69,7 +62,7 @@ Graceful degradation: ⚠️ Partial — small local refactors remain possible w
    - Behavior clearly preserved.
    - Language is **LSP-supported by Serena**.
 
-   This is intentional: non-LSP languages (Bash, YAML, Markdown, Lua, many DSLs) auto-promote to **low** risk at minimum. The fast path is locked behind LSP support because rename/safe-delete results in non-LSP languages are not authoritative.
+   Non-LSP languages (Bash, YAML, Markdown, Lua, many DSLs) auto-promote to **low** risk because rename/safe-delete results are not authoritative.
 4. For medium or high-risk refactors, optionally use `gitnexus-radar` to scope blast radius before editing. Discover the baseline verification command from project scripts or CI config. If baseline checks are already failing, stop and ask.
 5. For non-LSP languages, generated glue, dynamic dispatch, config-driven references, or text/prose references outside Serena's graph, add targeted text searches to the verification worklist before editing.
 
@@ -81,7 +74,7 @@ Choose the smallest matching transformation:
 - **Delete dead code** → `safe_delete_symbol` after confirming zero references.
 - **Extract function** → insert the helper, then update callers.
 - **Inline local logic** → update callers, then remove the old symbol safely.
-- **Rename + extract** (common combo): extract first under the **old** name, verify references, then `rename_symbol` to the new name. Keeps the two transforms independently verifiable.
+- **Rename + extract:** extract first under the **old** name, verify references, then `rename_symbol` to the new name so each transform is independently verifiable.
 - **Move code between files** (highest mechanical risk):
   1. Add the new destination first with `insert_after_symbol` or `apply_patch`; do not delete the origin yet.
   2. Update every import or re-export, using the reference map from Step 2.

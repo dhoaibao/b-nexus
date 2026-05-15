@@ -68,19 +68,9 @@ You can inspect and maintain the suite from this source repository, which contai
 
 ### Runtime conventions
 
-In this source repo, the shared runtime rules are authored in `global/AGENTS.md` and installed as `~/.config/opencode/AGENTS.b-skills.md`; the installer only replaces `~/.config/opencode/AGENTS.md` when it is missing or you approve replacement. Installed skill prose should still reference `AGENTS.md`, so a preserved third-party `AGENTS.md` leaves the suite in an activation-pending state until you merge or replace it. The headlines:
+In this source repo, shared runtime rules live in `global/AGENTS.md` and install to `~/.config/opencode/AGENTS.b-skills.md`; the installer replaces the active `AGENTS.md` only when missing or approved. Installed skills still cite `AGENTS.md`, so preserved third-party rules leave the suite activation-pending until merged/replaced.
 
-- **Definitions** (`§3`): "non-trivial", **small direct request** (≤3 files), **severity** (BLOCKER/MAJOR/MINOR/NIT), **risk** (trivial/low/medium/high), and the **confidence signal** every partial-evidence answer carries.
-- **Durable plan metadata** (`§2`): saved plans carry frontmatter for approval state, timestamps, approved git HEAD, risk, and touch points; legacy plans remain valid when explicitly approved in chat.
-- **MCP bundles** (`§4`): skills reference named bundles — `serena-symbol-toolkit`, `gitnexus-radar`, `context7-docs`, `brave-discovery`, `firecrawl-extraction` / `firecrawl-extended` / `firecrawl-deep`, `playwright-browser`. Bundle definitions own session-init, fallback ladder, language-coverage caveats, and cost/approval gates.
-- **Tool-use heuristics** (`§4`): around the 12th MCP call, narrow the active thread or summarize what remains unknown instead of blindly continuing to fan out.
-- **Safety gates** (`§6`): command risk classes, privacy gate, sensitive-file safety, generated-file/lockfile policy, worktree safety, git safety, and the **canonical approval ask** template.
-- **Iteration cap** (`§7`): maximum of 3 fix/verify loops per step before surfacing the blocker.
-- **Execution discipline** (`§7`): scope-expansion rules, verification provenance, empty-state defaults, and the maximum of 3 fix/verify loops per step before surfacing the blocker.
-- **Artifacts** (`§8`): canonical slug algorithm, run-id format, plan path, manifest schema, and retention/cleanup guidance.
-- **Output contract** (`§9`): chat language vs artifact language, **skill-exit status block**, and **handoff envelope**.
-- **Test-vs-bug decision** (`§10`): the single home for "is this a test problem or a real bug?" — owned in global, referenced by `b-test` and `b-debug`. Also owns the DOM-unit vs browser-flow boundary and the self-review vs external-review distinction.
-- **Session lifecycle** (`§11`): preflight and crash/resume rules.
+Runtime headlines: definitions and rubrics (§3), durable plan metadata (§2), MCP bundles and fallbacks (§4), safety gates (§6), execution/verification discipline (§7), artifacts (§8), output contract (§9), test-vs-bug and DOM/browser boundaries (§10), session lifecycle (§11).
 
 Artifact paths:
 - Plans: `.opencode/b-skills/b-plan/<task-slug>.md` after applying the `.opencode/.gitignore` guard in `global/AGENTS.md` §6 (legacy `.opencode/b-plans/` is deprecated). New saved plans include frontmatter for durable approval state, timestamps, approved git HEAD, risk, and touch points. Saved plans remain the canonical repo-local source of truth. `<task-slug>` follows the slug algorithm in `global/AGENTS.md` §8.
@@ -89,24 +79,7 @@ Artifact paths:
 - Temporary command output: `/tmp/opencode/b-skills/<skill>/<slug>.log`.
 - Multi-artifact runs include a `manifest.json` per the schema in `global/AGENTS.md` §8.
 
-Routing and safety highlights:
-- Keep one active skill until its stop condition is hit; do not bounce across skills for optional enrichment.
-- Trigger precedence is strict: browser flow → `/b-e2e`; DOM-rendered unit test → `/b-test`; likely product bug → `/b-debug`; named behavior-preserving transform → `/b-refactor`; unclear scope → `/b-plan`; external-knowledge blocker → `/b-research`.
-- After `/b-plan` approval, the approved plan becomes the execution source of truth, subject to the **plan staleness gate** and **plan revision protocol** in `global/AGENTS.md` §2.
-- When a saved plan has frontmatter, approval state is updated in place (`status`, `approved_at`, `approved_by`, `approved_head`) so later runs do not rely only on chat memory; `approved` and `in-progress` are executable approved states.
-- Approval is required before installs, dev servers, migrations, production-like/staging writes, broad refactors, commits, or destructive commands — using the **canonical approval ask** template in `global/AGENTS.md` §6.
-- Commands are classified by risk: read-only, project-write, dependency-write, environment-write, external-write, and destructive.
-- Persisting reusable browser auth/session state requires explicit user opt-in, even when stored outside the worktree.
-- Generated files, lockfiles, snapshots, goldens, vendored code, and minified files are treated as derived artifacts unless the source or approved generation step is clear.
-- Manual edits use `apply_patch`.
-- Verification follows the ladder: narrow check → broader affected-area check → full check only when scope or risk justifies it.
-- Verification command discovery follows: explicit plan/user command → project scripts → CI config → repo docs → existing language-native defaults → clarification.
-- Non-trivial final reports include verification provenance: checks run, evidence used, and skipped or unavailable checks.
-- GitNexus is optional radar; Serena is primary hands.
-- Cross-skill handoffs use the **handoff envelope** in `global/AGENTS.md` §9.
-- Non-trivial skill runs close with the **skill-exit status block** in `global/AGENTS.md` §9.
-- The installer always writes a suite-owned runtime snapshot to `~/.config/opencode/AGENTS.b-skills.md`, backs up changed config files, and preserves an existing `~/.config/opencode/AGENTS.md` unless replacement is approved.
-- Preserve mode is intentionally not reported as full success: the installer exits with activation-pending guidance until the active `AGENTS.md` is replaced or manually merged.
+Routing/safety highlights: keep one active skill; strict trigger precedence; approved plans are execution source of truth; approval gates protect installs, servers, migrations, commits, destructive/shared-environment actions; generated/lock/snapshot files are derived; manual edits use `apply_patch`; verification narrows before broadening; GitNexus is optional radar and Serena is primary hands; non-trivial runs use the §9 handoff/status schemas. Preserve-mode installs are activation-pending until active `AGENTS.md` is replaced or merged.
 
 See [REFERENCE.md](REFERENCE.md) for detailed skill contracts and maintenance conventions.
 
@@ -158,7 +131,7 @@ When you open this repo in OpenCode, the checked-in `AGENTS.md` provides maintai
 
 ## MCP dependencies
 
-Skills reference **MCP bundles** defined in `global/AGENTS.md` §4 rather than enumerating individual tool names.
+Skills reference **MCP bundles** defined in `global/AGENTS.md` §4 instead of repeating tool lists.
 
 | Bundle | Server | Role |
 |---|---|---|
@@ -171,16 +144,9 @@ Skills reference **MCP bundles** defined in `global/AGENTS.md` §4 rather than e
 | `playwright-browser` | `playwright` MCP, or local Playwright CLI via `bash` as fallback | Browser automation. `*_unsafe` variants are excluded from the default toolkit and require approval. |
 | `gitnexus-radar` *(optional)* | `gitnexus` | Optional graph radar — only when indexed, fresh, and target-aware. Never an edit layer. |
 
-`sequential-thinking` is **bundled but optional**. The default MCP install includes it, but it remains an escape hatch rather than a routine dependency; invoke it only when three or more plausible hypotheses remain with equal cheapest-verification cost.
+`sequential-thinking` is bundled but optional; use it only when three or more plausible hypotheses have equal cheapest-verification cost. Verify core MCPs before relying on full suite behavior. GitNexus is optional and useful only for indexed repos.
 
-Verify the core MCPs are connected in OpenCode before relying on the full suite. GitNexus is optional and augments the suite when a repo has been indexed.
-
-**GitNexus best-practice flow:**
-1. Install the GitNexus CLI separately (`npm install -g gitnexus` or your preferred method).
-2. Run `install.sh` with `B_SKILLS_INSTALL_MCP=Y` (or answer `y` at the MCP prompt) — GitNexus is included in the default MCP set.
-3. Index each repo with `gitnexus analyze --skip-agents-md` only after sensitive files and local private artifacts are excluded.
-4. Use GitNexus only when the repo is indexed, fresh, and the target file/symbol is represented.
-5. Selected skills reach for GitNexus first when the task is graph-shaped (architecture, blast radius, changed scope); if GitNexus is unavailable, stale, unindexed, missing FTS, or missing the target, they warn once and continue with Serena and native tools, tagged `[degraded: gitnexus unavailable]`.
+**GitNexus best-practice flow:** install the CLI separately, install MCPs via `install.sh`, index with `gitnexus analyze --skip-agents-md` only after excluding sensitive/private artifacts, and use it only when indexed, fresh, and target-aware. If unavailable/stale/missing target, skills continue with Serena/native tools and label degraded confidence when relevant.
 
 **Decision tree**
 - Graph overview / impact / architecture? → GitNexus first (if indexed, fresh, and target-aware).
@@ -193,14 +159,7 @@ Verify the core MCPs are connected in OpenCode before relying on the full suite.
 - Do not ask both tools the same question. A normal handoff is `GitNexus narrow → Serena inspect/edit`.
 - Go back to GitNexus only if Serena reveals a new graph question, such as an unexpected shared boundary or consumer contract.
 
-OpenCode integration:
-- Serena runs as `serena start-mcp-server --context=ide --project-from-cwd --open-web-dashboard False` so the dashboard does not auto-open on OpenCode startup.
-- Serena owns symbol discovery, references, and structural edits; native tools handle files, strings, manifests, commands, prose, and configs.
-- Serena preflight is a session-level concern owned by `global/AGENTS.md` §4 — it runs once when symbol-aware work first becomes necessary, not before every later Serena step in the same run.
-- GitNexus augments Serena for graph-level intelligence only when indexed, fresh, and target-aware. Bundle definition and freshness gate live in `global/AGENTS.md` §4.
-- Cost-gated tools (`firecrawl-deep`, browser `*_unsafe` variants) require explicit user approval per invocation.
-
-**Evidence model:** runtime evidence outranks graph evidence; Serena confirms exact symbols and references; text search confirms strings, config, and prose; web/search snippets are discovery only and must be backed by fetched or primary sources before final claims. Snippet-only answers are allowed only when labeled `Confidence: low`. Any answer derived from incomplete evidence carries the **confidence signal** defined in `global/AGENTS.md` §3.
+OpenCode integration: Serena starts without auto-opening the dashboard and owns symbol/reference/structural edits; native tools handle strings, manifests, prose, configs, and commands. Cost-gated tools (`firecrawl-deep`, browser `*_unsafe`) require approval per invocation. Evidence hierarchy and confidence labeling live in `global/AGENTS.md` §5/§3.
 
 ---
 

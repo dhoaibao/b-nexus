@@ -15,7 +15,7 @@ metadata:
 
 $ARGUMENTS
 
-Execute approved or clearly scoped work with discipline: load the source of truth, change the next smallest step, verify it, and stop when a new decision appears.
+Execute approved/scoped work: load source of truth, change the next smallest step, verify, and stop for new decisions.
 
 If `$ARGUMENTS` is present, treat it as the plan path, plan slug, approved chat plan, or **small direct request** as defined in `AGENTS.md` §3.
 
@@ -33,11 +33,6 @@ If `$ARGUMENTS` is present, treat it as the plan path, plan slug, approved chat 
 - The task is only tests → use **b-test**.
 - Something is broken and root cause is not confirmed → use **b-debug**.
 
-## Boundary examples
-
-- **Use b-implement:** "Implement the approved rate-limiting plan" or "wire the new settings copy into the existing page."
-- **Use b-refactor instead:** "Rename `UserService` to `UserRepository` across the codebase" because the primary job is a mechanical transform.
-
 ## Tools required
 
 - `bash` — inspect status, diff, and run verification commands.
@@ -45,9 +40,7 @@ If `$ARGUMENTS` is present, treat it as the plan path, plan slug, approved chat 
 - `gitnexus-radar` *(optional, for shared-route/tool/exported-boundary changes)*
 - `context7-docs` *(optional, for a narrow API uncertainty discovered mid-step)*
 
-Fallbacks: `AGENTS.md` §4 MCP fallback ladder. If execution reveals a new research blocker, stop and use **b-research**.
-
-Graceful degradation: ✅ Possible — native tools can still implement, but broad symbol changes are riskier without Serena.
+Fallbacks: `AGENTS.md` §4. If execution reveals a research blocker, stop and use **b-research**. Graceful degradation: ✅ Possible — native tools work, broad symbol changes are riskier without Serena.
 
 ## Steps
 
@@ -63,7 +56,7 @@ If the request fails the threshold and no plan exists, stop and route to **b-pla
 
 Apply the **plan staleness gate** (`AGENTS.md` §2) before executing. A stale plan must be re-planned, not improvised against.
 
-Extract only what execution needs: frontmatter approval state when present, confirmed decisions, planned touch points, ordered steps or the single scoped request, verification expectations, unresolved blockers.
+Extract only execution-critical data: approval state, decisions, touch points, steps/request, verification, blockers.
 
 For saved plans with frontmatter, require `status: approved`, `status: in-progress`, or explicit approval in the current conversation before editing. If approval arrives in chat for a draft plan, update `status`, `approved_at`, `approved_by`, and `approved_head` when available before the first source edit. Legacy plans without frontmatter may execute from explicit current-chat approval per `AGENTS.md` §2.
 
@@ -75,7 +68,7 @@ Run `git status --short` and inspect only the files relevant to the current step
 - If the target file already has unrelated edits, patch around them.
 - If user changes directly conflict with the approved scope, stop and ask.
 
-If the request asks to implement, finish, or continue an approved plan, proceed through dependency-ready steps while verification passes and no new decision appears. If the request asks for only the next step, stop after one verified step. If the request is a small direct task, treat it as a one-step implementation; do not invent extra ceremony.
+For implement/finish/continue, proceed through dependency-ready steps while checks pass and no decision appears. For next-step requests, stop after one verified step. Treat small direct tasks as one step.
 
 ### Step 3 — Implement the next smallest step
 
@@ -117,7 +110,7 @@ After a step passes verification:
 At the end:
 - Inspect `git diff`.
 - Run the final relevant verification.
-- For non-trivial changes (`AGENTS.md` §3), emit a handoff envelope (`AGENTS.md` §9) recommending **b-review**.
+- For non-trivial changes, emit an `AGENTS.md` §9 handoff recommending **b-review**.
 - Close with the skill-exit status block (`AGENTS.md` §9).
 
 ## Rules

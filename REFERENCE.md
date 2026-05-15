@@ -21,17 +21,6 @@ Think before coding. `b-plan` exists for unclear, broad, or risky work where the
 - Routes unresolved external feasibility, contract, migration, or security unknowns to `b-research` instead of guessing.
 - Treats the approved plan as the execution source of truth for later `b-implement` work.
 
-**Good triggers**
-```text
-/b-plan add rate limiting to the API
-plan the auth migration
-how should I approach this refactor?
-```
-
-**Boundary examples**
-- `b-plan`: "Plan the auth migration across middleware, API routes, and session state."
-- `b-implement` instead: "Add a help link to Settings" when the behavior is already obvious and safely scoped.
-
 **Output**
 - Quick mode: short chat plan.
 - Full mode: English plan file at `.opencode/b-skills/b-plan/<task-slug>.md` after applying the `.opencode/.gitignore` guard in `global/AGENTS.md` §6, where `<task-slug>` follows the slug algorithm in `global/AGENTS.md` §8. Saved plans remain canonical repo-local source-of-truth files. Skeleton: durable frontmatter, `# title`, `Confirmed decisions`, `Planned touch points`, `Dependencies`, `Risks`, `Unknowns`, checkbox-style `Steps`, `Verification`, `Rollback` (only when real), and `Revisions` (added when revised).
@@ -64,13 +53,6 @@ External knowledge with auto-deepening depth — lookup or research.
 - Uses Context7 first for library and framework APIs; search discovers candidate sources, while final claims require Context7, direct extraction, or another primary source unless explicitly labeled snippet-only and low confidence.
 - Uses `firecrawl-extraction` for local docs and known URLs; `firecrawl-extended` only for site maps or structured fields; `firecrawl-deep` only with explicit user approval per invocation (cost warning in `global/AGENTS.md` §4).
 - Reuses fetched results from earlier in the session instead of re-fetching.
-
-**Good triggers**
-```text
-/b-research what's the Prisma transaction API?
-/b-research compare BullMQ vs Bee-Queue
-tra cứu config key cho NextAuth session timeout
-```
 
 **Output**
 - Lookup: direct answer, source, and a minimal example only when it helps. Confidence line only when not high.
@@ -105,17 +87,6 @@ tra cứu config key cho NextAuth session timeout
 - Updates saved-plan task-list progress in place when the plan uses checkbox-style steps.
 - Updates frontmatter progress (`approved` → `in-progress` → `complete`) without stripping metadata.
 - Continues through approved plan steps when the user asks to implement or finish the plan; stops after one verified step when the user asks for only the next step.
-
-**Good triggers**
-```text
-/b-implement add-rate-limit
-/b-implement .opencode/b-skills/b-plan/add-rate-limit.md
-implement the approved plan
-```
-
-**Boundary examples**
-- `b-implement`: "Implement the approved rate-limit plan" or "wire the new settings copy into the existing page."
-- `b-refactor` instead: "Rename `UserService` to `UserRepository` everywhere" when the work is primarily mechanical.
 
 **Output**
 ```text
@@ -152,18 +123,6 @@ Closes with the **skill-exit status block** from `global/AGENTS.md` §9.
 - Confirms root cause before editing.
 - Applies the smallest fix and verifies with the narrowest relevant runtime check, then re-scans the diff and removes every temporary probe before reporting success.
 - Defers the "test failure vs runtime bug" decision to `global/AGENTS.md` §10.
-
-**Good triggers**
-```text
-/b-debug login callback not firing
-why is this endpoint returning 500?
-fix this runtime bug
-the dashboard is slow after the last deploy
-```
-
-**Boundary examples**
-- `b-debug`: "This endpoint started returning 500 after the deploy."
-- `b-test` instead: "The snapshot changed after the copy update" when production behavior is already confirmed correct.
 
 **Output**
 ```text
@@ -202,19 +161,6 @@ Symptoms -> Code path -> Hypotheses -> Root cause -> Fix -> Verification
 - Skips test adequacy and observability only when `--skip-tests` is present.
 - Reports findings first, ordered by the **severity rubric** in `global/AGENTS.md` §3 (BLOCKER / MAJOR / MINOR / NIT), and includes "Checked and clean" so the author sees what scope was actually inspected.
 
-**Good triggers**
-```text
-/b-review
-/b-review --range=origin/main..HEAD
-/b-review --repo-audit runtime contract and installer
-review before PR
-what would a reviewer flag here?
-```
-
-**Boundary examples**
-- Default `b-review`: review a diff, branch range, or working tree before PR.
-- `--repo-audit`: audit a named repository surface such as the installer, runtime contract, or one subsystem.
-
 **Output**
 ```text
 Findings -> Coverage / Tests / Observability -> READY FOR PR or NEEDS FIXES
@@ -252,18 +198,6 @@ Findings -> Coverage / Tests / Observability -> READY FOR PR or NEEDS FIXES
 - Hands real-browser flows to `b-e2e`; hands product-behavior uncertainty or confirmed product fixes out of the test lane to `b-debug` or `b-implement` with the failing evidence.
 - Keeps property-based, fuzz, and contract tests in `b-test` only when the repo already has an established runner and pattern; new strategies or frameworks route to `b-plan` first.
 
-**Good triggers**
-```text
-/b-test fix failing login test
-/b-test write regression tests for retry logic
-/b-test evaluate API coverage
-```
-
-**Boundary examples**
-- `b-test`: "Fix the Vitest mock setup" or "add regression tests for retry backoff" when intended behavior is already known.
-- `b-debug` instead: "The new regression test proves the API now returns the wrong shape."
-- `b-e2e` instead: "Verify the signup flow in a real browser."
-
 **Output**
 ```text
 Type -> Framework -> Findings -> Changes -> Verification -> Remaining gaps
@@ -294,13 +228,6 @@ Type -> Framework -> Findings -> Changes -> Verification -> Remaining gaps
 - Defaults to functional snapshots over visual regression; visual regression baselines require approval.
 - Applies the **flake handling** procedure in `global/AGENTS.md` §10 before reporting flake.
 - When writing tests, inspects the repo's existing browser-test framework first and preserves it instead of forcing Playwright everywhere.
-
-**Good triggers**
-```text
-/b-e2e verify checkout flow
-/b-e2e reproduce the signup UI bug
-write a Playwright test for the new dashboard
-```
 
 **Output**
 ```text
@@ -336,17 +263,6 @@ Mode -> Target -> Driver -> Interactions -> Assertions -> Test code -> Artifacts
 - Treats **move between files** as the highest-mechanical-risk refactor: add destination first, update every import and test path, update build config and barrel files, only then `safe_delete_symbol` the origin, then re-confirm references.
 - Verifies with diagnostics plus the narrowest risk-appropriate check (verification ladder in `global/AGENTS.md` §7).
 - Hands behavioral redesign back to `b-plan` via the handoff envelope in `global/AGENTS.md` §9, including the locked target and the reference map.
-
-**Good triggers**
-```text
-/b-refactor rename UserService to UserRepository
-/b-refactor extract validation from handleSubmit
-/b-refactor delete unused legacy auth helper
-```
-
-**Boundary examples**
-- `b-refactor`: "Extract `parseOptions` from `handleArgs` without changing behavior."
-- `b-plan` or `b-implement` instead: "Simplify checkout retries so the product gives up sooner" because the behavior changes.
 
 **Output**
 ```text

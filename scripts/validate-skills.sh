@@ -76,6 +76,8 @@ for path in skill_paths:
         r'`edit`',
         r'native `edit`',
         r'manual `edit`',
+        r'## Boundary examples',
+        r'MCP fallback ladder',
         r'\.opencode/b-e2e/',
         r'git diff HEAD~1 HEAD',
         r'Never trigger destructive git commands',
@@ -115,9 +117,13 @@ if '@modelcontextprotocol/server-sequential-thinking' in install_sh:
         if 'Not bundled.' in doc_text:
             errors.append(f'{doc_path}: sequential-thinking wording conflicts with install.sh bundled defaults')
 
-for required in ['Radar/hands boundary', 'Evidence standards', 'GitNexus freshness gate']:
+for required in ['Radar/hands boundary', 'Evidence standards', 'GitNexus freshness gate', 'Token budget']:
     if required not in global_rules:
         errors.append(f'global/AGENTS.md: missing global convention {required!r}')
+
+for doc_path, doc_text in [('REFERENCE.md', reference)]:
+    if 'Good triggers' in doc_text or 'Boundary examples' in doc_text:
+        errors.append(f'{doc_path}: duplicated trigger examples should stay in README/skills, not reference')
 
 if 'install.sh' in global_rules:
     errors.append('global/AGENTS.md: runtime global rules should not mention install.sh')

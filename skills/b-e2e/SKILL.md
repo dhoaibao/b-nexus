@@ -15,7 +15,7 @@ metadata:
 
 $ARGUMENTS
 
-Use a real browser to verify user-facing flows, then optionally turn a successful flow into repo-native browser test code. Two modes: **verify** and **author**.
+Use a real browser to verify flows or author browser tests. Capture evidence; write tests only when requested.
 
 ## When to use
 
@@ -35,19 +35,17 @@ Use a real browser to verify user-facing flows, then optionally turn a successfu
 - `serena-symbol-toolkit` *(optional, for editing existing browser test files)*
 - `bash` and native file tools — target health checks, config discovery, manifests, and writing repo test files when needed.
 
-Fallbacks: per `AGENTS.md` §4, prefer Playwright MCP; if unavailable, drive the project's local Playwright CLI via `bash`; if neither is available, stop and tell the user browser automation is unavailable.
-
-Graceful degradation: ⚠️ Partial — MCP path is fastest; CLI fallback works when the project already has Playwright installed.
+Fallbacks: `AGENTS.md` §4. Prefer Playwright MCP, then local Playwright CLI if installed; otherwise browser automation is unavailable. Graceful degradation: ⚠️ Partial.
 
 ## Steps
 
 ### Step 1 — Prepare the run
 
-1. Create a session-specific artifact directory using the run-id format from `AGENTS.md` §8. For repo-local non-sensitive artifacts, first apply the `.opencode/.gitignore` guard from `AGENTS.md` §6, then use `.opencode/b-skills/b-e2e/<run-id>/`. Use `~/.config/opencode/b-skills/b-e2e/<run-id>/` or `/tmp/opencode/b-skills/b-e2e/<run-id>/` for sensitive artifacts or auth/session state unless the user explicitly opts into repo-local persistence.
+1. Create a run artifact directory per `AGENTS.md` §8. For repo-local non-sensitive artifacts, apply the `.opencode/.gitignore` guard (`AGENTS.md` §6), then use `.opencode/b-skills/b-e2e/<run-id>/`. Use non-worktree paths for sensitive/auth state unless repo-local persistence is explicitly approved.
 2. Determine the **target**: a URL, an extension surface, a local app, or an authenticated entry point. Record the target type.
 3. Before touching `localhost`, verify the server is reachable. Do not start a dev server without approval (canonical approval ask in `AGENTS.md` §6).
 4. Clarify only what blocks the flow: auth/session state, test data, and whether writes are allowed.
-5. **Auth state reuse:** if a safe stored auth state file already exists (for example under `~/.config/opencode/b-skills/b-e2e/.../storage-state.json`) and the user has approved using it, load it instead of re-authenticating. If no auth state exists and the flow needs auth, ask before saving reusable post-login state. Without opt-in, use an ephemeral session or current-run temporary state only. Do not create real auth state under repo-local `.opencode/...` unless the user explicitly wants repo-local persistence.
+5. **Auth state reuse:** load approved safe stored auth state when available. If auth is needed and no state exists, ask before saving reusable post-login state. Without opt-in, use ephemeral/current-run state only.
 
 ### Step 2 — Pick the mode
 
