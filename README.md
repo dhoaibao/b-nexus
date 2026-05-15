@@ -79,7 +79,7 @@ Artifact paths:
 - Temporary command output: `/tmp/opencode/b-skills/<skill>/<slug>.log`.
 - Multi-artifact runs include a `manifest.json` per the schema in `global/AGENTS.md` §8.
 
-Routing/safety highlights: keep one active skill; strict trigger precedence; approved plans are execution source of truth; approval gates protect installs, servers, migrations, commits, destructive/shared-environment actions; generated/lock/snapshot files are derived; manual edits use `apply_patch`; verification narrows before broadening; GitNexus is optional radar and Serena is primary hands; non-trivial runs use the §9 handoff/status schemas. Preserve-mode installs are activation-pending until active `AGENTS.md` is replaced or merged.
+Routing/safety highlights: keep one active skill; strict trigger precedence; approved plans are execution source of truth; approval gates protect installs, servers, migrations, commits, destructive/shared-environment actions; generated/lock/snapshot files are derived; manual edits use `apply_patch` with fresh-read, small-hunk, stale-context retry discipline; verification narrows before broadening; GitNexus is optional radar and Serena is primary hands; non-trivial runs use the §9 handoff/status schemas. Preserve-mode installs are activation-pending until active `AGENTS.md` is replaced or merged.
 
 See [REFERENCE.md](REFERENCE.md) for detailed skill contracts and maintenance conventions.
 

@@ -17,6 +17,7 @@ Think before coding. `b-plan` exists for unclear, broad, or risky work where the
 - Writes new full-mode saved plans with durable frontmatter for `slug`, `status`, approval timestamps, approved git HEAD, risk, and touch points.
 - Uses the smallest blocking questions only; does not turn every plan into an interview.
 - Produces dependency-ordered steps as short as the work actually is, with exact files or symbols when known.
+- For prose/config-heavy work, names stable anchors instead of long quoted paragraphs that can drift before implementation.
 - Keeps broad or unclear refactors in planning until they reduce to concrete mechanical transforms for `b-refactor`.
 - Routes unresolved external feasibility, contract, migration, or security unknowns to `b-research` instead of guessing.
 - Treats the approved plan as the execution source of truth for later `b-implement` work.
@@ -84,6 +85,7 @@ External knowledge with auto-deepening depth — lookup or research.
 - Applies the **plan staleness gate** (`global/AGENTS.md` §2) before executing a saved plan.
 - Triggers the **plan revision protocol** (`global/AGENTS.md` §2) when the plan is wrong mid-execution.
 - Verifies each step before moving on, capped by the iteration cap in `global/AGENTS.md` §7.
+- Follows global `apply_patch` discipline: fresh target slice, small hunks, stale-context retry after missing expected lines.
 - Updates saved-plan task-list progress in place when the plan uses checkbox-style steps.
 - Updates frontmatter progress (`approved` → `in-progress` → `complete`) without stripping metadata.
 - Continues through approved plan steps when the user asks to implement or finish the plan; stops after one verified step when the user asks for only the next step.
@@ -121,7 +123,7 @@ Closes with the **skill-exit status block** from `global/AGENTS.md` §9.
 - Handles perf bugs explicitly: measures before and after with profilers, benchmarks, or runtime tracing — never infers speed from code shape.
 - Handles **cannot-reproduce** reports explicitly: states the gap, captures state diffs, and asks before patching.
 - Confirms root cause before editing.
-- Applies the smallest fix and verifies with the narrowest relevant runtime check, then re-scans the diff and removes every temporary probe before reporting success.
+- Applies the smallest fix under global `apply_patch` discipline when manual edits are needed, verifies with the narrowest relevant runtime check, then re-scans the diff and removes every temporary probe before reporting success.
 - Defers the "test failure vs runtime bug" decision to `global/AGENTS.md` §10.
 
 **Output**
@@ -197,6 +199,7 @@ Findings -> Coverage / Tests / Observability -> READY FOR PR or NEEDS FIXES
 - Ranks coverage gaps using the rubric in the skill (required → strong → useful → opportunistic).
 - Hands real-browser flows to `b-e2e`; hands product-behavior uncertainty or confirmed product fixes out of the test lane to `b-debug` or `b-implement` with the failing evidence.
 - Keeps property-based, fuzz, and contract tests in `b-test` only when the repo already has an established runner and pattern; new strategies or frameworks route to `b-plan` first.
+- Uses global `apply_patch` discipline for new test files and small non-symbol edits.
 
 **Output**
 ```text
@@ -259,6 +262,7 @@ Mode -> Target -> Driver -> Interactions -> Assertions -> Test code -> Artifacts
 - Treats vague "simplify" requests as planning work until the exact behavior-preserving transform is locked.
 - Uses `gitnexus-radar` only when exported, shared, route/tool, or broader package boundaries make graph context useful.
 - Uses the `serena-symbol-toolkit` rename/delete/body-replacement tools whenever they fit the transformation.
+- Uses `apply_patch` only for import updates, config, prose, or non-symbol glue, under the global patch discipline.
 - For **rename + extract**, does extract first under the old name, then `rename_symbol`, so each transform is independently verifiable.
 - Treats **move between files** as the highest-mechanical-risk refactor: add destination first, update every import and test path, update build config and barrel files, only then `safe_delete_symbol` the origin, then re-confirm references.
 - Verifies with diagnostics plus the narrowest risk-appropriate check (verification ladder in `global/AGENTS.md` §7).

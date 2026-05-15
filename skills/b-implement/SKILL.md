@@ -74,7 +74,7 @@ For implement/finish/continue, proceed through dependency-ready steps while chec
 
 Use `serena-symbol-toolkit` for symbol-aware edits and the cheapest discovery tool that closes the next question (`AGENTS.md` §4). Use `gitnexus-radar` only when the step crosses a shared route, tool, or exported boundary, subject to the freshness gate.
 
-Apply the smallest edit that satisfies the step.
+Apply the smallest edit that satisfies the step. For manual `apply_patch` edits, follow the patch discipline in `AGENTS.md` §6.
 
 If the step turns into an unplanned rename, move, extract, inline, or delete → stop and hand off to **b-refactor**.
 
@@ -90,6 +90,7 @@ Use `get_diagnostics_for_file` on the touched source file (production code, not 
 
 Classify failures:
 - Implementation mistake → fix and rerun.
+- `apply_patch` missing expected lines → stale context; re-read the current target slice and retry only with verified smaller context (`AGENTS.md` §6).
 - Test harness problem → **b-test**.
 - Runtime/root-cause uncertainty → **b-debug**.
 - Unresolved library/API behavior → `context7-docs`, then **b-research** if still unclear.

@@ -117,9 +117,13 @@ if '@modelcontextprotocol/server-sequential-thinking' in install_sh:
         if 'Not bundled.' in doc_text:
             errors.append(f'{doc_path}: sequential-thinking wording conflicts with install.sh bundled defaults')
 
-for required in ['Radar/hands boundary', 'Evidence standards', 'GitNexus freshness gate', 'Token budget']:
+for required in ['Radar/hands boundary', 'Evidence standards', 'GitNexus freshness gate', 'Patch discipline', 'Token budget']:
     if required not in global_rules:
         errors.append(f'global/AGENTS.md: missing global convention {required!r}')
+
+for required in ['missing expected lines', 'stale context', 'one small hunk']:
+    if required not in global_rules:
+        errors.append(f'global/AGENTS.md: patch discipline missing phrase {required!r}')
 
 for doc_path, doc_text in [('REFERENCE.md', reference)]:
     if 'Good triggers' in doc_text or 'Boundary examples' in doc_text:
@@ -156,6 +160,21 @@ b_plan = (root / 'skills' / 'b-plan' / 'SKILL.md').read_text()
 b_implement = (root / 'skills' / 'b-implement' / 'SKILL.md').read_text()
 if 'Update saved-plan checkboxes' in b_implement and '- [ ] **<imperative step title>**' not in b_plan:
     errors.append('skills/b-plan/SKILL.md: saved-plan skeleton must support checkbox-style progress updates used by b-implement')
+
+patch_skill_expectations = {
+    'b-implement': ['patch discipline', 'stale context'],
+    'b-refactor': ['patch discipline', 'stale context'],
+    'b-test': ['patch discipline', 'stale context'],
+    'b-debug': ['patch discipline', 'stale context'],
+}
+for skill_name, required_phrases in patch_skill_expectations.items():
+    skill_text = (root / 'skills' / skill_name / 'SKILL.md').read_text()
+    for required in required_phrases:
+        if required not in skill_text:
+            errors.append(f'skills/{skill_name}/SKILL.md: missing patch recovery phrase {required!r}')
+
+if 'stable anchors' not in b_plan:
+    errors.append('skills/b-plan/SKILL.md: prose/config plans should mention stable anchors for patchable edits')
 
 stale_reindex_prefix = 'If any GitNexus tool warns the index is stale, run `'
 if stale_reindex_prefix in root_agents and '--skip-agents-md' not in root_agents:

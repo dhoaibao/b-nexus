@@ -379,6 +379,12 @@ Skills do not restate this. They reference §6.
 - If a target file already has unrelated edits, patch around them.
 - If user changes directly conflict with the task, stop and ask.
 
+### Patch discipline
+
+- Before manual `apply_patch` edits to prose, config, or non-symbol glue, read the current target slice and anchor on nearby stable headings, keys, or function signatures.
+- Prefer one file and one small hunk per patch when context may drift. Do not quote long paragraphs as required context unless that exact text was just read.
+- If `apply_patch` reports missing expected lines, treat it as stale context: re-read the target slice, shrink the patch to verified current text, and retry once before changing strategy. Do not rerun the same failed patch from memory.
+
 ### Git safety
 
 - Never run autonomously: `git push`, `git pull`, `git commit`, `git reset --hard`, `git revert`, `git clean -f`, `git branch -D`.

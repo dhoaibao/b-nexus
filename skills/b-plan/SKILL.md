@@ -92,6 +92,8 @@ If the approach is obvious, skip this step. Do not invent fake alternatives.
 
 Produce dependency-ordered steps as short as the work actually is. Each step says: changes, exact paths/symbols when known, ordering reason, and `Done when` verification.
 
+For prose-heavy or config-heavy edits, name stable anchors such as headings, keys, or symbols instead of quoting long paragraphs that may drift before implementation.
+
 For saved plans, format execution steps as Markdown task-list items so progress can be updated in place during implementation.
 
 For full-mode plans, follow this saved-plan skeleton. New saved plans include durable frontmatter from `AGENTS.md` §2 before the Markdown body:

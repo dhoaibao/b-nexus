@@ -96,14 +96,15 @@ Discover the existing coverage command before inventing one; ask before adding a
 
 **Advanced tests** — property-based, fuzz, and contract tests stay here only when the repo already has an established runner and pattern. If the framework, boundary contract, generator strategy, or CI cost needs design, hand off to **b-plan** instead of inventing it inside a test edit.
 
-Prefer `serena-symbol-toolkit` insertions for existing test bodies. Use `apply_patch` when creating a new test file or when a small non-symbol edit is clearer.
+Prefer `serena-symbol-toolkit` insertions for existing test bodies. Use `apply_patch` when creating a new test file or when a small non-symbol edit is clearer, following the patch discipline in `AGENTS.md` §6.
 
 ### Step 4 — Verify
 
 1. Run `get_diagnostics_for_file` on touched files — both the test and the underlying source — when the language supports it.
 2. Re-run the narrowest relevant tests.
 3. Widen to a broader suite only when the change touches shared fixtures/helpers, public contracts, or the repo's normal test workflow requires it (verification ladder in `AGENTS.md` §7).
-4. Apply the iteration cap from `AGENTS.md` §7.
+4. If `apply_patch` reports missing expected lines, treat it as stale context; re-read the current target slice and retry only with verified smaller context (`AGENTS.md` §6).
+5. Apply the iteration cap from `AGENTS.md` §7.
 
 Close with the skill-exit status block (`AGENTS.md` §9).
 

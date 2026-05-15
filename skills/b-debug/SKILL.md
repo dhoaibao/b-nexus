@@ -87,7 +87,8 @@ State the root cause explicitly before editing:
 ### Step 4 — Apply the minimal fix
 
 Keep the fix narrow:
-- Use Serena for symbol-scoped edits, `apply_patch` for small line fixes, and comments only when the fix is non-obvious.
+- Use Serena for symbol-scoped edits, `apply_patch` for small line fixes under the patch discipline in `AGENTS.md` §6, and comments only when the fix is non-obvious.
+- If `apply_patch` reports missing expected lines, treat it as stale context; re-read the current target slice and retry only with verified smaller context.
 
 Do not roll broader cleanup or unrelated refactors into the bug fix.
 
