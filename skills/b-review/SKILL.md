@@ -95,5 +95,5 @@ Scope/Mode/Path/Baseline -> Findings -> Checked and clean -> Coverage/Tests/Obse
 
 ## Reference pointers
 
-- `skills/b-review/reference.md` - use for auth, untrusted input, sensitive data, uploads, webhooks, or integrations.
+- `reference.md` - use for auth, untrusted input, sensitive data, uploads, webhooks, or integrations.
 - `references/performance-checklist.md` - use for hot paths, query volume, rendering loops, list endpoints, or retry behavior.

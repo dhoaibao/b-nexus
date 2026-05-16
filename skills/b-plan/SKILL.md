@@ -86,7 +86,7 @@ Full-mode steps use checkbox style so **b-implement** can update progress:
   - Done when: <verification>
 ```
 
-Use `skills/b-plan/reference.md` for the quick-plan template, saved-plan skeleton, supersede rules, and multi-plan dependencies. Use `references/domain-glossary.md` when existing glossary docs should guide naming, context boundaries, or plan terminology.
+Use `reference.md` for the quick-plan template, saved-plan skeleton, supersede rules, and multi-plan dependencies. Use `references/domain-glossary.md` when existing glossary docs should guide naming, context boundaries, or plan terminology.
 
 ### Step 6 - Deliver and request approval
 
@@ -97,7 +97,7 @@ If approval arrives during the same run, update `status`, `approved_at`, `approv
 ## Output format
 
 - Quick mode: concise chat plan with scope, risk, steps, and verification.
-- Full mode: saved Markdown plan using `skills/b-plan/reference.md`.
+- Full mode: saved Markdown plan using `reference.md`.
 
 ## Rules
 

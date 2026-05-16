@@ -151,7 +151,7 @@ This tree is the source repository layout used by `install.sh`, not a directly d
 - `global/AGENTS.md` → `~/.config/opencode/AGENTS.b-skills.md` and optionally `~/.config/opencode/AGENTS.md`
 - `references/runtime-contract.md` → `~/.config/opencode/references/b-skills/runtime-contract.md`
 
-Installed skill prose references `AGENTS.md`, while this repository keeps the kernel source copy at `global/AGENTS.md` and the detailed contract at `references/runtime-contract.md`.
+Installed skill prose references `AGENTS.md`, while this repository keeps the kernel source copy at `global/AGENTS.md` and the detailed contract at `references/runtime-contract.md`. Per-skill prose points to its own installed `reference.md` as `reference.md`, because support files are copied beside `SKILL.md` under `~/.config/opencode/skills/<name>/`.
 
 When you open this repo in OpenCode, the checked-in `AGENTS.md` provides maintainer guidance for editing the source repository itself.
 
