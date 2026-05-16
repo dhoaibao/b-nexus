@@ -101,6 +101,12 @@ for path in skill_paths:
 readme = (root / 'README.md').read_text()
 reference = (root / 'REFERENCE.md').read_text()
 global_rules = (root / 'global' / 'AGENTS.md').read_text()
+runtime_contract_path = root / 'references' / 'runtime-contract.md'
+if not runtime_contract_path.exists():
+    errors.append('references/runtime-contract.md: missing detailed runtime contract')
+    runtime_contract = ''
+else:
+    runtime_contract = runtime_contract_path.read_text()
 root_agents = (root / 'AGENTS.md').read_text()
 install_sh = (root / 'install.sh').read_text()
 
@@ -116,6 +122,8 @@ for name in reference_names:
 
 for ref_path in reference_paths:
     ref_name = ref_path.name
+    if ref_name == 'runtime-contract.md':
+        continue
     if not any(ref_name in path.read_text() for path in skill_paths):
         errors.append(f'{ref_path}: not referenced by any skill file')
 
@@ -125,26 +133,42 @@ if 'references/b-skills' not in install_sh:
 if 'sync_directory "$REFERENCES_SRC" "$REFERENCES_DST"' not in install_sh:
     errors.append('install.sh: missing references sync step')
 
-for doc_path, doc_text in [('README.md', readme), ('REFERENCE.md', reference), ('global/AGENTS.md', global_rules)]:
+if 'RUNTIME_CONTRACT_DST' not in install_sh:
+    errors.append('install.sh: missing runtime contract managed path')
+
+for doc_path, doc_text in [('README.md', readme), ('REFERENCE.md', reference), ('global/AGENTS.md', global_rules), ('references/runtime-contract.md', runtime_contract)]:
     if '.opencode/b-e2e/' in doc_text:
         errors.append(f'{doc_path}: old E2E artifact path still present')
 
-for doc_path, doc_text in [('README.md', readme), ('global/AGENTS.md', global_rules)]:
+for doc_path, doc_text in [('README.md', readme), ('global/AGENTS.md', global_rules), ('references/runtime-contract.md', runtime_contract)]:
     if 'Opus 4.7' in doc_text:
         errors.append(f'{doc_path}: model-specific reasoning wording should not be present')
 
 if '@modelcontextprotocol/server-sequential-thinking' in install_sh:
-    for doc_path, doc_text in [('README.md', readme), ('global/AGENTS.md', global_rules)]:
+    for doc_path, doc_text in [('README.md', readme), ('global/AGENTS.md', global_rules), ('references/runtime-contract.md', runtime_contract)]:
         if 'Not bundled.' in doc_text:
             errors.append(f'{doc_path}: sequential-thinking wording conflicts with install.sh bundled defaults')
 
 for required in ['Radar/hands boundary', 'Evidence standards', 'GitNexus freshness gate', 'Patch discipline', 'Token budget']:
-    if required not in global_rules:
-        errors.append(f'global/AGENTS.md: missing global convention {required!r}')
+    if required not in runtime_contract:
+        errors.append(f'references/runtime-contract.md: missing detailed convention {required!r}')
 
 for required in ['missing expected lines', 'stale context', 'one small hunk']:
+    if required not in runtime_contract:
+        errors.append(f'references/runtime-contract.md: patch discipline missing phrase {required!r}')
+
+kernel_required = [
+    'Runtime Kernel',
+    'references/b-skills/runtime-contract.md',
+    'Source Of Truth',
+    'Tool Priority',
+    'Safety',
+    '[status]',
+    '[handoff]',
+]
+for required in kernel_required:
     if required not in global_rules:
-        errors.append(f'global/AGENTS.md: patch discipline missing phrase {required!r}')
+        errors.append(f'global/AGENTS.md: runtime kernel missing phrase {required!r}')
 
 for doc_path, doc_text in [('REFERENCE.md', reference)]:
     if 'Good triggers' in doc_text or 'Boundary examples' in doc_text:

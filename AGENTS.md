@@ -5,10 +5,10 @@ Guidelines for creating, editing, and maintaining the install-only OpenCode skil
 ## Scope
 
 - This file is maintainer guidance for the source repository.
-- Runtime suite behavior lives in `global/AGENTS.md` and the individual `skills/*/SKILL.md` files.
+- Runtime suite behavior lives in the `global/AGENTS.md` kernel, the detailed `references/runtime-contract.md`, and the individual `skills/*/SKILL.md` files.
 - `install.sh` deploys the runtime files into `~/.config/opencode/`, always writes `AGENTS.b-skills.md`, and only replaces the main `AGENTS.md` when missing or approved.
 
-When authoring runtime-facing skill prose, reference `AGENTS.md`. In this source repo, that runtime file is authored at `global/AGENTS.md`, installed as the suite snapshot at `AGENTS.b-skills.md`, and optionally applied to the main OpenCode `AGENTS.md` by `install.sh`.
+When authoring runtime-facing skill prose, reference `AGENTS.md`. In this source repo, that runtime kernel is authored at `global/AGENTS.md`, installed as the suite snapshot at `AGENTS.b-skills.md`, and optionally applied to the main OpenCode `AGENTS.md` by `install.sh`. Long-form schemas, rubrics, and edge-case protocols live in `references/runtime-contract.md` and install with the shared references.
 
 ## Quick links
 
@@ -18,8 +18,8 @@ When authoring runtime-facing skill prose, reference `AGENTS.md`. In this source
 - `skills/b-implement/SKILL.md` — Approved-plan execution
 - `skills/b-debug/SKILL.md` — Hypothesis-driven debugging
 - `skills/b-review/SKILL.md` — Pre-PR changed-code review
-- `references/` — Reusable checklists shared by multiple skills
-- `global/AGENTS.md` — Runtime rules source installed as `AGENTS.b-skills.md` and optionally applied to OpenCode's main `AGENTS.md`
+- `references/` — Reusable checklists and the detailed runtime contract
+- `global/AGENTS.md` — Runtime kernel source installed as `AGENTS.b-skills.md` and optionally applied to OpenCode's main `AGENTS.md`
 - `commands/` — Thin slash-command wrappers that load the matching skills
 
 ---
@@ -61,7 +61,7 @@ metadata:
 - Start with a one-line summary of what the skill does
 - Include `ALWAYS invoke when...` with a short, intent-shaped condition
 - End with one-clause disambiguation from the most similar skill
-- Keep Vietnamese trigger words in `global/AGENTS.md` routing aids rather than spamming every skill description with multilingual keyword lists
+- Keep Vietnamese trigger words in `global/AGENTS.md` or `references/runtime-contract.md` routing aids rather than spamming every skill description with multilingual keyword lists
 - No step-by-step instructions, no tool lists, no output format details
 
 ---
@@ -178,7 +178,7 @@ Keep command wrappers thin. They are entrypoints, not duplicate logic stores.
 
 ## MCP selection criteria
 
-Skills declare MCP usage by referencing **bundles** defined in `global/AGENTS.md` §4 — not by enumerating individual tool names. Bundle definitions own session-init steps, fallback behavior, cost/approval caveats, and language-coverage caveats.
+Skills declare MCP usage by referencing **bundles** summarized in `global/AGENTS.md` §4 and fully defined in `references/runtime-contract.md` §4 — not by enumerating individual tool names. Bundle definitions own session-init steps, fallback behavior, cost/approval caveats, and language-coverage caveats.
 
 | Role | When to add | Example |
 |---|---|---|
@@ -188,9 +188,9 @@ Skills declare MCP usage by referencing **bundles** defined in `global/AGENTS.md
 
 **Rules:**
 - Never add a bundle just to increase coverage — every bundle must have a clear use case in the Steps section.
-- Reference the bundle name. Do not paste the per-tool list into the skill; that list belongs in `global/AGENTS.md` §4.
+- Reference the bundle name. Do not paste the per-tool list into the skill; that list belongs in `references/runtime-contract.md` §4.
 - Label each bundle in "Tools required" with its role: required vs `*(optional, for [condition])`*.
-- Always include a `Graceful degradation:` line summarizing skill-specific fallback (the generic MCP fallback ladder lives in `global/AGENTS.md` §4 and is not restated).
+- Always include a `Graceful degradation:` line summarizing skill-specific fallback (the generic MCP fallback ladder lives in `references/runtime-contract.md` §4 and is not restated).
 - Write skill prose to prefer the lightest capable tool. Do not force MCP-first behavior for exact strings, manifests, prose, small file reads, or other cases where native tools are cheaper and equally reliable.
 - Do not list `sequential-thinking` in a skill's tool table. The global rules describe when to reach for it inline; it is not a per-skill dependency.
 - Do not list `*_unsafe` tool variants (e.g., browser code-execution) in skill workflows. Approval is required per-invocation; they are excluded from default toolkits.
@@ -200,7 +200,7 @@ Skills declare MCP usage by referencing **bundles** defined in `global/AGENTS.md
 - Serena is **primary hands** for exact symbol discovery, source inspection, references, and symbol-aware edits.
 - Add `gitnexus-radar` to a skill only when graph-level intelligence (cross-file impact, architecture context, execution-flow discovery, stale-index detection, route/API consumers, multi-repo mapping) materially improves the workflow. GitNexus is the preferred first step for graph-shaped tasks only when the repo is **indexed, fresh, and target-aware**; Serena then handles exact symbol inspection and edits.
 - If the target symbol or file is already known, or the task is local to a single file/module, skip GitNexus and go straight to Serena.
-- Every skill that uses GitNexus must rely on the freshness gate in `global/AGENTS.md` §4 and fall back to Serena/native tools when the gate fails.
+- Every skill that uses GitNexus must rely on the freshness gate summarized in `global/AGENTS.md` §4 and fully defined in `references/runtime-contract.md` §4, then fall back to Serena/native tools when the gate fails.
 - When both MCPs appear in one workflow, GitNexus answers the graph question first; Serena then becomes the source of truth for symbol lookup, body inspection, references, and edits. Do not keep both active on the same exact question.
 - Before maintainers suggest `gitnexus analyze --skip-agents-md` or add indexing guidance to a skill, verify it is **only when indexing is safe**.
 
@@ -216,7 +216,7 @@ All skills live in `skills/<name>/SKILL.md`. When changing skill files:
 | **Update** skill | Edit `skills/<name>/SKILL.md` and keep `commands/<name>.md` aligned. If the change adds or modifies a long template/skeleton, externalize it to `skills/<name>/reference.md` and link from `SKILL.md` |
 | **Delete** skill | Delete `skills/<name>/SKILL.md`, `commands/<name>.md`, any `reference.md`/`examples.md`/`scripts/`, and the directory if empty |
 
-**`global/AGENTS.md` sync** — when runtime behavior changes, update `global/AGENTS.md` in the same commit and keep any related repo docs aligned.
+**Runtime contract sync** — when always-on runtime behavior changes, update `global/AGENTS.md`; when detailed schemas/rubrics/protocols change, update `references/runtime-contract.md`. Keep related repo docs aligned in the same commit.
 
 **Root `AGENTS.md`** — keep repo-level maintainer guidance in the root `AGENTS.md` so it remains available when working in this source repository.
 
@@ -247,4 +247,4 @@ Before merging any skill file change, verify:
 5. **No trigger keyword regression** — before rewriting a description, list all current trigger keywords and verify all survive in the new version
 6. **Suite validator passes** — run `scripts/validate-skills.sh` before installing or committing skill changes
 7. **No avoidable churn** — steps should not force repeated Serena preflights, optional MCP escalation, or skill switches when the current skill can complete with bounded evidence
-8. **No duplicated global concepts** — slug algorithm, skill-exit status block, handoff envelope, manifest schema, canonical approval ask, fallback labeling, tool-use heuristics, empty-state defaults, plan staleness/revision gates, isolated-workspace preference, review checkpoint cadence, completion closure protocol, and the DOM-unit vs browser-flow boundary all live in `global/AGENTS.md`. Skills reference them; they do not restate them.
+8. **No duplicated global concepts** — slug algorithm, skill-exit status block, handoff envelope, manifest schema, canonical approval ask, fallback labeling, tool-use heuristics, empty-state defaults, plan staleness/revision gates, isolated-workspace preference, review checkpoint cadence, completion closure protocol, and the DOM-unit vs browser-flow boundary live in `global/AGENTS.md` or `references/runtime-contract.md`. Skills reference them; they do not restate them.

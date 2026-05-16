@@ -61,7 +61,7 @@ You can inspect and maintain the suite from this source repository, which contai
 /b-review --repo-audit [area]  (reviewer-style repository or maintainer audit)
 ```
 
-`/b-plan` supports **quick mode** for low-risk scoped work and **full mode** for non-trivial work. Skill files now keep only task-specific workflow; shared safety, evidence, artifact, output, and fallback rules live in `global/AGENTS.md`. Routine low-risk runs use happy-path compression, while risky boundaries still trigger the full global discipline.
+`/b-plan` supports **quick mode** for low-risk scoped work and **full mode** for non-trivial work. Skill files now keep only task-specific workflow; shared safety, evidence, artifact, output, and fallback rules are summarized in `global/AGENTS.md` and fully defined in `references/runtime-contract.md`. Routine low-risk runs use happy-path compression, while risky boundaries still trigger the full global discipline.
 
 ### Decision boundaries
 
@@ -74,18 +74,18 @@ You can inspect and maintain the suite from this source repository, which contai
 
 ### Runtime conventions
 
-In this source repo, shared runtime rules live in `global/AGENTS.md` and install to `~/.config/opencode/AGENTS.b-skills.md`; the installer replaces the active `AGENTS.md` only when missing or approved. Installed skills still cite `AGENTS.md`, so preserved third-party rules leave the suite activation-pending until merged/replaced.
+In this source repo, the active runtime kernel lives in `global/AGENTS.md` and installs to `~/.config/opencode/AGENTS.b-skills.md`; the detailed runtime contract lives in `references/runtime-contract.md` and installs to `~/.config/opencode/references/b-skills/runtime-contract.md`. The installer replaces the active `AGENTS.md` only when missing or approved. Installed skills still cite `AGENTS.md`, so preserved third-party rules leave the suite activation-pending until merged/replaced.
 
-Runtime headlines: the always-on runtime kernel and contract version (§0), definitions and rubrics including readiness vocabulary (§3), durable plan metadata plus matching-plan conflict handling and the optional domain-docs convention (§2), MCP bundles and fallbacks plus slash-command flag/mode conventions (§4), evidence standards including happy-path compression and citation provenance (§5), safety gates plus approval lifetime and isolated-workspace preference (§6), execution/verification discipline including monorepo workspace selection, command budgets, environment snapshots, skipped-check labels, generated-artifact provenance, review checkpoints, transform rollback, cascading failures, and the completion contract (§7), artifacts including minimization, `contract_version`, valid JSON manifests, and manifest transitions (§8), output contract including compact default verbosity, receiving-skill handoff intake, and the verbosity cap that exempts BLOCKERs (§9), cross-cutting decisions including the high-risk challenge gate, developer-tooling public-contract examples, test-vs-bug routing, DOM/browser and hybrid component boundaries, and the agent-cannot-reproduce protocol (§10), session lifecycle and cross-skill conventions (§11), and the suite-wide common-rationalizations table (§12).
+Runtime headlines: `global/AGENTS.md` stays short and operational: routing, source of truth, risk/readiness, tool priority, evidence, safety, execution, artifacts, output/handoff, cross-cutting boundaries, session lifecycle, and anti-patterns. `references/runtime-contract.md` owns the detailed schemas, rubrics, MCP bundles, fallback ladder, approval templates, evidence standards, verification protocols, artifact schema, status/handoff envelopes, lifecycle rules, and edge cases.
 
 Artifact paths:
 - Plans: `.opencode/b-skills/b-plan/<task-slug>.md` after applying the `.opencode/.gitignore` guard in `global/AGENTS.md` §6 (legacy `.opencode/b-plans/` is deprecated). New saved plans include `contract_version` plus frontmatter for durable approval state, timestamps, approved git HEAD, risk, and touch points. Saved plans remain the canonical repo-local source of truth. `<task-slug>` follows the slug algorithm in `global/AGENTS.md` §8.
 - Skill artifacts: `.opencode/b-skills/<skill>/<run-id>/` for repo-local non-sensitive artifacts after applying the `.opencode/.gitignore` guard in `global/AGENTS.md` §6. E2E auth/session state should use the non-worktree path by default. `run-id = <YYYYMMDD-HHMMSS>-<slug>`.
 - Saved reports: `.opencode/b-skills/<skill>/<run-id>/report.md` for explicit review/research reports after applying the `.opencode/.gitignore` guard in `global/AGENTS.md` §6.
 - Temporary command output: `/tmp/opencode/b-skills/<skill>/<slug>.log`.
-- Multi-artifact runs include a valid JSON `manifest.json` with `contract_version` per the schema in `global/AGENTS.md` §8.
+- Multi-artifact runs include a valid JSON `manifest.json` with `contract_version` per the schema in `references/runtime-contract.md` §8.
 
-Routing/safety highlights: keep one active skill; strict trigger precedence; approved plans are execution source of truth; ambiguous matching plans require user selection; unknown slash-command flags must not be ignored; non-trivial execution prefers isolated workspace/worktree handling when it materially reduces risk; approvals are scoped to the named action/environment/run unless explicitly extended; approval gates protect installs, servers, migrations, commits, destructive/shared-environment actions; b-e2e treats production-like targets as read-only by default; generated/lock/snapshot files are derived and require provenance when touched; manual edits use `apply_patch` with fresh-read, small-hunk, stale-context retry discipline; transform rollback and cascading-failure rules apply across implement/refactor/debug/test; verification narrows before broadening, uses closest workspace context in monorepos, and respects command budgets; blocked/non-trivial debug/test/E2E runs capture environment snapshots; milestone-sized risky slices can trigger `b-review` before the very end, with the completed step or milestone carried in the handoff; receiving skills must validate inherited handoffs against latest user/repo evidence; artifacts are minimized unless durability/auditability is needed; GitNexus is optional radar and Serena is primary hands; cited URLs must come from results actually fetched in the current session; report verbosity defaults compact and is capped per severity but BLOCKERs are never elided; non-trivial runs use the §9 handoff/status schemas and the §7 completion contract. Preserve-mode installs are activation-pending until active `AGENTS.md` is replaced or merged.
+Routing/safety highlights: keep one active skill; strict trigger precedence; approved plans are execution source of truth; ambiguous matching plans require user selection; unknown slash-command flags must not be ignored; non-trivial execution prefers isolated workspace/worktree handling when it materially reduces risk; approvals are scoped to the named action/environment/run unless explicitly extended; approval gates protect installs, servers, migrations, commits, destructive/shared-environment actions; b-e2e treats production-like targets as read-only by default; generated/lock/snapshot files are derived and require provenance when touched; manual edits use `apply_patch` with fresh-read, small-hunk, stale-context retry discipline; transform rollback and cascading-failure rules apply across implement/refactor/debug/test; verification narrows before broadening, uses closest workspace context in monorepos, and respects command budgets; blocked/non-trivial debug/test/E2E runs capture environment snapshots; milestone-sized risky slices can trigger `b-review` before the very end, with the completed step or milestone carried in the handoff; receiving skills must validate inherited handoffs against latest user/repo evidence; artifacts are minimized unless durability/auditability is needed; GitNexus is optional radar and Serena is primary hands; cited URLs must come from results actually fetched in the current session; report verbosity defaults compact and is capped per severity but BLOCKERs are never elided; non-trivial runs use the detailed contract's handoff/status schemas and completion contract. Preserve-mode installs are activation-pending until active `AGENTS.md` is replaced or merged.
 
 ### Shared references
 
@@ -117,7 +117,8 @@ b-skills/
 │   ├── domain-glossary.md
 │   ├── performance-checklist.md
 │   ├── security-checklist.md
-│   └── testing-patterns.md
+│   ├── testing-patterns.md
+│   └── runtime-contract.md
 ├── README.md
 ├── REFERENCE.md
 ├── install.sh
@@ -145,8 +146,9 @@ This tree is the source repository layout used by `install.sh`, not a directly d
 - `commands/` → `~/.config/opencode/commands/`
 - `references/` → `~/.config/opencode/references/b-skills/`
 - `global/AGENTS.md` → `~/.config/opencode/AGENTS.b-skills.md` and optionally `~/.config/opencode/AGENTS.md`
+- `references/runtime-contract.md` → `~/.config/opencode/references/b-skills/runtime-contract.md`
 
-Installed skill prose references `AGENTS.md`, while this repository keeps the source copy at `global/AGENTS.md`.
+Installed skill prose references `AGENTS.md`, while this repository keeps the kernel source copy at `global/AGENTS.md` and the detailed contract at `references/runtime-contract.md`.
 
 When you open this repo in OpenCode, the checked-in `AGENTS.md` provides maintainer guidance for editing the source repository itself.
 
@@ -154,7 +156,7 @@ When you open this repo in OpenCode, the checked-in `AGENTS.md` provides maintai
 
 ## MCP dependencies
 
-Skills reference **MCP bundles** defined in `global/AGENTS.md` §4 instead of repeating tool lists.
+Skills reference **MCP bundles** summarized in `global/AGENTS.md` §4 and fully defined in `references/runtime-contract.md` §4 instead of repeating tool lists.
 
 | Bundle | Server | Role |
 |---|---|---|
@@ -182,20 +184,21 @@ Skills reference **MCP bundles** defined in `global/AGENTS.md` §4 instead of re
 - Do not ask both tools the same question. A normal handoff is `GitNexus narrow → Serena inspect/edit`.
 - Go back to GitNexus only if Serena reveals a new graph question, such as an unexpected shared boundary or consumer contract.
 
-OpenCode integration: Serena starts without auto-opening the dashboard and owns symbol/reference/structural edits; native tools handle strings, manifests, prose, configs, and commands. Cost-gated tools (`firecrawl-deep`, browser `*_unsafe`) require approval per invocation by default; `firecrawl-deep` additionally supports a run-scoped capped pre-authorization (`global/AGENTS.md` §4). Evidence hierarchy and confidence labeling live in `global/AGENTS.md` §5/§3.
+OpenCode integration: Serena starts without auto-opening the dashboard and owns symbol/reference/structural edits; native tools handle strings, manifests, prose, configs, and commands. Cost-gated tools (`firecrawl-deep`, browser `*_unsafe`) require approval per invocation by default; `firecrawl-deep` additionally supports a run-scoped capped pre-authorization (`references/runtime-contract.md` §4). Evidence hierarchy and confidence labeling are summarized in `global/AGENTS.md` and fully defined in `references/runtime-contract.md` §5/§3.
 
 ---
 
 ## Repository maintenance
 
 - `AGENTS.md` is maintainer guidance for working on this source repo locally.
-- `global/AGENTS.md` is the runtime rule source installed as `~/.config/opencode/AGENTS.b-skills.md` by `install.sh`, and optionally applied to the main `~/.config/opencode/AGENTS.md`.
+- `global/AGENTS.md` is the runtime kernel source installed as `~/.config/opencode/AGENTS.b-skills.md` by `install.sh`, and optionally applied to the main `~/.config/opencode/AGENTS.md`.
+- `references/runtime-contract.md` is the detailed runtime contract installed with the shared references.
 - Skills live in `skills/<name>/SKILL.md`.
 - Commands live in `commands/<name>.md`.
 - Shared references live in `references/*.md` and install to `~/.config/opencode/references/b-skills/`.
 - `install.sh` is responsible for deploying and pruning suite-managed files under `~/.config/opencode/`.
 - `scripts/smoke-install.sh` runs isolated installer smoke tests against a temp HOME and repo snapshot.
-- `scripts/validate-skills.sh` checks frontmatter, required sections, stale tool names, old artifact paths, GitNexus scope drift, runtime-global leakage, and README/REFERENCE coverage.
+- `scripts/validate-skills.sh` checks frontmatter, required sections, stale tool names, old artifact paths, GitNexus scope drift, runtime-kernel/detailed-contract split, runtime-global leakage, and README/REFERENCE coverage.
 - Any skill change requires updating both `README.md` and `REFERENCE.md` in the same commit.
 - Run `scripts/validate-skills.sh` before installing or committing skill changes.
 - Keep skill descriptions trigger-focused and concise.

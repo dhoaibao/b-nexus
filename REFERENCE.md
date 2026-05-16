@@ -2,7 +2,7 @@
 
 Detailed contract reference for the maintained nine-skill suite. For install and high-level overview, see [README.md](README.md).
 
-When this document cites `global/AGENTS.md`, that is the source-repo path. Installed skill prose should reference the runtime path `AGENTS.md`.
+When this document cites `global/AGENTS.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the runtime path `AGENTS.md`; detailed runtime behavior lives at `references/runtime-contract.md` in this repo and `references/b-skills/runtime-contract.md` after install.
 
 ---
 
@@ -215,7 +215,8 @@ This repository is the install-only source layout for the suite. OpenCode does n
 
 ### Repository source files
 - `AGENTS.md` — maintainer guidance for this source repo.
-- `global/AGENTS.md` — runtime global rules source, installed as `AGENTS.b-skills.md` and optionally applied to OpenCode's main `AGENTS.md`.
+- `global/AGENTS.md` — runtime kernel source, installed as `AGENTS.b-skills.md` and optionally applied to OpenCode's main `AGENTS.md`.
+- `references/runtime-contract.md` — detailed runtime contract source, installed under `references/b-skills/runtime-contract.md`.
 - `skills/<name>/SKILL.md` — concise skill sources.
 - `commands/<name>.md` — thin slash-command wrappers.
 - `references/*.md` — reusable checklists and conventions shared by multiple skills.
@@ -231,25 +232,27 @@ This repository is the install-only source layout for the suite. OpenCode does n
 - New saved plans and multi-artifact manifests carry the current `contract_version` from `global/AGENTS.md` §0; manifests must be valid JSON.
 
 ### Runtime global conventions
-- The runtime kernel in `global/AGENTS.md` §0 captures the always-on rules to preserve under context pressure.
+- The runtime kernel in `global/AGENTS.md` captures always-on rules to preserve under context pressure.
+- The detailed contract in `references/runtime-contract.md` owns schemas, rubrics, tool bundles, edge cases, and long-form protocols.
 - One active skill at a time; trigger precedence lives in `global/AGENTS.md`.
 - Skill bodies are intentionally concise: trigger boundary, task-specific workflow, and task-specific stop conditions only.
-- Global rules own rubrics, readiness vocabulary, safety gates, approval lifetime, artifacts, manifest transitions, slash-command flag/mode handling, status/handoff schemas, skipped-check labels, evidence hierarchy, happy-path compression, fallback labeling, patch discipline, transform rollback, cascading failures, and output caps.
+- The kernel summarizes rubrics, readiness vocabulary, safety gates, approval lifetime, artifacts, slash-command flag/mode handling, status/handoff requirements, evidence hierarchy, patch discipline, transform rollback, cascading failures, and output caps; the detailed contract owns the full definitions.
 - Non-trivial runs define success, verify with the global ladder, respect monorepo workspace selection and command budgets, and report skipped checks with global labels.
 - Blocked or non-trivial debug/test/E2E runs record a minimal environment snapshot without secret values.
 - Receiving skills must treat handoff envelopes as initial source of truth and validate inherited assumptions against latest user/repo evidence.
 - Serena is primary hands for symbols and edits. GitNexus is optional radar only when indexed, fresh, and target-aware.
 - Cited URLs must come from sources fetched or supplied in the current session.
-- Common rationalizations live in `global/AGENTS.md`; skills do not duplicate them.
+- Common rationalizations are summarized in `global/AGENTS.md` and fully listed in `references/runtime-contract.md`; skills do not duplicate them.
 
 ### Tool model
 - Native tools stay first for exact strings, manifests, prose, configs, and small reads.
-- Skills reference MCP bundles by name; bundle definitions and fallbacks live in `global/AGENTS.md`.
+- Skills reference MCP bundles by name; bundle summaries live in `global/AGENTS.md` and full definitions/fallbacks live in `references/runtime-contract.md`.
 - Runtime evidence outranks symbol evidence, then graph, text, and snippets.
 - `sequential-thinking` is optional for evenly ranked multi-hypothesis decisions.
 
 ### Installer behavior
-- `install.sh` always installs the suite runtime snapshot at `~/.config/opencode/AGENTS.b-skills.md`.
+- `install.sh` always installs the suite runtime kernel snapshot at `~/.config/opencode/AGENTS.b-skills.md`.
+- It installs `references/runtime-contract.md` to `~/.config/opencode/references/b-skills/runtime-contract.md` with the other shared references.
 - It replaces `~/.config/opencode/AGENTS.md` only when missing or explicitly approved.
 - Preserve-mode installs are activation-pending until the active `AGENTS.md` is replaced or merged.
 - `--dry-run` / `B_SKILLS_DRY_RUN=Y` previews changes without writing.
@@ -259,4 +262,4 @@ This repository is the install-only source layout for the suite. OpenCode does n
 - Keep command wrappers thin.
 - Update `README.md` and `REFERENCE.md` with skill changes.
 - Run `scripts/validate-skills.sh` before installing or committing skill changes.
-- Keep shared policy in `global/AGENTS.md`; do not duplicate it across skills.
+- Keep shared policy in `global/AGENTS.md` and `references/runtime-contract.md`; do not duplicate it across skills.

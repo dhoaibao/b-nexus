@@ -33,6 +33,7 @@ readonly RULES_SRC="$LOCAL_REPO/global/AGENTS.md"
 readonly RULES_DST="$OPENCODE_DIR/AGENTS.md"
 readonly RULES_SNAPSHOT_DST="$OPENCODE_DIR/AGENTS.b-skills.md"
 readonly REFERENCES_DST="$OPENCODE_DIR/references/b-skills"
+readonly RUNTIME_CONTRACT_DST="$REFERENCES_DST/runtime-contract.md"
 readonly CONFIG_FILE="$OPENCODE_DIR/opencode.json"
 readonly INSTALL_MANIFEST="$OPENCODE_DIR/b-skills-install.json"
 readonly TIMESTAMP="$(date +%Y%m%d%H%M%S)"
@@ -312,7 +313,7 @@ decide_agents_install_action() {
     return 0
   fi
 
-  printf 'Replace existing OpenCode AGENTS.md with the b-skills runtime contract? [y/N]: ' > /dev/tty
+  printf 'Replace existing OpenCode AGENTS.md with the b-skills runtime kernel? [y/N]: ' > /dev/tty
   if IFS= read -r entered_value < /dev/tty; then
     :
   else
@@ -336,6 +337,7 @@ write_install_manifest() {
     AGENTS_INSTALL_ACTION="$AGENTS_INSTALL_ACTION" \
     RUNTIME_ACTIVATION_STATE="$RUNTIME_ACTIVATION_STATE" \
     RULES_SNAPSHOT_DST="$RULES_SNAPSHOT_DST" \
+    RUNTIME_CONTRACT_DST="$RUNTIME_CONTRACT_DST" \
     RULES_DST="$RULES_DST" \
     CONFIG_FILE="$CONFIG_FILE" \
     RULES_BACKUP_PATH="$RULES_BACKUP_PATH" \
@@ -360,6 +362,8 @@ payload = {
         "skillsDir": "~/.config/opencode/skills",
         "commandsDir": "~/.config/opencode/commands",
         "referencesDir": "~/.config/opencode/references/b-skills",
+        "runtimeKernel": os.environ["RULES_SNAPSHOT_DST"],
+        "runtimeContract": os.environ["RUNTIME_CONTRACT_DST"],
         "suiteRules": os.environ["RULES_SNAPSHOT_DST"],
         "globalAgents": os.environ["RULES_DST"],
         "config": os.environ["CONFIG_FILE"],
@@ -1452,7 +1456,7 @@ log "✅ Shared references synced"
 
 section "Install runtime rules"
 decide_agents_install_action
-write_file_from_source "$RULES_SRC" "$RULES_SNAPSHOT_DST" "b-skills runtime rules snapshot"
+write_file_from_source "$RULES_SRC" "$RULES_SNAPSHOT_DST" "b-skills runtime kernel snapshot"
 
 case "$AGENTS_INSTALL_ACTION" in
   replace)
@@ -1470,7 +1474,7 @@ case "$AGENTS_INSTALL_ACTION" in
     ;;
   preserve)
     log "⏭ Preserved existing OpenCode AGENTS.md"
-    log "   b-skills runtime rules snapshot: $RULES_SNAPSHOT_DST"
+    log "   b-skills runtime kernel snapshot: $RULES_SNAPSHOT_DST"
     RUNTIME_ACTIVATION_STATE="pending"
     ;;
 esac
@@ -1512,7 +1516,7 @@ fi
 
 section "Done"
 if [ "$RUNTIME_ACTIVATION_STATE" = "pending" ]; then
-  log "⚠️  b-skills files were installed, but the runtime contract is not active yet."
+  log "⚠️  b-skills files were installed, but the runtime kernel is not active yet."
 elif dry_run_enabled; then
   log "✅ b-skills install preview completed."
 else
@@ -1520,7 +1524,8 @@ else
 fi
 log "   Skills:       $OPENCODE_DIR/skills"
 log "   Commands:     $OPENCODE_DIR/commands"
-log "   Suite rules:  $RULES_SNAPSHOT_DST"
+log "   Runtime kernel:   $RULES_SNAPSHOT_DST"
+log "   Runtime contract: $RUNTIME_CONTRACT_DST"
 log "   AGENTS.md:    $RULES_DST ($AGENTS_INSTALL_ACTION)"
 log "   Config:       $CONFIG_FILE"
 if [ "$RULES_BACKUP_PATH" != "none" ]; then
