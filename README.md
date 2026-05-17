@@ -24,10 +24,12 @@ The installer deploys this suite into your global OpenCode config directory:
 - `~/.config/opencode/skills/`
 - `~/.config/opencode/commands/`
 - `~/.config/opencode/references/b-skills/`
-- `~/.config/opencode/AGENTS.b-skills.md`
+- `~/.config/opencode/b-skills/AGENTS.md`
+- `~/.config/opencode/b-skills/install.json`
+- `~/.config/opencode/b-skills/backups/` *(created on demand when a suite-managed backup is written or migrated)*
 - `~/.config/opencode/AGENTS.md` *(only when missing or when you approve replacement)*
 
-If `~/.config/opencode/AGENTS.md` already exists and you do **not** approve replacement, the installer keeps that file, writes the suite snapshot to `AGENTS.b-skills.md`, and exits with an activation-pending status plus next steps. Full suite behavior requires either replacing `AGENTS.md` or manually merging the snapshot into the active file.
+If `~/.config/opencode/AGENTS.md` already exists and you do **not** approve replacement, the installer keeps that file, writes the suite snapshot to `b-skills/AGENTS.md`, and exits with an activation-pending status plus next steps. Full suite behavior requires either replacing `AGENTS.md` or manually merging the snapshot into the active file.
 
 This repository is the **install-only source layout** for that deployment. OpenCode does **not** load the checked-in `skills/`, `commands/`, or `references/` directories directly from this repo root; `install.sh` copies them into the correct `~/.config/opencode/` paths.
 
@@ -81,7 +83,7 @@ You can inspect and maintain the suite from this source repository, which contai
 
 ### Runtime conventions
 
-The runtime kernel lives in `global/AGENTS.md` (installs to `~/.config/opencode/AGENTS.b-skills.md`); the detailed contract lives in `references/runtime-contract.md` (installs to `~/.config/opencode/references/b-skills/runtime-contract.md`). `global/AGENTS.md` is the short operational layer — routing, risk, tool priority, safety, artifacts, handoff, and anti-patterns. `references/runtime-contract.md` owns schemas, rubrics, MCP bundles, fallback ladder, and edge cases.
+The runtime kernel lives in `global/AGENTS.md` (installs to `~/.config/opencode/b-skills/AGENTS.md`); the detailed contract lives in `references/runtime-contract.md` (installs to `~/.config/opencode/references/b-skills/runtime-contract.md`). `global/AGENTS.md` is the short operational layer — routing, risk, tool priority, safety, artifacts, handoff, and anti-patterns. `references/runtime-contract.md` owns schemas, rubrics, MCP bundles, fallback ladder, and edge cases.
 
 Artifact paths:
 - Plans: `.opencode/b-skills/b-plan/<task-slug>.md` (`.opencode/.gitignore` guard: `global/AGENTS.md` §6; slug: §8; legacy `.opencode/b-plans/` deprecated).
@@ -153,7 +155,7 @@ This tree is the source repository layout used by `install.sh`, not a directly d
 - `skills/` → `~/.config/opencode/skills/`
 - `commands/` → `~/.config/opencode/commands/`
 - `references/` → `~/.config/opencode/references/b-skills/`
-- `global/AGENTS.md` → `~/.config/opencode/AGENTS.b-skills.md` and optionally `~/.config/opencode/AGENTS.md`
+- `global/AGENTS.md` → `~/.config/opencode/b-skills/AGENTS.md` and optionally `~/.config/opencode/AGENTS.md`
 - `references/runtime-contract.md` → `~/.config/opencode/references/b-skills/runtime-contract.md`
 
 Installed skill prose references `AGENTS.md`, while this repository keeps the kernel source copy at `global/AGENTS.md` and the detailed contract at `references/runtime-contract.md`. Per-skill prose points to its own installed `reference.md` as `reference.md`, because support files are copied beside `SKILL.md` under `~/.config/opencode/skills/<name>/`.
@@ -185,13 +187,13 @@ Skills reference **MCP bundles** summarized in `global/AGENTS.md` §4 and fully 
 ## Repository maintenance
 
 - `AGENTS.md` is maintainer guidance for working on this source repo locally.
-- `global/AGENTS.md` is the runtime kernel source installed as `~/.config/opencode/AGENTS.b-skills.md` by `install.sh`, and optionally applied to the main `~/.config/opencode/AGENTS.md`.
+- `global/AGENTS.md` is the runtime kernel source installed as `~/.config/opencode/b-skills/AGENTS.md` by `install.sh`, and optionally applied to the main `~/.config/opencode/AGENTS.md`.
 - `references/runtime-contract.md` is the detailed runtime contract installed with the shared references.
 - Skills live in `skills/<name>/SKILL.md`.
 - Commands live in `commands/<name>.md`.
 - Shared references live in `references/*.md` and install to `~/.config/opencode/references/b-skills/`; single-skill references live at `skills/<name>/reference.md` and install with their owning skill.
 - `install.sh` is responsible for deploying and pruning suite-managed files under `~/.config/opencode/`.
-- `install.sh --uninstall` removes skills and commands only when they are marked as b-skills-managed, then removes shared references, the runtime snapshot, and the install manifest; it restores a recorded `AGENTS.md` backup only when the active file still matches the b-skills runtime snapshot, otherwise it preserves the active file.
+- `install.sh --uninstall` removes skills and commands only when they are marked as b-skills-managed, then removes shared references plus active metadata files under `~/.config/opencode/b-skills/`; it restores a recorded `AGENTS.md` backup only when the active file still matches the b-skills runtime snapshot, otherwise it preserves the active file. Backup files are kept under `~/.config/opencode/b-skills/backups/` for manual rollback.
 - `scripts/smoke-install.sh` runs isolated installer smoke tests against a temp HOME and repo snapshot.
 - `scripts/validate-skills.sh` checks frontmatter, required sections, stale tool names, old artifact paths, GitNexus scope drift, runtime-kernel/detailed-contract split, runtime-global leakage, and README/REFERENCE coverage.
 - Any skill change requires updating both `README.md` and `REFERENCE.md` in the same commit.

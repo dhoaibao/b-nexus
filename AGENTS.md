@@ -6,7 +6,7 @@ Guidelines for creating, editing, and maintaining the install-only OpenCode skil
 
 - This file is maintainer guidance for the source repository.
 - Runtime suite behavior lives in `global/AGENTS.md` (kernel), `references/runtime-contract.md` (detailed contract), and `skills/*/SKILL.md` (per-skill).
-- `install.sh` deploys runtime files to `~/.config/opencode/`, always writes `AGENTS.b-skills.md`, and replaces `AGENTS.md` only when missing or approved.
+- `install.sh` deploys runtime files to `~/.config/opencode/`, always writes `b-skills/AGENTS.md`, and replaces `AGENTS.md` only when missing or approved.
 - When authoring runtime-facing skill prose, reference `AGENTS.md`. Long-form schemas, rubrics, and edge-case protocols live in `references/runtime-contract.md`.
 
 ## Quick links
@@ -21,7 +21,7 @@ Guidelines for creating, editing, and maintaining the install-only OpenCode skil
 - `skills/b-review/SKILL.md` — Pre-PR changed-code review
 - `skills/b-audit/SKILL.md` — Repository and suite-slice audits
 - `references/` — Reusable checklists and the detailed runtime contract
-- `global/AGENTS.md` — Runtime kernel source (installs as `AGENTS.b-skills.md`)
+- `global/AGENTS.md` — Runtime kernel source (installs as `b-skills/AGENTS.md`)
 - `commands/` — Thin slash-command wrappers
 
 ---

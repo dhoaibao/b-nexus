@@ -28,16 +28,20 @@ readonly REPO_URL="${B_SKILLS_REPO:-https://github.com/dhoaibao/b-skills.git}"
 readonly LOCAL_REPO="${B_SKILLS_DIR:-$HOME/.b-skills}"
 readonly REF="${B_SKILLS_REF:-}"
 readonly OPENCODE_DIR="$HOME/.config/opencode"
+readonly B_SKILLS_METADATA_DIR="$OPENCODE_DIR/b-skills"
+readonly B_SKILLS_BACKUPS_DIR="$B_SKILLS_METADATA_DIR/backups"
 readonly SKILLS_SRC="$LOCAL_REPO/skills"
 readonly COMMANDS_SRC="$LOCAL_REPO/commands"
 readonly REFERENCES_SRC="$LOCAL_REPO/references"
 readonly RULES_SRC="$LOCAL_REPO/global/AGENTS.md"
 readonly RULES_DST="$OPENCODE_DIR/AGENTS.md"
-readonly RULES_SNAPSHOT_DST="$OPENCODE_DIR/AGENTS.b-skills.md"
+readonly RULES_SNAPSHOT_DST="$B_SKILLS_METADATA_DIR/AGENTS.md"
 readonly REFERENCES_DST="$OPENCODE_DIR/references/b-skills"
 readonly RUNTIME_CONTRACT_DST="$REFERENCES_DST/runtime-contract.md"
 readonly CONFIG_FILE="$OPENCODE_DIR/opencode.json"
-readonly INSTALL_MANIFEST="$OPENCODE_DIR/b-skills-install.json"
+readonly INSTALL_MANIFEST="$B_SKILLS_METADATA_DIR/install.json"
+readonly LEGACY_RULES_SNAPSHOT_DST="$OPENCODE_DIR/AGENTS.b-skills.md"
+readonly LEGACY_INSTALL_MANIFEST="$OPENCODE_DIR/b-skills-install.json"
 readonly TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 
 log()     { printf '%s
@@ -108,6 +112,39 @@ is_placeholder_value() {
 
 prompt_available() {
   [ -r /dev/tty ] && [ -w /dev/tty ] && ( exec 3<>/dev/tty ) >/dev/null 2>&1
+}
+
+resolve_existing_install_manifest() {
+  if [ -f "$INSTALL_MANIFEST" ]; then
+    printf '%s' "$INSTALL_MANIFEST"
+    return 0
+  fi
+
+  if [ -f "$LEGACY_INSTALL_MANIFEST" ]; then
+    printf '%s' "$LEGACY_INSTALL_MANIFEST"
+    return 0
+  fi
+
+  return 1
+}
+
+resolve_existing_rules_snapshot() {
+  if [ -f "$RULES_SNAPSHOT_DST" ]; then
+    printf '%s' "$RULES_SNAPSHOT_DST"
+    return 0
+  fi
+
+  if [ -f "$LEGACY_RULES_SNAPSHOT_DST" ]; then
+    printf '%s' "$LEGACY_RULES_SNAPSHOT_DST"
+    return 0
+  fi
+
+  return 1
+}
+
+backup_path_for_file() {
+  local file_path="$1"
+  printf '%s/%s.bak-%s' "$B_SKILLS_BACKUPS_DIR" "$(basename "$file_path")" "$TIMESTAMP"
 }
 
 wants_mcp_install() {
@@ -186,12 +223,16 @@ announce_write() {
 
 backup_file_if_needed() {
   local file_path="$1"
-  local backup_path="${file_path}.bak-${TIMESTAMP}"
+  local backup_path
+
+  backup_path="$(backup_path_for_file "$file_path")"
 
   [ -f "$file_path" ] || {
     printf 'none'
     return 0
   }
+
+  ensure_dir "$B_SKILLS_BACKUPS_DIR"
 
   if dry_run_enabled; then
     log "[dry-run] backup $file_path -> $backup_path"
@@ -365,6 +406,7 @@ payload = {
     "agentsAction": os.environ.get("AGENTS_INSTALL_ACTION", "preserve"),
     "activationState": os.environ.get("RUNTIME_ACTIVATION_STATE", "active"),
     "managedPaths": {
+        "metadataDir": "~/.config/opencode/b-skills",
         "skillsDir": "~/.config/opencode/skills",
         "commandsDir": "~/.config/opencode/commands",
         "referencesDir": "~/.config/opencode/references/b-skills",
@@ -991,22 +1033,22 @@ remove_command_if_managed() {
 }
 
 restore_agents_backup_if_available() {
-  local backup_path
-  [ -f "$INSTALL_MANIFEST" ] || return 1
+  local backup_path manifest_path snapshot_path
+  manifest_path=$(resolve_existing_install_manifest) || return 1
+  snapshot_path=$(resolve_existing_rules_snapshot) || return 1
   [ -f "$RULES_DST" ] || return 1
-  [ -f "$RULES_SNAPSHOT_DST" ] || return 1
-  if ! cmp -s "$RULES_DST" "$RULES_SNAPSHOT_DST"; then
+  if ! cmp -s "$RULES_DST" "$snapshot_path"; then
     log "⏭ Preserved OpenCode AGENTS.md because it has changed since b-skills install"
     return 0
   fi
 
-  backup_path=$(env INSTALL_MANIFEST="$INSTALL_MANIFEST" python3 - <<'PYEOF'
+  backup_path=$(env INSTALL_MANIFEST_PATH="$manifest_path" python3 - <<'PYEOF'
 import json
 import os
 from pathlib import Path
 
 try:
-    payload = json.loads(Path(os.environ["INSTALL_MANIFEST"]).read_text())
+    payload = json.loads(Path(os.environ["INSTALL_MANIFEST_PATH"]).read_text())
 except (FileNotFoundError, json.JSONDecodeError, OSError):
     raise SystemExit(0)
 
@@ -1032,17 +1074,115 @@ PYEOF
 }
 
 remove_agents_if_b_skills_managed() {
+  local snapshot_path
   [ -f "$RULES_DST" ] || {
     log "✅ OpenCode AGENTS.md already absent"
     return 0
   }
 
-  if [ -f "$RULES_SNAPSHOT_DST" ] && cmp -s "$RULES_DST" "$RULES_SNAPSHOT_DST"; then
+  snapshot_path=$(resolve_existing_rules_snapshot) || snapshot_path=""
+
+  if [ -n "$snapshot_path" ] && cmp -s "$RULES_DST" "$snapshot_path"; then
     remove_path_if_exists "$RULES_DST" "OpenCode AGENTS.md"
     return 0
   fi
 
   log "⏭ Preserved OpenCode AGENTS.md because it does not match the b-skills snapshot"
+}
+
+cleanup_legacy_metadata_paths() {
+  [ -e "$LEGACY_RULES_SNAPSHOT_DST" ] && remove_path_if_exists "$LEGACY_RULES_SNAPSHOT_DST" "legacy runtime kernel snapshot"
+  [ -e "$LEGACY_INSTALL_MANIFEST" ] && remove_path_if_exists "$LEGACY_INSTALL_MANIFEST" "legacy install manifest"
+  return 0
+}
+
+migrate_legacy_backup_files() {
+  local legacy_backup_pairs backup_key source_path destination_path
+
+  [ -f "$LEGACY_INSTALL_MANIFEST" ] || return 0
+
+  legacy_backup_pairs=$(env LEGACY_MANIFEST_PATH="$LEGACY_INSTALL_MANIFEST" python3 - <<'PYEOF'
+import json
+import os
+from pathlib import Path
+
+try:
+    payload = json.loads(Path(os.environ["LEGACY_MANIFEST_PATH"]).read_text())
+except (FileNotFoundError, json.JSONDecodeError, OSError):
+    raise SystemExit(0)
+
+for key, backup_path in payload.get("backups", {}).items():
+    if isinstance(backup_path, str) and backup_path and backup_path != "none":
+        print(f"{key}\t{backup_path}")
+PYEOF
+  )
+
+  [ -n "$legacy_backup_pairs" ] || return 0
+
+  while IFS=$'\t' read -r backup_key source_path; do
+    [ -n "$source_path" ] || continue
+    destination_path="$B_SKILLS_BACKUPS_DIR/$(basename "$source_path")"
+
+    case "$source_path" in
+      "$B_SKILLS_BACKUPS_DIR"/*)
+        destination_path="$source_path"
+        ;;
+      "$OPENCODE_DIR"/*.bak-*)
+        ;;
+      *)
+        continue
+        ;;
+    esac
+
+    [ -f "$source_path" ] || continue
+
+    if [ "$destination_path" != "$source_path" ] && [ -e "$destination_path" ]; then
+      log "⏭ Preserved legacy backup $source_path because $destination_path already exists"
+    elif [ "$destination_path" != "$source_path" ]; then
+      ensure_dir "$B_SKILLS_BACKUPS_DIR"
+
+      if dry_run_enabled; then
+        log "[dry-run] move $source_path -> $destination_path"
+      else
+        mv "$source_path" "$destination_path"
+        log "✅ Moved legacy backup $(basename "$source_path") into $B_SKILLS_BACKUPS_DIR"
+      fi
+    fi
+
+    case "$backup_key" in
+      globalAgents)
+        if [ "$RULES_BACKUP_PATH" = "none" ]; then
+          RULES_BACKUP_PATH="$destination_path"
+        fi
+        ;;
+      config)
+        if [ "$CONFIG_BACKUP_PATH" = "none" ]; then
+          CONFIG_BACKUP_PATH="$destination_path"
+        fi
+        ;;
+      *)
+        ;;
+    esac
+  done <<< "$legacy_backup_pairs"
+
+  return 0
+}
+
+remove_dir_if_empty() {
+  local dir_path="$1" label="$2"
+
+  [ -d "$dir_path" ] || return 0
+  if [ -n "$(ls -A "$dir_path")" ]; then
+    return 0
+  fi
+
+  if dry_run_enabled; then
+    log "[dry-run] remove empty directory $dir_path"
+    return 0
+  fi
+
+  rmdir "$dir_path"
+  log "✅ $label removed"
 }
 
 uninstall_b_skills() {
@@ -1078,6 +1218,9 @@ uninstall_b_skills() {
 
   remove_path_if_exists "$RULES_SNAPSHOT_DST" "runtime kernel snapshot"
   remove_path_if_exists "$INSTALL_MANIFEST" "install manifest"
+  cleanup_legacy_metadata_paths
+  remove_dir_if_empty "$B_SKILLS_BACKUPS_DIR" "b-skills backups directory"
+  remove_dir_if_empty "$B_SKILLS_METADATA_DIR" "b-skills metadata directory"
 
   section "Done"
   if dry_run_enabled; then
@@ -1541,7 +1684,7 @@ PYEOF
 
   write_text_file "$CONFIG_FILE" "$merged" "OpenCode config" Y
   if [ -f "$CONFIG_FILE" ] && ! dry_run_enabled; then
-    CONFIG_BACKUP_PATH="${CONFIG_FILE}.bak-${TIMESTAMP}"
+    CONFIG_BACKUP_PATH="$(backup_path_for_file "$CONFIG_FILE")"
     [ -f "$CONFIG_BACKUP_PATH" ] || CONFIG_BACKUP_PATH="none"
   fi
 }
@@ -1611,7 +1754,7 @@ case "$AGENTS_INSTALL_ACTION" in
     if [ -f "$RULES_DST" ] && ! dry_run_enabled; then
       RULES_BACKUP_PATH="$(backup_file_if_needed "$RULES_DST")"
     elif [ -f "$RULES_DST" ]; then
-      RULES_BACKUP_PATH="${RULES_DST}.bak-${TIMESTAMP}"
+      RULES_BACKUP_PATH="$(backup_path_for_file "$RULES_DST")"
     fi
     write_file_from_source "$RULES_SRC" "$RULES_DST" "OpenCode AGENTS.md"
     RUNTIME_ACTIVATION_STATE="active"
@@ -1638,6 +1781,8 @@ collect_custom_provider_config
 
 merge_opencode_config
 write_install_manifest
+cleanup_legacy_metadata_paths
+migrate_legacy_backup_files
 
 section "MCP defaults"
 if wants_mcp_install "$INSTALL_MCPS_VALUE"; then

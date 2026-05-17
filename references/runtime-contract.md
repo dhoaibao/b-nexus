@@ -6,7 +6,7 @@
 
 ## 0. Relationship To Runtime Kernel
 
-The authoritative active runtime kernel lives in `global/AGENTS.md` in this source repo and installs as `AGENTS.md` or `AGENTS.b-skills.md`. This detailed contract must not duplicate the kernel rule list; it expands the schemas, rubrics, tool bundles, and edge-case protocols that the kernel links to.
+The authoritative active runtime kernel lives in `global/AGENTS.md` in this source repo and installs as `AGENTS.md` or `b-skills/AGENTS.md`. This detailed contract must not duplicate the kernel rule list; it expands the schemas, rubrics, tool bundles, and edge-case protocols that the kernel links to.
 
 ### Contract Version
 
