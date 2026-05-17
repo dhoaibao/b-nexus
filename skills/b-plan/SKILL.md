@@ -49,7 +49,7 @@ Fallbacks: `AGENTS.md` section 4. Graceful degradation: possible with native rea
 ### Step 1 - Choose quick or full mode
 
 - **Quick mode:** default for low-risk scoped work. Return a short chat plan and ask for approval.
-- **Full mode:** use only for non-trivial work, real structural choice, public/sensitive risk, or durable coordination need. Save a plan under `.opencode/b-skills/b-plan/<task-slug>.md` after the global `.opencode/.gitignore` guard.
+- **Full mode:** use only for non-trivial work, real structural choice, public/sensitive risk, or durable coordination need. Save a plan under `.opencode/b-skills/b-plan/<plan-file-slug>.md` after the global `.opencode/.gitignore` guard.
 
 Default to quick mode when the plan is low/trivial risk, fits in chat, and can be executed in one coherent session. Do not promote to full mode solely because the task has several routine substeps. Use full mode when the plan needs durable approval, spans sessions, has more than about five meaningful steps, has unresolved dependencies, or discovery reveals broad references, public contracts, security-sensitive behavior, deployment risk, or a plan that is no longer readable in chat.
 
@@ -103,6 +103,6 @@ If approval arrives during the same run, update `status`, `approved_at`, `approv
 
 - Do not implement while planning.
 - Keep quick plans lean; promote to full mode when the plan grows risk or coordination needs.
-- Use the slug, artifact, staleness, and revision rules from `AGENTS.md`.
+- Use the slug, artifact, staleness, revision, and saved-plan filename rules from `AGENTS.md`.
 - Surface blockers and assumptions explicitly.
 - Approved plans are the execution source of truth for **b-implement**.

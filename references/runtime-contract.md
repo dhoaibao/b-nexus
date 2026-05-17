@@ -92,14 +92,14 @@ Ignore legacy or alternate skill trees that do not match the installed runtime c
 
 Use this order when instructions compete:
 1. User's latest explicit instruction.
-2. Approved saved plan in `.opencode/b-skills/b-plan/<task-slug>.md`.
+2. Approved saved plan in `.opencode/b-skills/b-plan/<plan-file-slug>.md`.
 3. Approved chat plan.
 4. Current repository evidence.
 5. Conventional defaults recorded as assumptions.
 
 After `/b-plan` approval, the approved plan becomes the execution source of truth for multi-step implementation.
 
-If multiple approved saved plans plausibly match the same request, do not choose by slug similarity. Ask the user to pick the plan or approve superseding/merging them before editing.
+If multiple approved saved plans plausibly match the same request, do not choose by filename or slug similarity. Ask the user to pick the plan or approve superseding/merging them before editing.
 
 ### Durable plan metadata
 
@@ -637,6 +637,19 @@ Examples:
 - "Add rate limiting to the API" → `add-rate-limiting-to-the-api`
 - "Đổi tên UserService thành UserRepository" → `doi-ten-userservice-thanh-userrepository`
 
+### Saved plan filename
+
+Saved plan paths use an English `<plan-file-slug>`:
+
+1. Base it on the plan's English H1 title or one-line goal.
+2. Lowercase. Keep important identifiers, API names, and code symbols in their natural form.
+3. Replace non-alphanumeric runs with `-`. Trim leading/trailing `-`.
+4. Cap at **40 characters**. If truncation would split a word, end at the previous `-`.
+5. If a collision exists with another saved plan filename, append `-2`, `-3`, … (numeric only).
+6. Once created, keep the filename stable through revisions unless the user explicitly asks to rename or supersede the plan.
+
+The frontmatter field `slug: <task-slug>` remains the canonical deterministic identifier for matching, dependencies, cross-skill references, and any run-id continuity. Do not replace it with the English filename slug.
+
 ### Run ID
 
 `<YYYYMMDD-HHMMSS>-<task-slug>`. All skills use this format.
@@ -662,7 +675,7 @@ Files inside a run directory follow these conventions so they're predictable acr
 
 ### Paths
 
-- **Plans:** `.opencode/b-skills/b-plan/<task-slug>.md` (canonical) after applying the `.opencode/.gitignore` guard in §6. Saved plans remain repo-local source-of-truth files. The legacy `.opencode/b-plans/` is deprecated; do not write there.
+- **Plans:** `.opencode/b-skills/b-plan/<plan-file-slug>.md` (canonical path) after applying the `.opencode/.gitignore` guard in §6. Saved plans remain repo-local source-of-truth files. Frontmatter `slug: <task-slug>` stays canonical for matching and continuity. The legacy `.opencode/b-plans/` is deprecated; do not write there.
 - **Skill artifacts:** `.opencode/b-skills/<skill>/<run-id>/` for repo-local non-sensitive b-skills artifacts after applying the `.opencode/.gitignore` guard in §6.
 - **Saved reports:** `.opencode/b-skills/<skill>/<run-id>/report.md` for explicit review/research reports after applying the `.opencode/.gitignore` guard in §6.
 - **Sensitive artifacts:** auth/session state and similar secrets default to `~/.config/opencode/b-skills/<skill>/<run-id>/` or `/tmp/opencode/b-skills/<skill>/<run-id>/`; never store them in a tracked worktree path.
@@ -718,7 +731,7 @@ Single-artifact runs may skip the manifest and report these fields inline instea
 ### Language
 
 - **Chat:** match the language of the user's most recent message. Code identifiers, paths, and command examples stay in their natural form.
-- **Saved artifacts:** English (headings, prose, slugs) regardless of chat language, so plans, manifests, and reports remain interoperable.
+- **Saved artifacts:** English (headings, prose, plan filenames) regardless of chat language, so plans, manifests, and reports remain interoperable. Canonical slugs and run-ids still follow §8.
 
 ### Lead with the result
 

@@ -62,7 +62,7 @@ Detailed routing, localized triggers, and switch policy: `references/b-skills/ru
 
 Use this conflict ladder:
 1. User's latest explicit instruction.
-2. Approved saved plan in `.opencode/b-skills/b-plan/<task-slug>.md`.
+2. Approved saved plan in `.opencode/b-skills/b-plan/<plan-file-slug>.md`.
 3. Approved chat plan.
 4. Current repository evidence.
 5. Conventional defaults recorded as assumptions.

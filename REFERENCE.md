@@ -34,7 +34,7 @@ Turns a clear goal into an execution-ready plan without implementing.
 **Core behavior**
 - Defaults to quick mode for low-risk, chat-sized scoped work and uses full mode only for durable, multi-session, dependency-heavy, or risky coordination.
 - Avoids promoting routine multi-step work to a saved plan solely because it has several obvious substeps.
-- Saves full plans under `.opencode/b-skills/b-plan/<task-slug>.md` with durable frontmatter and `contract_version` from `global/AGENTS.md`.
+- Saves full plans under `.opencode/b-skills/b-plan/<plan-file-slug>.md` with durable frontmatter and `contract_version` from `global/AGENTS.md`; the filename stays English while frontmatter `slug` remains the canonical task slug.
 - Promotes quick plans to saved plans when risk, breadth, or coordination grows.
 - Uses repo evidence only when it materially improves sequencing or touch-point accuracy.
 - Records assumptions separately from confirmed decisions unless the user confirms them.

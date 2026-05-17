@@ -4,7 +4,7 @@ Long-form templates for `b-plan`. The SKILL.md links here so the main file stays
 
 ## Saved-plan skeleton (full mode)
 
-New saved plans include durable frontmatter from `AGENTS.md` §2 before the Markdown body:
+New saved plans include durable frontmatter from `AGENTS.md` §2 before the Markdown body. Use the path and slug conventions from `AGENTS.md` §8: save the file with an English `<plan-file-slug>` filename, while frontmatter `slug` stays the canonical `<task-slug>`.
 
 ```markdown
 ---
@@ -82,7 +82,7 @@ Quick plans stay in chat. Use this minimum shape so quick plans don't drift in f
 **Verification:** <narrowest command or procedure>
 ```
 
-If a quick plan accumulates more than ~5 steps or grows risks/unknowns sections, promote it to full mode and save it under `.opencode/b-skills/b-plan/<task-slug>.md`.
+If a quick plan accumulates more than ~5 steps or grows risks/unknowns sections, promote it to full mode and save it under `.opencode/b-skills/b-plan/<plan-file-slug>.md`.
 
 ## Supersede vs revise
 

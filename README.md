@@ -86,7 +86,7 @@ You can inspect and maintain the suite from this source repository, which contai
 The runtime kernel lives in `global/AGENTS.md` (installs to `~/.config/opencode/b-skills/AGENTS.md`); the detailed contract lives in `references/runtime-contract.md` (installs to `~/.config/opencode/references/b-skills/runtime-contract.md`). `global/AGENTS.md` is the short operational layer — routing, risk, tool priority, safety, artifacts, handoff, and anti-patterns. `references/runtime-contract.md` owns schemas, rubrics, MCP bundles, fallback ladder, and edge cases.
 
 Artifact paths:
-- Plans: `.opencode/b-skills/b-plan/<task-slug>.md` (`.opencode/.gitignore` guard: `global/AGENTS.md` §6; slug: §8; legacy `.opencode/b-plans/` deprecated).
+- Plans: `.opencode/b-skills/b-plan/<plan-file-slug>.md` (`.opencode/.gitignore` guard: `global/AGENTS.md` §6; filename and slug conventions: §8; saved plan filenames are English, while frontmatter `slug` remains the canonical task slug; legacy `.opencode/b-plans/` deprecated).
 - Skill artifacts: `.opencode/b-skills/<skill>/<run-id>/` (`run-id = <YYYYMMDD-HHMMSS>-<slug>`); sensitive auth/session artifacts stay outside the worktree. Repo-native test, coverage, trace, video, and screenshot outputs follow project configuration when produced by verification commands.
 - Saved reports: `.opencode/b-skills/<skill>/<run-id>/report.md`.
 - Temp logs: `/tmp/opencode/b-skills/<skill>/<slug>.log`.
