@@ -14,11 +14,23 @@ errors = []
 
 skill_paths = sorted(root.glob('skills/*/SKILL.md'))
 skill_names = [path.parent.name for path in skill_paths]
+command_paths = sorted(root.glob('commands/*.md'))
+command_names = [path.stem for path in command_paths]
 reference_paths = sorted(root.glob('references/*.md'))
 reference_names = [path.name for path in reference_paths]
 
 if not skill_paths:
     errors.append('No skills/*/SKILL.md files found')
+
+if not command_paths:
+    errors.append('No commands/*.md files found')
+
+if len(command_paths) != len(skill_paths):
+    errors.append(f'commands/: expected {len(skill_paths)} wrappers, found {len(command_paths)}')
+
+extra_command_names = sorted(set(command_names) - set(skill_names))
+if extra_command_names:
+    errors.append(f'commands/: wrappers without matching skill directories: {", ".join(extra_command_names)}')
 
 if not reference_paths:
     errors.append('No references/*.md files found')
@@ -109,6 +121,26 @@ else:
     runtime_contract = runtime_contract_path.read_text()
 root_agents = (root / 'AGENTS.md').read_text()
 install_sh = (root / 'install.sh').read_text()
+
+expected_skill_count = len(skill_paths)
+for doc_path, doc_text in [('README.md', readme), ('REFERENCE.md', reference)]:
+    doc_lower = doc_text.lower()
+    count_matches = {int(value) for value in re.findall(r'\b(\d+)\s*[- ]skill\b', doc_lower)}
+    count_matches.update(int(value) for value in re.findall(r'\bsuite of\s+(\d+)\s+skills\b', doc_lower))
+    if not count_matches:
+        errors.append(f'{doc_path}: missing explicit numeric skill-count claim')
+    elif expected_skill_count not in count_matches:
+        found = ', '.join(str(value) for value in sorted(count_matches))
+        errors.append(f'{doc_path}: skill-count claim {found} does not match repo count {expected_skill_count}')
+
+non_trivial_patterns = {
+    'global/AGENTS.md': r'A change is \*\*non-trivial\*\* if it touches more than 3 files, a public contract, a sensitive path, dependencies, CI/build/release config, or requires sequencing\.',
+    'references/runtime-contract.md': r'### Non-trivial work\n\nA change is \*\*non-trivial\*\* if any is true:\n- Touches more than 3 files\.\n- Touches a public contract \(exported API, route, CLI flag, schema, migration\)\.\n- Touches a sensitive path \(auth, authz, billing, secrets, crypto, persistence migrations\)\.\n- Adds, removes, or changes a dependency\.\n- Modifies CI, build, or release configuration\.\n- Requires sequencing\.',
+}
+for doc_path, pattern in non_trivial_patterns.items():
+    doc_text = global_rules if doc_path == 'global/AGENTS.md' else runtime_contract
+    if not re.search(pattern, doc_text, re.MULTILINE):
+        errors.append(f'{doc_path}: canonical non-trivial definition drifted from the expected rule')
 
 for name in skill_names:
     for doc_path, doc_text in [('README.md', readme), ('REFERENCE.md', reference)]:

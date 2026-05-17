@@ -1,6 +1,6 @@
 # b-skills
 
-A lean 10-skill suite for **OpenCode**, optimized around **Serena for symbol-aware code work**, optional **GitNexus graph radar**, and selective reasoning only when ambiguity warrants it.
+A lean 9-skill suite for **OpenCode**, optimized around **Serena for symbol-aware code work**, optional **GitNexus graph radar**, and selective reasoning only when ambiguity warrants it.
 
 ## Install & Update
 
@@ -48,7 +48,7 @@ You can inspect and maintain the suite from this source repository, which contai
 |---|---|---|
 | `/b-spec` | Clarify | Clarify unclear end states, constraints, acceptance criteria, non-goals, and assumptions before planning or coding |
 | `/b-plan` | Decide | Turn a clear goal into a short chat plan or, only when needed, a saved execution plan |
-| `/b-research` | Decide | External knowledge lookup or synthesis with version pinning, source extraction, citation discipline, and news/image routing when needed |
+| `/b-research` | Decide | External knowledge lookup or synthesis with version pinning, source extraction, citation discipline, and explicit degradation when rich local documents cannot be extracted |
 | `/b-implement` | Build | Execute approved or clearly scoped work in coherent verified steps |
 | `/b-refactor` | Build | Execute concrete behavior-preserving transforms: rename, extract, move, inline, simplify, or delete |
 | `/b-debug` | Validate | Confirm runtime root cause, fix minimally, verify, and remove probes |

@@ -1,6 +1,6 @@
 # b-skills — Skill reference
 
-Detailed contract reference for the maintained ten-skill suite. For install and high-level overview, see [README.md](README.md).
+Detailed contract reference for the maintained 9-skill suite. For install and high-level overview, see [README.md](README.md).
 
 When this document cites `global/AGENTS.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the runtime path `AGENTS.md`; detailed runtime behavior lives at `references/runtime-contract.md` in this repo and `references/b-skills/runtime-contract.md` after install.
 
@@ -62,6 +62,7 @@ Answers external-knowledge questions from fetched evidence.
 - Pins library versions when APIs, configs, migrations, signatures, or examples depend on version.
 - Treats user-provided URLs/files/documents as direct-source lookup when one source is likely sufficient.
 - Uses Context7 for library/framework APIs, `brave-discovery` to find unknown official URLs, recent advisories/release notes, and comparison sources, and Firecrawl extraction for final page/document evidence when page substance matters.
+- Falls back to native local reads only for plain-text, Markdown, or HTML documents when extraction is unavailable; otherwise stops and reports the limitation instead of guessing from filenames or metadata.
 - Auto-deepens when evidence is stale, contradictory, non-authoritative, or indirect.
 - Applies global privacy, citation-provenance, confidence, and deep-research approval rules.
 - Requires primary vendor or source-repo evidence when available for security, licensing, pricing, breaking migrations, or production-impacting compatibility.

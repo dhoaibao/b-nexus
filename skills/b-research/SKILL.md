@@ -22,7 +22,7 @@ Answer external-knowledge questions at the lightest reliable depth, with fetched
 
 - Library, framework, SDK, API, config, method signature, setup, migration, or capability questions.
 - Comparisons, deep dives, cited reports, recency-sensitive topics, or multi-source synthesis.
-- Questions about known URLs, local docs, PDFs, spreadsheets, or other source material.
+- Questions about known URLs, local docs, PDFs, spreadsheets, or other source material when the suite can extract them reliably.
 
 ## When NOT to use
 
@@ -35,11 +35,11 @@ Answer external-knowledge questions at the lightest reliable depth, with fetched
 
 - `context7-docs` (primary for library/framework API lookups)
 - `brave-discovery` (open-web discovery for unknown URLs, recent sources, and comparisons)
-- `firecrawl-extraction` (known URLs and local documents)
+- `firecrawl-extraction` (known URLs and local documents when extraction is available)
 - `firecrawl-extended` *(optional, for site maps or structured fields)*
 - `firecrawl-deep` *(last resort; approval-gated by `AGENTS.md`)*
 
-Fallbacks: `AGENTS.md` section 4. Graceful degradation: partial; synthesis is weaker without extraction.
+Fallbacks: `AGENTS.md` section 4. Graceful degradation: partial; synthesis is weaker without extraction, and rich local documents may become unavailable.
 
 ## Steps
 
@@ -49,6 +49,8 @@ Fallbacks: `AGENTS.md` section 4. Graceful degradation: partial; synthesis is we
 - **Research:** multi-source synthesis, comparison, recency-sensitive answer, or contradictions.
 
 If the user provides a URL/file/document and one bounded source is likely sufficient, extract it directly.
+
+If the user provides a local document and extraction is unavailable, fall back only for plain-text, Markdown, or HTML sources that local tools can read directly. For PDFs, spreadsheets, DOCX files, or other rich binaries, stop and surface the limitation instead of guessing.
 
 ### Step 2 - Pin version when material
 
@@ -90,3 +92,4 @@ Research: answer, key findings, limitations, sources, confidence.
 - Use limitations and confidence labels instead of filling gaps from memory.
 - Cited URLs must come from fetched or user-provided sources in this session.
 - Include `as of <date>` for recency-sensitive, pricing, security, licensing, compatibility, and migration answers.
+- Do not infer document substance from filenames, metadata, or snippets when a rich local document could not be extracted.

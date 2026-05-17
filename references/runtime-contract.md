@@ -155,6 +155,7 @@ A change is **non-trivial** if any is true:
 - Touches a sensitive path (auth, authz, billing, secrets, crypto, persistence migrations).
 - Adds, removes, or changes a dependency.
 - Modifies CI, build, or release configuration.
+- Requires sequencing.
 
 Otherwise the change is **trivial** and may use the lightweight paths in each skill.
 
@@ -302,7 +303,9 @@ Assume bundles are available; do not preflight. On failure, retry once narrower,
 - `serena-symbol-toolkit` unavailable → native Glob/Grep/Read + `apply_patch`. Treat renames and safe-deletes as high-risk; widen verification.
 - `gitnexus-radar` unavailable, stale, or missing target → continue without graph evidence; do not retry.
 - `context7-docs` unavailable → official-docs URL via `brave-discovery` + `firecrawl-extraction`.
-- `firecrawl-extraction` unavailable → search snippets only; mark answer as snippet-only with `Confidence: low`.
+- `firecrawl-extraction` unavailable on a known URL → search snippets only; mark the answer as snippet-only with `Confidence: low`.
+- `firecrawl-extraction` unavailable on a local plain-text, Markdown, or HTML document → use native local reads and exact local tools.
+- `firecrawl-extraction` unavailable on a local PDF, spreadsheet, DOCX, or other rich binary → stop with `[degraded: firecrawl-extraction unavailable]`; do not infer substance from filenames or metadata alone.
 
 ### Fallback labeling
 
