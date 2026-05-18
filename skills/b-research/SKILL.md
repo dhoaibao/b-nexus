@@ -48,7 +48,7 @@ Fallbacks: `AGENTS.md` section 4. Graceful degradation: partial; synthesis is we
 - **Lookup:** one fact, signature, config key, yes/no capability, or tiny example.
 - **Research:** multi-source synthesis, comparison, recency-sensitive answer, or contradictions.
 
-If the user provides a URL/file/document and one bounded source is likely sufficient, extract it directly.
+If the user provides a URL/file/document and one bounded source is likely sufficient, extract it directly. Before sending a local rich document or likely internal document to external extraction, confirm it is safe to process externally unless the user already approved that exact document class for this run.
 
 If the user provides a local document and extraction is unavailable, fall back only for plain-text, Markdown, or HTML sources that local tools can read directly. For PDFs, spreadsheets, DOCX files, or other rich binaries, stop and surface the limitation instead of guessing.
 
@@ -82,12 +82,15 @@ Lookup: direct answer, optional minimal example, source, confidence when not hig
 
 Research: answer, key findings, limitations, sources, confidence.
 
+Close non-trivial research runs with the skill-exit status block from `AGENTS.md`.
+
 ## Rules
 
 - Never ask the user to choose lookup vs research; decide and auto-deepen.
 - Use the lightest depth that answers correctly.
 - Pin versions when they affect the answer.
 - Do not bypass gated sources or paste secrets into fetches.
+- Do not send local rich documents or likely internal documents to external extraction without explicit approval.
 - Prefer 2-4 authoritative sources over long weak lists.
 - Use limitations and confidence labels instead of filling gaps from memory.
 - Cited URLs must come from fetched or user-provided sources in this session.

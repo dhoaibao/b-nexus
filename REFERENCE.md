@@ -63,6 +63,7 @@ Answers external-knowledge questions from fetched evidence.
 - Chooses lookup for one fact/signature/config/capability and research for synthesis, comparison, recency, or conflicts.
 - Pins library versions when APIs, configs, migrations, signatures, or examples depend on version.
 - Treats user-provided URLs/files/documents as direct-source lookup when one source is likely sufficient.
+- Requires approval before sending local rich documents or likely internal documents to external extraction unless that document class was already approved for the run.
 - Uses Context7 for library/framework APIs, `brave-discovery` to find unknown official URLs, recent advisories/release notes, and comparison sources, and Firecrawl extraction for final page/document evidence when page substance matters.
 - Falls back to native local reads only for plain-text, Markdown, or HTML documents when extraction is unavailable; otherwise stops and reports the limitation instead of guessing from filenames or metadata.
 - Auto-deepens when evidence is stale, contradictory, non-authoritative, or indirect.
@@ -109,7 +110,8 @@ Owns runtime and behavior failures.
 - Checks the regression window when available: recent commits, dependency/lockfile changes, config drift, feature flags, data shape changes, and environment differences.
 - Keeps a repro record for non-trivial or blocked bugs: command or interaction, target/workspace, versions/config flags, data mode, expected/actual behavior, determinism, and evidence without secret values.
 - Uses fast path when a trace strongly implicates one file/function.
-- Ranks suspects only as needed and confirms root cause before editing.
+- Ranks suspects only as needed and confirms root cause before applying the final fix.
+- Allows approved reversible containment before root cause only for active production, data-loss, or security impact, and labels it as containment rather than the final fix.
 - Tags temporary probes with `b-debug-probe`, removes probes, and re-verifies after cleanup.
 - Measures perf bugs before and after.
 - Uses bounded instrumentation for intermittent, remote-only, timing-dependent, or swallowed-error symptoms when it can collect decisive evidence.
@@ -129,7 +131,7 @@ Owns runtime and behavior failures.
 Reviews diffs, ranges, or checkpoints.
 
 **Core behavior**
-- Defaults to `git diff HEAD` and supports `--range` for changed-code review.
+- Runs `git status --short` before scoping, includes staged, unstaged, and in-scope untracked files for current-worktree review, and supports `--range` for changed-code review.
 - Reviews cumulative WIP diffs from the best available base when appropriate.
 - Uses fast path only for low-risk single-area changes; contract/auth/security/migration/dependency changes force standard review.
 - Establishes a sufficient baseline from arguments, plan, checkpoint, clarification, or the shared baseline source taxonomy; otherwise labels the review diff-only.
@@ -139,6 +141,7 @@ Reviews diffs, ranges, or checkpoints.
 - Checks tests/operability unless `--skip-tests` is present.
 - Reports findings first, includes checked-and-clean areas for standard reviews, and emits READY FOR PR, READY WITH FOLLOW-UPS, or NEEDS FIXES.
 - Blocks READY FOR PR when there is no baseline or required verification was skipped.
+- Saves `report.md` only when requested, needed for a durable checkpoint/handoff, or too large for chat.
 
 **Output**
 - Scope/mode/path/baseline, findings, checked-clean areas, coverage/tests/observability, verdict.
@@ -164,6 +167,7 @@ Audits named repository or suite surfaces outside diff-first review.
 - Runs only narrow checks that materially support the audit unless `--skip-checks` is present.
 - Reports findings first and emits AUDIT PASS, AUDIT PASS WITH FOLLOW-UPS, or NEEDS FIXES.
 - Blocks AUDIT PASS when there is no baseline, required verification was skipped, or sampled coverage leaves material unreviewed risk.
+- Saves `report.md` only when requested, needed for a durable checkpoint/handoff, or too large for chat.
 
 **Skill reference**
 - `skills/b-audit/reference.md` — concrete audit criteria for installer/update paths, runtime contracts, validators, route/tool boundaries, dependencies, generated artifacts, security-sensitive rules, and b-skills suite audits.

@@ -37,12 +37,12 @@ This repository is an install-only source layout. OpenCode does not load the che
 |---|---|---|
 | `/b-spec` | Clarify | Clarify unclear end states, constraints, acceptance criteria, non-goals, and assumptions before planning or coding |
 | `/b-plan` | Decide | Turn a clear goal into a short chat plan or saved execution plan |
-| `/b-research` | Decide | Fetch external docs, API facts, config keys, method signatures, comparisons, or recency-sensitive evidence |
-| `/b-implement` | Build | Execute approved or clearly scoped work in coherent verified steps |
+| `/b-research` | Decide | Fetch external docs, API facts, config keys, method signatures, comparisons, recency-sensitive evidence, or approved local document evidence |
+| `/b-implement` | Build | Execute approved plans or small direct requests in coherent verified steps |
 | `/b-refactor` | Build | Execute concrete behavior-preserving transforms: rename, extract, move, inline, simplify, or delete |
-| `/b-debug` | Validate | Confirm runtime root cause, fix minimally, verify, and remove probes |
+| `/b-debug` | Validate | Confirm runtime root cause, apply approved containment when urgent, fix minimally, verify, and remove probes |
 | `/b-test` | Validate | Write non-browser unit/integration/contract tests, fix test-only failures, evaluate coverage gaps, and route product bugs out of the test lane |
-| `/b-review` | Validate | Review changed-code diffs, ranges, or checkpoints for blockers, regressions, security, and coverage |
+| `/b-review` | Validate | Review changed-code diffs, ranges, checkpoints, and in-scope untracked files for blockers, regressions, security, and coverage |
 | `/b-audit` | Validate | Audit named repository or suite surfaces for systemic risk, sampled coverage, and residual risk |
 
 Typical flow:

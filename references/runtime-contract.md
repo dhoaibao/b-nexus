@@ -445,6 +445,7 @@ Example: `[approval] Run pnpm install — Effect: writes node_modules and update
 ### Public web privacy gate
 
 - Never send private stack traces, internal URLs, customer data, secrets, or proprietary code to public web tools without explicit approval.
+- Never send local rich documents or likely internal documents to external extraction services without explicit approval for that document class and current run.
 - Sanitize queries when a sanitized form can answer the question.
 - If sanitizing would remove the essential signal, stop and ask.
 
@@ -626,6 +627,7 @@ For blocked or non-trivial debug and test runs whose result depends on local set
 
 When the expected input is missing, do not silently fall back; ask once with a concrete default in mind:
 - No git diff → ask which commit, branch, or range to review.
+- Changed-code review with untracked files → include them from current contents for current-worktree reviews, or state they are excluded when reviewing an explicit commit/range.
 - No approved plan → check if the request meets the small-direct-request threshold (§3); otherwise route to `/b-plan`.
 - No test framework in the repo → ask before adding one; never introduce a framework as a side effect.
 - Browser or DOM test request → unsupported by this suite; do not add jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent tooling as a side effect.
@@ -787,6 +789,10 @@ Required fields are `skill`, `state`, `artifacts`, `next`, `blockers`. Every oth
 Skill prose that says "close with the skill-exit status block" inherits this schema verbatim; skills must not embed their own copy of the block in output templates.
 
 For trivial happy-path runs (a one-line answer, a tiny edit, or a low-risk local check with direct evidence), omit the block unless the user asked for an audit trail, verification is incomplete, or another skill must continue.
+
+### Saved reports
+
+Save `report.md` only when the user asks for a saved report, a review/audit/checkpoint handoff needs durable evidence, output is too large for chat, or the run produces artifacts that need a manifest. Otherwise prefer the chat report and list `artifacts: none` in the status block.
 
 ### Error envelope (failure cause-class)
 

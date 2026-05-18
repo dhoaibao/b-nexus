@@ -48,7 +48,7 @@ Collect exact failure, expected vs actual behavior, repro notes, determinism, an
 
 For non-trivial or blocked bugs, keep a repro record: command or interaction, workspace or target, relevant versions/config flags, data mode, expected behavior, actual behavior, determinism, and strongest evidence. Do not include secret values or private data.
 
-If production impact, data loss, or security risk is active, identify the safest containment first and ask before shared-environment action.
+If production impact, data loss, or security risk is active, identify the safest containment first and ask before shared-environment action. Treat containment as a reversible mitigation, not the final fix; record what remains unproven until root cause is confirmed.
 
 ### Step 2 - Rank suspects only as needed
 
@@ -64,13 +64,13 @@ Temporary probes are allowed only when cheaper evidence is insufficient. Use ins
 
 If the agent cannot reproduce a user-reproducible symptom, follow the global cannot-reproduce protocol and do not patch defensively.
 
-Before editing, state: `Root cause: <what fails> because <why>`.
+Before applying the final fix, state: `Root cause: <what fails> because <why>`.
 
 ### Step 4 - Apply the minimal fix
 
 Use Serena for symbol edits and `apply_patch` for small line/prose/config fixes under the global patch discipline.
 
-Do not bundle cleanup or redesign. If the confirmed cause needs a structural change, hand off to **b-plan** with root cause, evidence, and any attempted minimal fix.
+Do not bundle cleanup or redesign. If urgent containment was applied before root cause, continue diagnosis or hand off with the mitigation clearly labeled as containment. If the confirmed cause needs a structural change, hand off to **b-plan** with root cause, evidence, and any attempted minimal fix.
 
 ### Step 5 - Verify and clean up
 
@@ -84,9 +84,11 @@ Remove all `b-debug-probe` markers and scan for untagged debug leftovers (`conso
 Symptoms -> Root cause -> Fix -> Verification -> Cleanup/next
 ```
 
+Close non-trivial debug runs with the skill-exit status block from `AGENTS.md`.
+
 ## Rules
 
-- Do not patch before root cause is confirmed.
+- Do not apply the final fix before root cause is confirmed. Approved containment may happen first only to reduce active production, data-loss, or security impact, and must be labeled as containment.
 - Measure perf bugs before and after.
 - Surface cannot-reproduce gaps instead of speculative fixes.
 - Use global patch discipline, verification ladder, iteration cap, and skipped-check labels.

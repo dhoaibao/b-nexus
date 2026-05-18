@@ -99,6 +99,8 @@ If approval arrives during the same run, update `status`, `approved_at`, `approv
 - Quick mode: concise chat plan with scope, risk, steps, and verification.
 - Full mode: saved Markdown plan using `reference.md`.
 
+Close non-trivial planning runs with the skill-exit status block from `AGENTS.md` when a saved plan, blocker, or handoff is produced.
+
 ## Rules
 
 - Do not implement while planning.

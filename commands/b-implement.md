@@ -1,5 +1,5 @@
 ---
-description: Run the b-implement skill for executing an approved plan
+description: Run the b-implement skill for approved plans or scoped direct work
 ---
 
 <!-- b-skills-managed -->

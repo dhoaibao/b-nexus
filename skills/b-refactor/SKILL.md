@@ -83,6 +83,8 @@ Use global transform rollback, cascading failure handling, iteration cap, and sk
 Target -> Risk -> Impact -> Changes -> Verification -> Follow-up
 ```
 
+Close non-trivial refactor runs with the skill-exit status block from `AGENTS.md`.
+
 ## Rules
 
 - Preserve behavior; do not add features while refactoring.

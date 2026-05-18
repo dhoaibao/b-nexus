@@ -47,9 +47,9 @@ Fallbacks: `AGENTS.md` section 4. Graceful degradation: possible with git diff, 
 
 ### Step 1 - Scope the review
 
-Default to `git diff HEAD`. Use `--range` when supplied. If there is no diff, ask for a branch, commit, range, or checkpoint.
+Run `git status --short` before scoping. For current-worktree reviews, include staged, unstaged, and untracked files; review untracked files from their current contents because they are absent from `git diff`. Default tracked changes to `git diff HEAD`. Use `--range` when supplied and state whether current dirty or untracked files are excluded from that range review. If there is no diff and no untracked file in scope, ask for a branch, commit, range, or checkpoint.
 
-For WIP branches or dirty state, review the cumulative diff from the best available base: supplied range, upstream merge-base, origin default merge-base, then working tree if no base resolves. State scope and mode: self-review or external review.
+For WIP branches or dirty state, review the cumulative diff from the best available base: supplied range, upstream merge-base, origin default merge-base, then working tree if no base resolves. State scope, included untracked files, and mode: self-review or external review.
 
 ### Step 2 - Pick fast or standard path
 
@@ -71,7 +71,7 @@ Use diagnostics or narrow commands only when review confidence depends on runtim
 
 ### Step 5 - Report verdict
 
-Report findings first, ordered by global severity. Include checked-and-clean areas for standard reviews, capped by global verbosity rules; fast reviews may omit them only when the report says why. If no findings, say so and name residual risk or skipped checks.
+Report findings first, ordered by global severity. Include checked-and-clean areas for standard reviews, capped by global verbosity rules; fast reviews may omit them only when the report says why. If no findings, say so and name residual risk or skipped checks. Save `report.md` only when the user asks for a saved review, a checkpoint handoff needs durable evidence, or output is too large for chat; otherwise keep the review in chat.
 
 Verdicts: **READY FOR PR**, **READY WITH FOLLOW-UPS**, or **NEEDS FIXES**. Do not use **READY FOR PR** when the review has no baseline or required verification was skipped; use **READY WITH FOLLOW-UPS** or **NEEDS FIXES** instead.
 
@@ -83,11 +83,14 @@ If external knowledge is required, resolve one narrow docs lookup inline or hand
 Scope/Mode/Path/Baseline -> Findings -> Checked and clean -> Coverage/Tests/Observability -> Verdict
 ```
 
+Close non-trivial reviews with the skill-exit status block from `AGENTS.md`.
+
 ## Rules
 
 - Findings come first; summaries are secondary.
 - Label no-baseline reviews as `baseline-missing`; do not claim requirements coverage without a baseline.
 - Do not run broad checks by default.
+- Do not edit files during a review unless the user explicitly asks for fixes.
 - Fast path is risk-gated, not line-count-gated.
 - For self-review, bias against author blind spots; for external review, separate blockers from style.
 - Cite authoritative docs when an API-semantic finding or clean judgment depends on them.

@@ -71,7 +71,7 @@ Assess observability, cleanup, installation/update behavior, and rollback expect
 
 ### Step 5 - Report verdict
 
-Report findings first, ordered by global severity. Include checked-and-clean sampled areas and skipped surfaces. If no findings, say so and name residual risk or skipped checks.
+Report findings first, ordered by global severity. Include checked-and-clean sampled areas and skipped surfaces. If no findings, say so and name residual risk or skipped checks. Save `report.md` only when the user asks for a saved audit, the audit is a durable handoff/checkpoint, or output is too large for chat; otherwise keep the audit in chat.
 
 Verdicts: **AUDIT PASS**, **AUDIT PASS WITH FOLLOW-UPS**, or **NEEDS FIXES**. Do not use **AUDIT PASS** when the audit has no baseline, required verification was skipped, or sampled coverage leaves material unreviewed risk; use **AUDIT PASS WITH FOLLOW-UPS** or **NEEDS FIXES** instead.
 
@@ -82,6 +82,8 @@ If external knowledge is required, resolve one narrow docs lookup inline or hand
 ```text
 Scope/Mode/Baseline -> Findings -> Checked and clean -> Coverage/Verification/Operability -> Verdict
 ```
+
+Close non-trivial audits with the skill-exit status block from `AGENTS.md`.
 
 ## Rules
 

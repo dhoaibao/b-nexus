@@ -80,6 +80,8 @@ Run diagnostics on touched test/source files when supported, then the narrowest 
 Type -> Framework -> Findings -> Changes -> Verification -> Remaining gaps
 ```
 
+Close non-trivial test runs with the skill-exit status block from `AGENTS.md`.
+
 ## Rules
 
 - Never change production code just because a test is red.
