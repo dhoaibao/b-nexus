@@ -236,6 +236,28 @@ for required in ['Radar/hands boundary', 'Evidence standards', 'GitNexus freshne
     if required not in runtime_contract:
         errors.append(f'references/runtime-contract.md: missing detailed convention {required!r}')
 
+token_saving_contract_markers = [
+    'MCP bundles are available capabilities, not default context sources',
+    'Body-last symbol workflow',
+    'Shape large command outputs at the source',
+    'prefer structured extraction or query over full markdown',
+    'Search before extract',
+]
+for required in token_saving_contract_markers:
+    if required not in runtime_contract:
+        errors.append(f'references/runtime-contract.md: missing token-saving convention {required!r}')
+
+if 'Treat MCP bundles as lazy capabilities, not default context sources' not in global_rules:
+    errors.append('global/AGENTS.md: missing lazy MCP kernel rule')
+
+if 'Token hygiene preserved' not in root_agents:
+    errors.append('AGENTS.md: missing maintainer token hygiene checklist item')
+
+b_research_text = (root / 'skills' / 'b-research' / 'SKILL.md').read_text()
+for required in ['structured extraction or query for specific fields', 'Search before extracting']:
+    if required not in b_research_text:
+        errors.append(f'skills/b-research/SKILL.md: missing token-saving research phrase {required!r}')
+
 for required in ['missing expected lines', 'stale context', 'one small hunk']:
     if required not in runtime_contract:
         errors.append(f'references/runtime-contract.md: patch discipline missing phrase {required!r}')

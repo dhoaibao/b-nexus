@@ -48,7 +48,7 @@ Fallbacks: `AGENTS.md` section 4. Graceful degradation: partial; synthesis is we
 - **Lookup:** one fact, signature, config key, yes/no capability, or tiny example.
 - **Research:** multi-source synthesis, comparison, recency-sensitive answer, or contradictions.
 
-If the user provides a URL/file/document and one bounded source is likely sufficient, extract it directly. Before sending a local rich document or likely internal document to external extraction, confirm it is safe to process externally unless the user already approved that exact document class for this run.
+If the user provides a URL/file/document and one bounded source is likely sufficient, extract it directly. Prefer structured extraction or query for specific fields, parameters, prices, tables, or lists; use full markdown when full-page understanding, summarization, or quoted context is needed. Before sending a local rich document or likely internal document to external extraction, confirm it is safe to process externally unless the user already approved that exact document class for this run.
 
 If the user provides a local document and extraction is unavailable, fall back only for plain-text, Markdown, or HTML sources that local tools can read directly. For PDFs, spreadsheets, DOCX files, or other rich binaries, stop and surface the limitation instead of guessing.
 
@@ -60,7 +60,7 @@ Skip pinning when the question is conceptual and version is not material.
 
 ### Step 3 - Gather evidence
 
-Use Context7 first for library/framework APIs when it can match the pinned version; otherwise discover authoritative pages, then extract the highest-signal source. Prefer official docs, source repos, release notes, standards, and vendor materials over blogs or tutorials.
+Use Context7 first for library/framework APIs when it can match the pinned version; otherwise discover authoritative pages, then extract the highest-signal source. Search before extracting when the authoritative URL is unknown, and extract only the highest-signal source(s) needed for the answer. Prefer official docs, source repos, release notes, standards, and vendor materials over blogs or tutorials.
 
 For recency-sensitive questions, use the `brave-discovery` news path before extraction and include `as of <date>` or source publication dates in the answer. Use Brave to shortlist unknown official URLs, recent advisories/release notes, or comparison sources before extraction. Use image search only when visual evidence is material to the answer.
 

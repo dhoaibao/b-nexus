@@ -63,8 +63,9 @@ Answers external-knowledge questions from fetched evidence.
 - Chooses lookup for one fact/signature/config/capability and research for synthesis, comparison, recency, or conflicts.
 - Pins library versions when APIs, configs, migrations, signatures, or examples depend on version.
 - Treats user-provided URLs/files/documents as direct-source lookup when one source is likely sufficient.
+- Prefers structured extraction or query for specific fields, parameters, prices, tables, or lists, and keeps full markdown for full-page understanding, summaries, or quoted context.
 - Requires approval before sending local rich documents or likely internal documents to external extraction unless that document class was already approved for the run.
-- Uses Context7 for library/framework APIs, `brave-discovery` to find unknown official URLs, recent advisories/release notes, and comparison sources, and Firecrawl extraction for final page/document evidence when page substance matters.
+- Uses Context7 for library/framework APIs, `brave-discovery` to find unknown official URLs, recent advisories/release notes, and comparison sources, and Firecrawl extraction for final page/document evidence when page substance matters; searches before extracting when the authoritative URL is unknown.
 - Falls back to native local reads only for plain-text, Markdown, or HTML documents when extraction is unavailable; otherwise stops and reports the limitation instead of guessing from filenames or metadata.
 - Auto-deepens when evidence is stale, contradictory, non-authoritative, or indirect.
 - Applies global privacy, citation-provenance, confidence, and deep-research approval rules.

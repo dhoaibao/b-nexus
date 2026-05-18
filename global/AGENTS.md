@@ -89,7 +89,7 @@ Detailed rubrics and confidence signal: `references/b-skills/runtime-contract.md
 
 ## 4. Tool Priority
 
-Use the lightest reliable tool. Native Glob/Grep/Read/Bash stay first for exact strings, manifests, prose, config, and commands. Native tools are not MCP bundles; skill files may name them separately when they are part of the workflow.
+Use the lightest reliable tool. Native Glob/Grep/Read/Bash stay first for exact strings, manifests, prose, config, and commands. Treat MCP bundles as lazy capabilities, not default context sources; activate them only when they close the next evidence gap. Native tools are not MCP bundles; skill files may name them separately when they are part of the workflow.
 
 | Task shape | First choice | Then narrow with |
 |---|---|---|

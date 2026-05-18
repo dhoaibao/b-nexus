@@ -31,13 +31,21 @@ The installer deploys this source repo into OpenCode's global config:
 
 This repository is an install-only source layout. OpenCode does not load the checked-in `skills/`, `commands/`, or `references/` directories directly from this repo root.
 
+## Token-Saving Defaults
+
+- Keep OpenCode compaction and pruning enabled unless you are intentionally debugging context retention.
+- Ignore generated outputs, caches, logs, and suite artifacts in watchers so they do not become background context.
+- Disable broad, always-on MCP servers by default; enable project-specific MCPs per agent or task when they close an evidence gap.
+- Use Serena for symbol work and Context7 for versioned library docs instead of broad file reads or generic web searches.
+- Prefer structured extraction or query for specific web/document fields; reserve full-page markdown for source understanding or summaries.
+
 ## Skills
 
 | Skill | Phase | When to use |
 |---|---|---|
 | `/b-spec` | Clarify | Clarify unclear end states, constraints, acceptance criteria, non-goals, and assumptions before planning or coding |
 | `/b-plan` | Decide | Turn a clear goal into a short chat plan or saved execution plan |
-| `/b-research` | Decide | Fetch external docs, API facts, config keys, method signatures, comparisons, recency-sensitive evidence, or approved local document evidence |
+| `/b-research` | Decide | Fetch external docs, API facts, config keys, method signatures, comparisons, recency-sensitive evidence, or approved local document evidence with structured extraction when specific fields are enough |
 | `/b-implement` | Build | Execute approved plans or small direct requests in coherent verified steps |
 | `/b-refactor` | Build | Execute concrete behavior-preserving transforms: rename, extract, move, inline, simplify, or delete |
 | `/b-debug` | Validate | Confirm runtime root cause, apply approved containment when urgent, fix minimally, verify, and remove probes |

@@ -229,7 +229,7 @@ Skip the line on trivial high-confidence answers (a single docs lookup with a di
 
 ### Tool priority
 
-Use the lightest reliable tool. Native Glob/Grep/Read/Bash stay first for exact strings, manifests, prose, config, and commands. Native tools are not MCP bundles; skill files may name them separately when they are part of the workflow.
+Use the lightest reliable tool. Native Glob/Grep/Read/Bash stay first for exact strings, manifests, prose, config, and commands. MCP bundles are available capabilities, not default context sources; activate them only when they close the next evidence gap. Native tools are not MCP bundles; skill files may name them separately when they are part of the workflow.
 
 | Task shape | First choice | Then narrow with |
 |---|---|---|
@@ -252,6 +252,7 @@ Rely on GitNexus only when the repo is indexed, not stale, and the target file o
 
 - Single-file or local-only task: skip GitNexus.
 - Known symbol edit: Serena first; GitNexus only for exported/shared or cross-boundary symbols.
+- Body-last symbol workflow: inspect overviews, declarations, diagnostics, or references before full symbol bodies; request bodies only when needed to decide or edit.
 - Large unfamiliar area: one GitNexus pass to narrow, then Serena confirms.
 - Do not use GitNexus and Serena in parallel on the same exact symbol hunt.
 - Do not escalate to a second MCP when the first authoritative source already answered.
@@ -295,6 +296,7 @@ Skills reference MCP bundles by name instead of repeating per-tool MCP lists. Na
 - **Server:** `firecrawl`
 - **Tools:** `firecrawl_scrape`, `firecrawl_parse`.
 - **Use for:** content extraction from a known URL or local document.
+- **Format selection:** for specific data points, fields, prices, API parameters, tables, or lists, prefer structured extraction or query over full markdown. Use full markdown only when full-page understanding, summarization, or quoted context is needed.
 
 #### `firecrawl-extended` (conditional tier)
 
@@ -325,6 +327,7 @@ When fallback changes the intended tool path, evidence source, or verification r
 ### Tool-use heuristics
 
 - Around **12 MCP calls** in one skill run, pause and summarize remaining unknowns before more discovery.
+- Search before extract when the authoritative URL is unknown; extract only the highest-signal source(s) needed for the answer.
 - Do not open a second tool-heavy thread until the current investigation, edit, or verification thread is closed or the user asks to expand scope.
 - If sustained tool use is not increasing evidence quality, narrow the next check or stop and ask whether to continue.
 - Classify failures before retry/fallback: unavailable, auth/permission, rate-limit, timeout, stale index/cache, unsupported content, malformed request. Retry only transient or fixable-by-narrowing failures; stop for auth failures.
@@ -586,6 +589,10 @@ A non-trivial run is "done" only when **all** are true:
 - Artifacts manifest written when more than one artifact exists (§8).
 - Outstanding follow-ups land on an existing report surface — the report's `Follow-up` / `Remaining gaps` section, the status block `notes` field, or the `blockers` field when they block the next skill — not silently dropped.
 - The tree is in a coherent state — no mid-transform leftovers (see Transform rollback).
+
+### Source-side output shaping
+
+Shape large command outputs at the source before they enter chat: use targeted flags, filters, counts, summaries, failing sections, or saved logs. Do not paste full test logs, dependency trees, generated files, lockfiles, or broad search output unless the full content is the evidence.
 
 ### Truncated output
 
