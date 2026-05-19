@@ -8,7 +8,7 @@ Guidelines for creating, editing, and maintaining the install-only OpenCode skil
 - Keep root docs targeted: `README.md` is the brief repo overview, `AGENTS.md` is maintainer guidance for this repo, and `REFERENCE.md` is the reference guide for each skill in this repo.
 - Runtime suite behavior lives in `global/AGENTS.md` (kernel), `references/runtime-contract.md` (detailed contract), and `skills/*/SKILL.md` (per-skill).
 - `install.sh` deploys runtime files to `~/.config/opencode/`, always writes `b-skills/AGENTS.md`, and replaces `AGENTS.md` only when missing or approved.
-- When authoring runtime-facing skill prose, reference `AGENTS.md`. Long-form schemas, rubrics, and edge-case protocols live in `references/runtime-contract.md`.
+- When authoring runtime-facing skill prose, reference `AGENTS.md`. Long-form schemas, rubrics, and edge-case protocols live in `references/runtime-contract.md`; when a skill depends on one of them, phrase the instruction as a required read gate rather than a passive pointer.
 
 ## Quick links
 
@@ -251,3 +251,4 @@ Before merging any skill file change, verify:
 7. **No avoidable churn** — steps should not force repeated Serena preflights, optional MCP escalation, or skill switches when the current skill can complete with bounded evidence
 8. **Token hygiene preserved** — skill edits should keep MCP bundles lazy, use body-last Serena guidance, prefer structured extraction for specific data, and shape large command output at the source instead of adding broad full-context reads.
 9. **No duplicated global concepts** — slug algorithm, status block, handoff envelope, manifest schema, saved-report defaults, approval ask, fallback labeling, tool-use heuristics, empty-state defaults, plan staleness gates, workspace isolation preference, review checkpoint cadence, completion closure protocol, and the unsupported browser/DOM test boundary all live in `global/AGENTS.md` or `references/runtime-contract.md`. Skills reference them; they do not restate them.
+10. **Reference gates preserved** — if a skill step requires a shared schema, checklist, protocol, or output shape, it must tell the agent to read the named section/file before applying it, without copying the full global rule into the skill.

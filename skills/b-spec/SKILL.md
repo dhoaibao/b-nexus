@@ -91,10 +91,6 @@ Use the compact spec shape above. Saved artifacts are not created unless the use
 
 Close non-trivial spec runs with the skill-exit status block from `AGENTS.md` when a blocker or handoff is produced.
 
-## Reference pointers
-
-- `references/b-skills/domain-glossary.md` - optional glossary convention for `CONTEXT.md`, `CONTEXT-MAP.md`, and ADR usage.
-
 ## Rules
 
 - Clarify the outcome; do not plan or implement here.

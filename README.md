@@ -82,7 +82,7 @@ b-skills/
 - `AGENTS.md` is the maintainer guide for editing this source repo.
 - `REFERENCE.md` is the skill-by-skill reference guide.
 - `global/AGENTS.md` is the runtime kernel source.
-- `references/runtime-contract.md` is the detailed runtime contract.
-- `references/domain-glossary.md` and `references/performance-checklist.md` are reusable cross-skill references.
+- `references/runtime-contract.md` is the detailed runtime contract; referenced sections are required read gates when a skill needs their schemas, checklists, or protocols.
+- `references/performance-checklist.md` is a reusable cross-skill reference.
 
 Run `scripts/validate-skills.sh` before installing or committing suite changes.

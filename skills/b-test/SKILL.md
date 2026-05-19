@@ -92,7 +92,3 @@ Close non-trivial test runs with the skill-exit status block from `AGENTS.md`.
 - Keep fixture and mock changes local when practical.
 - Use global patch discipline, verification ladder, and iteration cap.
 - Test utilities belong here when created or changed to support an in-scope test; mechanical relocation belongs to **b-refactor**.
-
-## Reference pointers
-
-- `reference.md` - fallback guidance when local conventions are weak or conflicting.

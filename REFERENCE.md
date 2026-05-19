@@ -2,7 +2,7 @@
 
 Reference guide for each skill in the maintained 9-skill suite. For install and high-level repo overview, see [README.md](README.md). For maintainer guidance, see [AGENTS.md](AGENTS.md).
 
-When this document cites `global/AGENTS.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the runtime path `AGENTS.md`; detailed runtime behavior lives at `references/runtime-contract.md` in this repo and `references/b-skills/runtime-contract.md` after install.
+When this document cites `global/AGENTS.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the runtime path `AGENTS.md`; detailed runtime behavior lives at `references/runtime-contract.md` in this repo and `references/b-skills/runtime-contract.md` after install. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
 
 Browser, DOM-rendered, visual, and e2e tests are unsupported by this suite. Do not route jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent browser/DOM work to `b-test`; narrow the task to repo-local code review, non-browser tests, or static analysis that does not render through a DOM or drive a browser.
 
@@ -24,11 +24,6 @@ Clarifies rough or underspecified asks before planning.
 **Output**
 - Goal, constraints, acceptance criteria, non-goals, assumptions, and next skill.
 
-**Shared reference**
-- `references/b-skills/domain-glossary.md` — optional convention for persistent project glossary docs.
-
----
-
 ### b-plan
 
 Turns a clear goal into an execution-ready plan without implementing.
@@ -46,9 +41,6 @@ Turns a clear goal into an execution-ready plan without implementing.
 **Output**
 - Quick mode: concise chat plan with scope, risk, 2-5 likely steps, and verification.
 - Full mode: saved plan using `skills/b-plan/reference.md`.
-
-**Shared reference**
-- `references/b-skills/domain-glossary.md` — optional convention when glossary docs should guide terminology or bounded-context planning.
 
 **GitNexus use**
 - Optional only for graph-shaped planning.
@@ -200,9 +192,6 @@ Owns non-browser code-level testing work.
 
 **Output**
 - Type, framework, findings, changes, verification, remaining gaps.
-
-**Skill reference**
-- `skills/b-test/reference.md` — fallback conventions for tests, fixtures, and assertions.
 
 ---
 
