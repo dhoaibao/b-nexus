@@ -1,16 +1,16 @@
-# b-nexus — Agent Workflow Kernel Contract
+# b-agentic — Agent Workflow Kernel Contract
 
-> Detailed schemas, rubrics, edge-case protocols, tool bundles, and operational rules for the `b-nexus` agent workflow kernel. The active runtime kernel lives in `AGENTS.md`; installed agents should consult this file at `references/b-nexus/runtime-contract.md` when the kernel points to detailed behavior.
+> Detailed schemas, rubrics, edge-case protocols, tool bundles, and operational rules for the `b-agentic` agent workflow kernel. The active runtime kernel lives in `AGENTS.md`; installed agents should consult this file at `references/b-agentic/runtime-contract.md` when the kernel points to detailed behavior.
 
 ---
 
 ## 0. Relationship To Runtime Kernel
 
-The authoritative active runtime kernel lives in `global/AGENTS.md` in this source repo and installs as `AGENTS.md` or `b-nexus/AGENTS.md`. This detailed contract must not duplicate the kernel rule list; it expands the schemas, rubrics, tool bundles, and edge-case protocols that the kernel links to.
+The authoritative active runtime kernel lives in `global/AGENTS.md` in this source repo and installs as `AGENTS.md` or `b-agentic/AGENTS.md`. This detailed contract must not duplicate the kernel rule list; it expands the schemas, rubrics, tool bundles, and edge-case protocols that the kernel links to.
 
 ### Reference gate
 
-References to this contract and to other `references/b-nexus/*.md` files are mandatory gates when the referenced schema, rubric, protocol, checklist, or output shape affects the current task. Read the smallest named section or file before using it; do not reconstruct shared details from memory. This applies especially to saved-plan metadata, plan staleness, MCP bundle rules, approval asks, privacy gates, artifact manifests, status blocks, handoff envelopes, review/audit checklists, and performance guidance.
+References to this contract and to other `references/b-agentic/*.md` files are mandatory gates when the referenced schema, rubric, protocol, checklist, or output shape affects the current task. Read the smallest named section or file before using it; do not reconstruct shared details from memory. This applies especially to saved-plan metadata, plan staleness, MCP bundle rules, approval asks, privacy gates, artifact manifests, status blocks, handoff envelopes, review/audit checklists, and performance guidance.
 
 ### Runtime gate taxonomy
 
@@ -25,7 +25,7 @@ Runtime-critical gates are the points where missed instructions most often creat
 - **Artifact gate (§8):** before writing saved plans, reports, manifests, run logs, sensitive artifacts, or non-plan run directories.
 - **Output/handoff gate (§9):** before emitting non-trivial final output, status blocks, saved reports, error envelopes, or handoff envelopes.
 
-Use this wording pattern in skills when a gate is required: `Read references/b-nexus/runtime-contract.md §N before <action>`. For a per-skill `reference.md`, use: `Read reference.md before <action>`. Keep schemas in this contract; the skill owns only the local trigger for reading them.
+Use this wording pattern in skills when a gate is required: `Read references/b-agentic/runtime-contract.md §N before <action>`. For a per-skill `reference.md`, use: `Read reference.md before <action>`. Keep schemas in this contract; the skill owns only the local trigger for reading them.
 
 ### Runtime gate checklist
 
@@ -124,7 +124,7 @@ Ignore legacy or alternate skill trees that do not match the installed runtime c
 
 Use this order when instructions compete:
 1. User's latest explicit instruction.
-2. Approved saved plan in `.opencode/b-nexus/b-plan/<plan-file-slug>.md`.
+2. Approved saved plan in `.opencode/b-agentic/b-plan/<plan-file-slug>.md`.
 3. Approved chat plan.
 4. Current repository evidence.
 5. Conventional defaults recorded as assumptions.
@@ -499,9 +499,9 @@ Skills do not restate this. They reference §6.
 
 ### Repo-local artifact safety
 
-- Saved plans under `.opencode/b-nexus/b-plan/` are canonical source-of-truth files, not runtime artifacts; do not reroute them.
+- Saved plans under `.opencode/b-agentic/b-plan/` are canonical source-of-truth files, not runtime artifacts; do not reroute them.
 - Before any suite write under repo-local `.opencode/`, including saved plans, ensure the root ignore guard: create `.opencode/.gitignore` containing `*` when `.opencode/` or that file is missing; leave an existing `.opencode/.gitignore` unchanged.
-- Do not store auth/session state or other sensitive run artifacts under repo-local `.opencode/` unless the user explicitly opts into repo-local persistence. Use `~/.config/opencode/b-nexus/...` or `/tmp/opencode/b-nexus/...` instead by default.
+- Do not store auth/session state or other sensitive run artifacts under repo-local `.opencode/` unless the user explicitly opts into repo-local persistence. Use `~/.config/opencode/b-agentic/...` or `/tmp/opencode/b-agentic/...` instead by default.
 - Persisting reusable browser auth/session state requires explicit opt-in, even outside the worktree; otherwise use ephemeral/current-run state only.
 - Never store real browser auth/session state under a tracked worktree path.
 
@@ -628,7 +628,7 @@ Shape large command outputs at the source before they enter chat: use targeted f
 
 ### Truncated output
 
-If command output is truncated or times out, save the full output under `/tmp/opencode/b-nexus/<skill>/<slug>.log` and inspect the failing section instead of guessing.
+If command output is truncated or times out, save the full output under `/tmp/opencode/b-agentic/<skill>/<slug>.log` and inspect the failing section instead of guessing.
 
 ### Verification provenance
 
@@ -713,12 +713,12 @@ The frontmatter field `slug: <task-slug>` remains the canonical deterministic id
 
 ### Run-id continuity across handoffs
 
-When one skill hands off to another for the same logical task, the receiving skill **reuses** the source skill's `<run-id>` and writes its own artifacts under `.opencode/b-nexus/<receiving-skill>/<run-id>/`. Continuity rules:
+When one skill hands off to another for the same logical task, the receiving skill **reuses** the source skill's `<run-id>` and writes its own artifacts under `.opencode/b-agentic/<receiving-skill>/<run-id>/`. Continuity rules:
 
 - A new `<run-id>` is minted only on a fresh user task, not on a handoff.
 - Non-trivial `b-orchestrate` workflows mint a `<run-id>` at workflow start, even before artifacts exist, so every phase handoff can be tied to the same logical task.
 - The handoff envelope (§9) must carry the `run-id` **whenever one exists** — i.e., whenever the source skill wrote artifacts, itself inherited a `run-id` from an earlier handoff, or `b-orchestrate` minted one for a non-trivial workflow. Pure chat-only handoffs that have produced no artifacts and are not part of a non-trivial orchestration may omit the `run-id` field; the receiving skill mints one if and when it first writes an artifact.
-- If the receiving skill creates artifacts, it cross-links the source run directory in its own `manifest.json` `source_run` field (e.g., `".opencode/b-nexus/b-plan/<run-id>/"`).
+- If the receiving skill creates artifacts, it cross-links the source run directory in its own `manifest.json` `source_run` field (e.g., `".opencode/b-agentic/b-plan/<run-id>/"`).
 - When a chain of skills (e.g., `b-plan -> b-implement -> b-review`) all act on the same task and any one of them has written artifacts, every subsequent run directory shares the same `<run-id>` even though each lives under a different `<skill>` subdirectory.
 
 ### Non-plan artifact naming
@@ -733,18 +733,18 @@ Files inside a run directory follow these conventions so they're predictable acr
 
 ### Paths
 
-- **Plans:** `.opencode/b-nexus/b-plan/<plan-file-slug>.md` (canonical path) after applying the `.opencode/.gitignore` guard in §6. Saved plans remain repo-local source-of-truth files. Frontmatter `slug: <task-slug>` stays canonical for matching and continuity. The legacy `.opencode/b-plans/` is deprecated; do not write there.
-- **Skill artifacts:** `.opencode/b-nexus/<skill>/<run-id>/` for repo-local non-sensitive b-nexus artifacts after applying the `.opencode/.gitignore` guard in §6.
-- **Saved reports:** `.opencode/b-nexus/<skill>/<run-id>/report.md` for explicit review/research reports after applying the `.opencode/.gitignore` guard in §6.
-- **Sensitive artifacts:** auth/session state and similar secrets default to `~/.config/opencode/b-nexus/<skill>/<run-id>/` or `/tmp/opencode/b-nexus/<skill>/<run-id>/`; never store them in a tracked worktree path.
-- **Temporary logs:** `/tmp/opencode/b-nexus/<skill>/<slug>.log`.
+- **Plans:** `.opencode/b-agentic/b-plan/<plan-file-slug>.md` (canonical path) after applying the `.opencode/.gitignore` guard in §6. Saved plans remain repo-local source-of-truth files. Frontmatter `slug: <task-slug>` stays canonical for matching and continuity. The legacy `.opencode/b-plans/` is deprecated; do not write there.
+- **Skill artifacts:** `.opencode/b-agentic/<skill>/<run-id>/` for repo-local non-sensitive b-agentic artifacts after applying the `.opencode/.gitignore` guard in §6.
+- **Saved reports:** `.opencode/b-agentic/<skill>/<run-id>/report.md` for explicit review/research reports after applying the `.opencode/.gitignore` guard in §6.
+- **Sensitive artifacts:** auth/session state and similar secrets default to `~/.config/opencode/b-agentic/<skill>/<run-id>/` or `/tmp/opencode/b-agentic/<skill>/<run-id>/`; never store them in a tracked worktree path.
+- **Temporary logs:** `/tmp/opencode/b-agentic/<skill>/<slug>.log`.
 
-Do not invent new b-nexus artifact paths. Project-native verification outputs such as coverage reports, test traces, videos, screenshots, snapshots, or framework `test-results` may be produced in the repo's configured locations when running an approved or risk-appropriate command; report them when they affect evidence, cleanup, or generated-artifact provenance.
+Do not invent new b-agentic artifact paths. Project-native verification outputs such as coverage reports, test traces, videos, screenshots, snapshots, or framework `test-results` may be produced in the repo's configured locations when running an approved or risk-appropriate command; report them when they affect evidence, cleanup, or generated-artifact provenance.
 
 ### Artifact minimization
 
 - Do not create run artifacts for routine chat answers, tiny edits, or successful low-risk checks.
-- Create b-nexus artifacts only when needed for saved plans, explicit saved reports, screenshot evidence, large/truncated logs, auth/session state, generated evidence, partial failures, or user-requested auditability.
+- Create b-agentic artifacts only when needed for saved plans, explicit saved reports, screenshot evidence, large/truncated logs, auth/session state, generated evidence, partial failures, or user-requested auditability.
 - If an artifact is optional, prefer the chat/status summary over writing files.
 
 ### Workflow checkpoints
@@ -754,7 +754,7 @@ For non-trivial `b-orchestrate` workflows, checkpoint the phase state whenever t
 ### Retention and cleanup
 
 - Keep saved plans and explicit review/research reports until the user removes them; they are source-of-truth or decision artifacts.
-- Treat `/tmp/opencode/b-nexus/...` artifacts as disposable scratch. Report their paths when they matter, but do not promise persistence.
+- Treat `/tmp/opencode/b-agentic/...` artifacts as disposable scratch. Report their paths when they matter, but do not promise persistence.
 - Delete or avoid creating sensitive artifacts unless they are required for the task. Auth/session state should live in a non-worktree path and be named in the final report.
 - When a run creates test data, browser state, screenshots, logs, or generated files, report what was kept, cleaned up, or left for the user to decide.
 - Old run directories or saved plans that do not match the current task are historical artifacts. Do not delete or reuse them unless a manifest or plan status explicitly says to resume, or the user asks for cleanup.
@@ -940,7 +940,7 @@ Never modify production code purely because a test is red. Never modify an asser
 
 ### Flake handling
 
-Rerun the suspected test up to 2 times in isolation. If it passes some runs and fails others without any code change, mark it `flaky`, capture the failing output under `/tmp/opencode/b-nexus/b-test/`, and investigate ordering, shared state, async timing, or external time/network dependence before either skipping or rewriting it.
+Rerun the suspected test up to 2 times in isolation. If it passes some runs and fails others without any code change, mark it `flaky`, capture the failing output under `/tmp/opencode/b-agentic/b-test/`, and investigate ordering, shared state, async timing, or external time/network dependence before either skipping or rewriting it.
 
 ### Unsupported browser and DOM testing boundary
 
@@ -977,13 +977,13 @@ When the user can reproduce a symptom but the agent cannot in the current enviro
 
 1. `git status --short` — note dirty state; preserve unrelated changes (§6).
 2. Note whether the current checkout is already isolated (linked worktree, harness-provided workspace, or equivalent). Reuse existing isolation; do not nest it casually.
-3. Check for an approved plan under `.opencode/b-nexus/b-plan/` matching the current request.
+3. Check for an approved plan under `.opencode/b-agentic/b-plan/` matching the current request.
 4. Confirm MCP availability lazily on first use.
 5. Acknowledge dirty state only when it could affect the request.
 
 ### Crash/resume
 
-- If a prior session left a partially complete run directory under `.opencode/b-nexus/<skill>/<run-id>/`, resume from its manifest's last `complete` artifact rather than restarting.
+- If a prior session left a partially complete run directory under `.opencode/b-agentic/<skill>/<run-id>/`, resume from its manifest's last `complete` artifact rather than restarting.
 - If no manifest exists, treat the directory as orphaned; do not delete it without asking.
 - For saved plans, use the staleness gate (§2) to decide whether to resume or re-plan.
 

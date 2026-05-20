@@ -68,8 +68,8 @@ for path in skill_paths:
     if not re.search(r'^compatibility:\s*opencode\s*$', frontmatter, re.MULTILINE):
         errors.append(f'{path}: compatibility must be opencode')
 
-    if not re.search(r'^\s*suite:\s*b-nexus\s*$', frontmatter, re.MULTILINE):
-        errors.append(f'{path}: metadata.suite must be b-nexus')
+    if not re.search(r'^\s*suite:\s*b-agentic\s*$', frontmatter, re.MULTILINE):
+        errors.append(f'{path}: metadata.suite must be b-agentic')
 
     desc_match = re.search(r'^description:\s*>\s*\n(?P<desc>(?:\s+.*\n)+?)(?=^[A-Za-z_-]+:|^metadata:|^---)', frontmatter + '---', re.MULTILINE)
     if not desc_match:
@@ -126,17 +126,17 @@ for path in skill_paths:
     if re.search(r'Read §\d+', text):
         errors.append(f'{path}: read gates must name the reference file, not only a section number')
 
-    if 'Graceful degradation:' in text and '`references/b-nexus/runtime-contract.md` §4' not in text:
+    if 'Graceful degradation:' in text and '`references/b-agentic/runtime-contract.md` §4' not in text:
         errors.append(f'{path}: tool fallback must explicitly read runtime contract §4')
 
-    if re.search(r'status block|handoff envelope|status/handoff', text, re.IGNORECASE) and '`references/b-nexus/runtime-contract.md` §9' not in text:
+    if re.search(r'status block|handoff envelope|status/handoff', text, re.IGNORECASE) and '`references/b-agentic/runtime-contract.md` §9' not in text:
         errors.append(f'{path}: status/handoff usage must explicitly read runtime contract §9')
 
     skill_reference = path.parent / 'reference.md'
     if skill_reference.exists() and 'reference.md' in text and 'Read `reference.md` before' not in text:
         errors.append(f'{path}: local reference.md usage must be an explicit read gate')
 
-    if 'performance-checklist.md' in text and 'Read `references/b-nexus/performance-checklist.md` before' not in text:
+    if 'performance-checklist.md' in text and 'Read `references/b-agentic/performance-checklist.md` before' not in text:
         errors.append(f'{path}: performance checklist usage must be an explicit read gate')
 
     line_gate_requirements = [
@@ -145,7 +145,7 @@ for path in skill_paths:
     ]
     for line_number, line in enumerate(text.splitlines(), start=1):
         for pattern, section, label in line_gate_requirements:
-            if re.search(pattern, line, re.IGNORECASE) and f'`references/b-nexus/runtime-contract.md` {section}' not in line:
+            if re.search(pattern, line, re.IGNORECASE) and f'`references/b-agentic/runtime-contract.md` {section}' not in line:
                 errors.append(f'{path}:{line_number}: {label} usage must explicitly read runtime contract {section}')
 
     if 'global/AGENTS.md' in text:
@@ -178,14 +178,14 @@ for doc_path, doc_text in [('README.md', readme), ('REFERENCE.md', reference)]:
         errors.append(f'{doc_path}: skill-count claim {found} does not match repo count {expected_skill_count}')
 
 kernel_detail_sections = {
-    '§2': ['Detailed plan metadata', 'references/b-nexus/runtime-contract.md` §2'],
-    '§3': ['Detailed rubrics', 'references/b-nexus/runtime-contract.md` §3'],
-    '§5': ['Detailed evidence hierarchy', 'references/b-nexus/runtime-contract.md` §5'],
-    '§6': ['Detailed command risk classes', 'references/b-nexus/runtime-contract.md` §6'],
-    '§7': ['Detailed scope expansion', 'references/b-nexus/runtime-contract.md` §7'],
-    '§8': ['Detailed slug algorithm', 'references/b-nexus/runtime-contract.md` §8'],
-    '§9': ['Detailed status schema', 'references/b-nexus/runtime-contract.md` §9'],
-    '§10': ['Detailed high-risk gate', 'references/b-nexus/runtime-contract.md` §10'],
+    '§2': ['Detailed plan metadata', 'references/b-agentic/runtime-contract.md` §2'],
+    '§3': ['Detailed rubrics', 'references/b-agentic/runtime-contract.md` §3'],
+    '§5': ['Detailed evidence hierarchy', 'references/b-agentic/runtime-contract.md` §5'],
+    '§6': ['Detailed command risk classes', 'references/b-agentic/runtime-contract.md` §6'],
+    '§7': ['Detailed scope expansion', 'references/b-agentic/runtime-contract.md` §7'],
+    '§8': ['Detailed slug algorithm', 'references/b-agentic/runtime-contract.md` §8'],
+    '§9': ['Detailed status schema', 'references/b-agentic/runtime-contract.md` §9'],
+    '§10': ['Detailed high-risk gate', 'references/b-agentic/runtime-contract.md` §10'],
 }
 for section, markers in kernel_detail_sections.items():
     if not all(marker in global_rules for marker in markers):
@@ -217,7 +217,7 @@ for required in runtime_boundary_sections:
 runtime_boundary_markers = [
     'Requires sequencing.',
     'No remaining design decision',
-    'Read references/b-nexus/runtime-contract.md §N before <action>',
+    'Read references/b-agentic/runtime-contract.md §N before <action>',
     'Required fields are `skill`, `state`, `artifacts`, `next`, `blockers`.',
     'Required fields are `source`, `goal`, `decisions`, `assumptions`, `files`, `verification`, `blockers`, `next-skill`.',
 ]
@@ -227,8 +227,8 @@ for required in runtime_boundary_markers:
 
 kernel_summary_markers = [
     'Runtime gate checklist:',
-    'Use the shared §3 glossary in `references/b-nexus/runtime-contract.md`',
-    'Use the shared slug, run-id, and artifact conventions from `references/b-nexus/runtime-contract.md` §8.',
+    'Use the shared §3 glossary in `references/b-agentic/runtime-contract.md`',
+    'Use the shared slug, run-id, and artifact conventions from `references/b-agentic/runtime-contract.md` §8.',
     'shared `[status]` and `[handoff]` schemas',
 ]
 for required in kernel_summary_markers:
@@ -256,7 +256,7 @@ for ref_path in reference_paths:
     if not any(ref_name in path.read_text() for path in skill_paths):
         errors.append(f'{ref_path}: not referenced by any skill file')
 
-if 'references/b-nexus' not in install_sh:
+if 'references/b-agentic' not in install_sh:
     errors.append('install.sh: missing managed references install path')
 
 if 'sync_directory "$REFERENCES_SRC" "$REFERENCES_DST"' not in install_sh:
@@ -312,7 +312,7 @@ for required in ['missing expected lines', 'stale context', 'one small hunk']:
 
 kernel_required = [
     'Runtime Kernel',
-    'references/b-nexus/runtime-contract.md',
+    'references/b-agentic/runtime-contract.md',
     'Source Of Truth',
     'Tool Priority',
     'Safety',

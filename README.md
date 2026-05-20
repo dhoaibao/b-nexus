@@ -1,8 +1,8 @@
-# b-nexus
+# b-agentic
 
 **An agent workflow kernel for AI coding agents, with OpenCode as the reference runtime.**
 
-`b-nexus` is a lean 10-skill agent workflow suite that turns rough developer intent into disciplined loops: clarify, plan, build, test, debug, review, and audit. It is optimized around scoped execution, Serena-backed symbol work, optional GitNexus graph radar, and explicit safety rules when work crosses risky boundaries.
+`b-agentic` is a lean 10-skill agent workflow suite that turns rough developer intent into disciplined loops: clarify, plan, build, test, debug, review, and audit. It is optimized around scoped execution, Serena-backed symbol work, optional GitNexus graph radar, and explicit safety rules when work crosses risky boundaries.
 
 Think of it as the coordination layer between user intent, agent skills, repo evidence, MCP tools, verification, and handoffs.
 
@@ -11,26 +11,26 @@ Browser, DOM-rendered, visual, and e2e tests are intentionally unsupported. The 
 ## Install & Update
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-nexus/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash
 ```
 
 Preview an install without writing into `~/.config/opencode/`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-nexus/main/install.sh | bash -s -- --dry-run
+curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --dry-run
 ```
 
-Uninstall b-nexus-managed files from OpenCode config:
+Uninstall b-agentic-managed files from OpenCode config:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-nexus/main/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --uninstall
 ```
 
 The installer deploys this source repo into OpenCode's global config:
 - `skills/` -> `~/.config/opencode/skills/`
 - `commands/` -> `~/.config/opencode/commands/`
-- `references/` -> `~/.config/opencode/references/b-nexus/`
-- `global/AGENTS.md` -> `~/.config/opencode/b-nexus/AGENTS.md`
+- `references/` -> `~/.config/opencode/references/b-agentic/`
+- `global/AGENTS.md` -> `~/.config/opencode/b-agentic/AGENTS.md`
 - `global/AGENTS.md` -> `~/.config/opencode/AGENTS.md` only when missing or approved
 
 If an existing `~/.config/opencode/AGENTS.md` is preserved, the installer exits with `activationState: pending`. In that state the files are present, but the runtime gate checklist, explicit read gates, and status/handoff rules may not be active until you rerun with `--replace-agents` or merge the snapshot manually.
@@ -40,7 +40,7 @@ This repository is an install-only source layout. OpenCode does not load the che
 ## Runtime Enforcement
 
 - The always-on kernel in `global/AGENTS.md` keeps the compact runtime gate checklist for non-trivial work: source-of-truth at start, approval/safety before edits or external actions, and verification/status before completion or handoff.
-- Skill steps use explicit read gates such as `Read references/b-nexus/runtime-contract.md §9 before ...` so shared schemas and protocols are read at the point of use instead of remembered from distant prose.
+- Skill steps use explicit read gates such as `Read references/b-agentic/runtime-contract.md §9 before ...` so shared schemas and protocols are read at the point of use instead of remembered from distant prose.
 - Slash-command wrappers reinforce the active runtime kernel and the loaded skill's required read gates without duplicating policy.
 - `scripts/validate-skills.sh` enforces this model by failing stale passive pointers, missing point-of-use read gates, wrapper drift, and docs/runtime drift.
 
@@ -81,10 +81,10 @@ Typical flow:
 ## Repository Map
 
 ```text
-b-nexus/
+b-agentic/
 ├── AGENTS.md              # maintainer guidance for this source repo
 ├── global/AGENTS.md       # runtime kernel source installed into OpenCode config
-├── references/            # shared runtime references installed under references/b-nexus/
+├── references/            # shared runtime references installed under references/b-agentic/
 ├── skills/<name>/         # skill instructions and optional per-skill reference.md files
 ├── commands/<name>.md     # thin slash-command wrappers
 ├── install.sh             # installer, updater, and uninstaller

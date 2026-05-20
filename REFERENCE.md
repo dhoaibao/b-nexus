@@ -1,8 +1,8 @@
-# b-nexus — Agent Workflow Kernel Reference
+# b-agentic — Agent Workflow Kernel Reference
 
-Reference guide for the 10-skill set that makes up `b-nexus`, an agent workflow kernel for AI coding agents, with OpenCode as the reference runtime. For install and high-level repo overview, see [README.md](README.md). For maintainer guidance, see [AGENTS.md](AGENTS.md).
+Reference guide for the 10-skill set that makes up `b-agentic`, an agent workflow kernel for AI coding agents, with OpenCode as the reference runtime. For install and high-level repo overview, see [README.md](README.md). For maintainer guidance, see [AGENTS.md](AGENTS.md).
 
-When this document cites `global/AGENTS.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the runtime path `AGENTS.md`; detailed runtime behavior lives at `references/runtime-contract.md` in this repo and `references/b-nexus/runtime-contract.md` after install. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
+When this document cites `global/AGENTS.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the runtime path `AGENTS.md`; detailed runtime behavior lives at `references/runtime-contract.md` in this repo and `references/b-agentic/runtime-contract.md` after install. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
 
 Runtime enforcement is intentionally mechanical: `global/AGENTS.md` owns the runtime gate checklist, each skill step uses explicit read gates for shared schemas/protocols/checklists, slash commands remind agents to follow the active kernel, and `scripts/validate-skills.sh` rejects passive pointers that would rely on memory.
 
@@ -55,7 +55,7 @@ Turns a clear goal into an execution-ready plan without implementing.
 - Defaults to quick mode for low-risk, chat-sized scoped work and uses full mode only for durable, multi-session, dependency-heavy, or risky coordination.
 - Reads runtime contract and `skills/b-plan/reference.md` gates before saved-plan metadata, artifact paths, templates, staleness, or status output.
 - Avoids promoting routine multi-step work to a saved plan solely because it has several obvious substeps.
-- Saves full plans under `.opencode/b-nexus/b-plan/<plan-file-slug>.md` with durable frontmatter and `contract_version` from `global/AGENTS.md`; the filename stays English while frontmatter `slug` remains the canonical task slug.
+- Saves full plans under `.opencode/b-agentic/b-plan/<plan-file-slug>.md` with durable frontmatter and `contract_version` from `global/AGENTS.md`; the filename stays English while frontmatter `slug` remains the canonical task slug.
 - Promotes quick plans to saved plans when risk, breadth, or coordination grows.
 - Uses repo evidence only when it materially improves sequencing or touch-point accuracy.
 - Records assumptions separately from confirmed decisions unless the user confirms them.
@@ -142,7 +142,7 @@ Owns runtime and behavior failures.
 - Symptoms, root cause, fix, verification, cleanup/next.
 
 **Shared reference**
-- `references/b-nexus/performance-checklist.md` — multi-layer slowdown guidance.
+- `references/b-agentic/performance-checklist.md` — multi-layer slowdown guidance.
 
 ---
 
@@ -168,7 +168,7 @@ Reviews diffs, ranges, or checkpoints.
 - Scope/mode/path/baseline, findings, checked-clean areas, coverage/tests/observability, verdict.
 
 **Shared references**
-- `references/b-nexus/performance-checklist.md`
+- `references/b-agentic/performance-checklist.md`
 
 **Skill reference**
 - `skills/b-review/reference.md` — security checklist for auth, untrusted input, sensitive data, uploads, webhooks, and external integrations.
@@ -184,7 +184,7 @@ Audits named repository or suite surfaces outside diff-first review.
 - Reads runtime contract and `skills/b-audit/reference.md` gates before baseline taxonomy, surface checklist selection, severity/status output, or saved reports.
 - Establishes a sufficient baseline from arguments, `--baseline`, approved plan, checkpoint, clarification, or the shared baseline source taxonomy; otherwise labels the audit `baseline-missing`.
 - Chooses a surface-specific checklist: installer/update path, runtime contract, validator, route/tool boundary, dependency/lockfile, generated artifact, or security-sensitive rule.
-- For b-nexus suite audits, checks routing boundaries, skill-command wrapper alignment, runtime-contract consistency, docs sync, validator coverage, artifact paths, and safety-gate drift.
+- For b-agentic suite audits, checks routing boundaries, skill-command wrapper alignment, runtime-contract consistency, docs sync, validator coverage, artifact paths, and safety-gate drift.
 - Names sampled files/symbols, skipped surfaces, and residual risk so no-findings audits are not mistaken for exhaustive proof.
 - Runs only narrow checks that materially support the audit unless `--skip-checks` is present.
 - Reports findings first and emits AUDIT PASS, AUDIT PASS WITH FOLLOW-UPS, or NEEDS FIXES.
@@ -192,7 +192,7 @@ Audits named repository or suite surfaces outside diff-first review.
 - Saves `report.md` only when requested, needed for a durable checkpoint/handoff, or too large for chat.
 
 **Skill reference**
-- `skills/b-audit/reference.md` — concrete audit criteria for installer/update paths, runtime contracts, validators, route/tool boundaries, dependencies, generated artifacts, security-sensitive rules, and b-nexus suite audits.
+- `skills/b-audit/reference.md` — concrete audit criteria for installer/update paths, runtime contracts, validators, route/tool boundaries, dependencies, generated artifacts, security-sensitive rules, and b-agentic suite audits.
 
 **Output**
 - Scope/mode/baseline, findings, checked-clean sampled areas, coverage/verification/operability, verdict.

@@ -9,7 +9,7 @@ description: >
   sequences a clear target rather than discovering it.
 compatibility: opencode
 metadata:
-  suite: b-nexus
+  suite: b-agentic
 ---
 
 # b-plan
@@ -42,14 +42,14 @@ If `$ARGUMENTS` is present, treat it as the task description and proceed.
 - `context7-docs` *(optional, for one narrow API check)*
 - `firecrawl-extraction` *(optional, for a user-provided issue or ticket URL)*
 
-If required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native reads and reasoning.
+If required tools are unavailable, read `references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native reads and reasoning.
 
 ## Steps
 
 ### Step 1 - Choose quick or full mode
 
 - **Quick mode:** default for low-risk scoped work. Return a short chat plan and ask for approval.
-- **Full mode:** use only for non-trivial work, real structural choice, public/sensitive risk, or durable coordination need. Read `references/b-nexus/runtime-contract.md` §6 and §8 before saving a plan under `.opencode/b-nexus/b-plan/<plan-file-slug>.md`.
+- **Full mode:** use only for non-trivial work, real structural choice, public/sensitive risk, or durable coordination need. Read `references/b-agentic/runtime-contract.md` §6 and §8 before saving a plan under `.opencode/b-agentic/b-plan/<plan-file-slug>.md`.
 
 Default to quick mode when the plan is low/trivial risk, fits in chat, and can be executed in one coherent session. Do not promote to full mode solely because the task has several routine substeps. Use full mode when the plan needs durable approval, spans sessions, has more than about five meaningful steps, has unresolved dependencies, or discovery reveals broad references, public contracts, security-sensitive behavior, deployment risk, or a plan that is no longer readable in chat.
 
@@ -90,7 +90,7 @@ Read `reference.md` before writing a quick-plan template, saved-plan skeleton, s
 
 ### Step 6 - Deliver and request approval
 
-Quick mode stays in chat. For full mode, read `references/b-nexus/runtime-contract.md` §2 before writing durable frontmatter. Show the path and ask for approval.
+Quick mode stays in chat. For full mode, read `references/b-agentic/runtime-contract.md` §2 before writing durable frontmatter. Show the path and ask for approval.
 
 If approval arrives during the same run, update `status`, `approved_at`, `approved_by`, and `approved_head` when available.
 
@@ -99,12 +99,12 @@ If approval arrives during the same run, update `status`, `approved_at`, `approv
 - Quick mode: concise chat plan with scope, risk, steps, and verification.
 - Full mode: saved Markdown plan using `reference.md`.
 
-Read `references/b-nexus/runtime-contract.md` §9 before closing a non-trivial planning run with a status block.
+Read `references/b-agentic/runtime-contract.md` §9 before closing a non-trivial planning run with a status block.
 
 ## Rules
 
 - Do not implement while planning.
 - Keep quick plans lean; promote to full mode when the plan grows risk or coordination needs.
-- Read `references/b-nexus/runtime-contract.md` §2 and §8 before applying slug, artifact, staleness, revision, or saved-plan filename rules.
+- Read `references/b-agentic/runtime-contract.md` §2 and §8 before applying slug, artifact, staleness, revision, or saved-plan filename rules.
 - Surface blockers and assumptions explicitly.
 - Approved plans are the execution source of truth for **b-implement**.

@@ -7,7 +7,7 @@ description: >
   not diff/range-first and reports sampled coverage plus residual risk.
 compatibility: opencode
 metadata:
-  suite: b-nexus
+  suite: b-agentic
 ---
 
 # b-audit
@@ -23,7 +23,7 @@ Flags: `--baseline=<path|url>`, `--surface=<area>`, `--skip-checks`, `--self`, `
 - The user explicitly requests a repository, maintainer, or suite-slice audit.
 - The target is a named surface such as installer/update path, runtime contract, validator, tool boundary, dependency/lockfile, generated artifact, or security-sensitive rule.
 - The goal is to find systemic correctness, safety, operability, documentation drift, or coverage risk outside a specific diff/range review.
-- A b-nexus suite audit needs routing boundaries, skill-command alignment, runtime-contract consistency, docs sync, validator coverage, artifact paths, or safety-gate drift checked.
+- A b-agentic suite audit needs routing boundaries, skill-command alignment, runtime-contract consistency, docs sync, validator coverage, artifact paths, or safety-gate drift checked.
 
 ## When NOT to use
 
@@ -41,7 +41,7 @@ Flags: `--baseline=<path|url>`, `--surface=<area>`, `--skip-checks`, `--self`, `
 - `context7-docs` *(optional, for suspicious third-party API usage)*
 - `brave-discovery` + `firecrawl-extraction` *(optional, for focused public CVE, advisory, or release-drift lookup)*
 
-If required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native tools, focused reads, and targeted commands; graph-shaped impact confidence may be lower without optional radar.
+If required tools are unavailable, read `references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native tools, focused reads, and targeted commands; graph-shaped impact confidence may be lower without optional radar.
 
 ## Steps
 
@@ -49,13 +49,13 @@ If required tools are unavailable, read `references/b-nexus/runtime-contract.md`
 
 Lock the requested surface from arguments or `--surface`. If the surface is absent or too broad, ask for the smallest clarification that names the target area. Do not default to a whole-repository audit.
 
-State mode: self-audit or external audit. Use arguments, `--baseline`, approved plan, checkpoint handoff, or short clarification to identify intended behavior. Read `references/b-nexus/runtime-contract.md` §5 before applying the baseline source taxonomy. Without a sufficient baseline, label the run `baseline-missing` and do not claim requirements coverage.
+State mode: self-audit or external audit. Use arguments, `--baseline`, approved plan, checkpoint handoff, or short clarification to identify intended behavior. Read `references/b-agentic/runtime-contract.md` §5 before applying the baseline source taxonomy. Without a sufficient baseline, label the run `baseline-missing` and do not claim requirements coverage.
 
 ### Step 2 - Pick the checklist
 
 Read `reference.md` before choosing the smallest surface-specific checklist: installer/update path, runtime contract, validator, route/tool boundary, dependency/lockfile, generated artifact, or security-sensitive rule.
 
-For b-nexus suite audits, check routing boundaries, skill-to-command wrapper alignment, runtime-contract consistency, README/REFERENCE sync, validator coverage, artifact paths, and safety-gate drift.
+For b-agentic suite audits, check routing boundaries, skill-to-command wrapper alignment, runtime-contract consistency, README/REFERENCE sync, validator coverage, artifact paths, and safety-gate drift.
 
 ### Step 3 - Inspect risk evidence
 
@@ -71,7 +71,7 @@ Assess observability, cleanup, installation/update behavior, and rollback expect
 
 ### Step 5 - Report verdict
 
-Read `references/b-nexus/runtime-contract.md` §3 and §9 before reporting severity-ordered findings, checked-and-clean caps, saved reports, or status output. If no findings, say so and name residual risk or skipped checks.
+Read `references/b-agentic/runtime-contract.md` §3 and §9 before reporting severity-ordered findings, checked-and-clean caps, saved reports, or status output. If no findings, say so and name residual risk or skipped checks.
 
 Verdicts: **AUDIT PASS**, **AUDIT PASS WITH FOLLOW-UPS**, or **NEEDS FIXES**. Do not use **AUDIT PASS** when the audit has no baseline, required verification was skipped, or sampled coverage leaves material unreviewed risk; use **AUDIT PASS WITH FOLLOW-UPS** or **NEEDS FIXES** instead.
 
@@ -83,7 +83,7 @@ If external knowledge is required, resolve one narrow docs lookup inline or hand
 Scope/Mode/Baseline -> Findings -> Checked and clean -> Coverage/Verification/Operability -> Verdict
 ```
 
-Read `references/b-nexus/runtime-contract.md` §9 before closing a non-trivial audit with a status block.
+Read `references/b-agentic/runtime-contract.md` §9 before closing a non-trivial audit with a status block.
 
 ## Rules
 
@@ -97,4 +97,4 @@ Read `references/b-nexus/runtime-contract.md` §9 before closing a non-trivial a
 
 ## Reference pointers
 
-- Read `reference.md` before applying concrete audit criteria for installer/update paths, runtime contracts, validators, route/tool boundaries, dependencies, generated artifacts, security-sensitive rules, or b-nexus suite audits.
+- Read `reference.md` before applying concrete audit criteria for installer/update paths, runtime contracts, validators, route/tool boundaries, dependencies, generated artifacts, security-sensitive rules, or b-agentic suite audits.

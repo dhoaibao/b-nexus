@@ -9,7 +9,7 @@ description: >
   code or choosing implementation.
 compatibility: opencode
 metadata:
-  suite: b-nexus
+  suite: b-agentic
 ---
 
 # b-research
@@ -39,7 +39,7 @@ Answer external-knowledge questions at the lightest reliable depth, with fetched
 - `firecrawl-extended` *(optional, for site maps or structured fields)*
 - `firecrawl-deep` *(last resort; approval-gated by `AGENTS.md`)*
 
-If required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: partial; synthesis is weaker without extraction, and rich local documents may become unavailable.
+If required tools are unavailable, read `references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: partial; synthesis is weaker without extraction, and rich local documents may become unavailable.
 
 ## Steps
 
@@ -48,7 +48,7 @@ If required tools are unavailable, read `references/b-nexus/runtime-contract.md`
 - **Lookup:** one fact, signature, config key, yes/no capability, or tiny example.
 - **Research:** multi-source synthesis, comparison, recency-sensitive answer, or contradictions.
 
-If the user provides a URL/file/document and one bounded source is likely sufficient, extract it directly. Prefer structured extraction or query for specific fields, parameters, prices, tables, or lists; use full markdown when full-page understanding, summarization, or quoted context is needed. Read `references/b-nexus/runtime-contract.md` §6 before sending a local rich document or likely internal document to external extraction unless the user already approved that exact document class for this run.
+If the user provides a URL/file/document and one bounded source is likely sufficient, extract it directly. Prefer structured extraction or query for specific fields, parameters, prices, tables, or lists; use full markdown when full-page understanding, summarization, or quoted context is needed. Read `references/b-agentic/runtime-contract.md` §6 before sending a local rich document or likely internal document to external extraction unless the user already approved that exact document class for this run.
 
 If the user provides a local document and extraction is unavailable, fall back only for plain-text, Markdown, or HTML sources that local tools can read directly. For PDFs, spreadsheets, DOCX files, or other rich binaries, stop and surface the limitation instead of guessing.
 
@@ -60,15 +60,15 @@ Skip pinning when the question is conceptual and version is not material.
 
 ### Step 3 - Gather evidence
 
-Read `references/b-nexus/runtime-contract.md` §4 before choosing MCP/search/extraction depth. Use Context7 first for library/framework APIs when it can match the pinned version; otherwise discover authoritative pages, then extract the highest-signal source. Search before extracting when the authoritative URL is unknown, and extract only the highest-signal source(s) needed for the answer. Prefer official docs, source repos, release notes, standards, and vendor materials over blogs or tutorials.
+Read `references/b-agentic/runtime-contract.md` §4 before choosing MCP/search/extraction depth. Use Context7 first for library/framework APIs when it can match the pinned version; otherwise discover authoritative pages, then extract the highest-signal source. Search before extracting when the authoritative URL is unknown, and extract only the highest-signal source(s) needed for the answer. Prefer official docs, source repos, release notes, standards, and vendor materials over blogs or tutorials.
 
-For recency-sensitive questions, read `references/b-nexus/runtime-contract.md` §5 before using freshness labels or citations. Use the `brave-discovery` news path before extraction and include `as of <date>` or source publication dates in the answer. Use Brave to shortlist unknown official URLs, recent advisories/release notes, or comparison sources before extraction. Use image search only when visual evidence is material to the answer.
+For recency-sensitive questions, read `references/b-agentic/runtime-contract.md` §5 before using freshness labels or citations. Use the `brave-discovery` news path before extraction and include `as of <date>` or source publication dates in the answer. Use Brave to shortlist unknown official URLs, recent advisories/release notes, or comparison sources before extraction. Use image search only when visual evidence is material to the answer.
 
 For security, licensing, pricing, breaking migrations, or production-impacting compatibility, require primary vendor or source-repo evidence when available and include the evidence date. If only secondary sources are available, label the limitation and lower confidence.
 
 Auto-deepen when first evidence is stale, contradictory, non-authoritative, or indirect. Use search snippets only for discovery unless explicitly labeled snippet-only with low confidence.
 
-Use `firecrawl-extended` only for maps or structured fields. Read `references/b-nexus/runtime-contract.md` §4 and §6 before using `firecrawl-deep` or applying public-web privacy gates.
+Use `firecrawl-extended` only for maps or structured fields. Read `references/b-agentic/runtime-contract.md` §4 and §6 before using `firecrawl-deep` or applying public-web privacy gates.
 
 ### Step 4 - Resolve conflicts and synthesize
 
@@ -82,7 +82,7 @@ Lookup: direct answer, optional minimal example, source, confidence when not hig
 
 Research: answer, key findings, limitations, sources, confidence.
 
-Read `references/b-nexus/runtime-contract.md` §9 before closing a non-trivial research run with a status block.
+Read `references/b-agentic/runtime-contract.md` §9 before closing a non-trivial research run with a status block.
 
 ## Rules
 

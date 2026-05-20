@@ -8,7 +8,7 @@ description: >
   sequencing across multiple skills rather than changing code itself.
 compatibility: opencode
 metadata:
-  suite: b-nexus
+  suite: b-agentic
 ---
 
 # b-orchestrate
@@ -40,7 +40,7 @@ If `$ARGUMENTS` is present, treat it as the workflow goal plus any explicit cons
 - `serena-symbol-toolkit` *(optional, through the active phase skill when symbol work matters)*
 - `gitnexus-radar` *(optional, through the active phase skill for graph-shaped risk)*
 
-If required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible when native evidence and phase-skill handoffs can still prove progress; stop rather than simulating a phase whose required evidence is unavailable.
+If required tools are unavailable, read `references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible when native evidence and phase-skill handoffs can still prove progress; stop rather than simulating a phase whose required evidence is unavailable.
 
 ## Steps
 
@@ -48,9 +48,9 @@ If required tools are unavailable, read `references/b-nexus/runtime-contract.md`
 
 Run `git status --short`, name the source of truth, and define success as a **b-review** verdict of **READY FOR PR** with required verification complete for suite-supported scope. If UI/browser-relevant work needs browser, DOM, visual, or e2e evidence, require external evidence before **READY FOR PR**; if the user explicitly accepts skipped checks or follow-ups, success may be **READY WITH FOLLOW-UPS** instead.
 
-For non-trivial workflows, read `references/b-nexus/runtime-contract.md` §8, mint a run-id, and checkpoint phase state when the workflow pauses or needs durable resume state.
+For non-trivial workflows, read `references/b-agentic/runtime-contract.md` §8, mint a run-id, and checkpoint phase state when the workflow pauses or needs durable resume state.
 
-Read `references/b-nexus/runtime-contract.md` §1 before routing across phase skills. Keep exactly one phase owner active at a time; every phase transition is a stop condition plus handoff, not parallel execution. Resume only from the receiving skill's output, status block, or handoff envelope.
+Read `references/b-agentic/runtime-contract.md` §1 before routing across phase skills. Keep exactly one phase owner active at a time; every phase transition is a stop condition plus handoff, not parallel execution. Resume only from the receiving skill's output, status block, or handoff envelope.
 
 ### Step 2 - Route the spec phase
 
@@ -60,9 +60,9 @@ If external feasibility blocks the spec, hand off to **b-research** and resume o
 
 ### Step 3 - Route the plan or direct-build phase
 
-Hand off to **b-plan** for non-trivial work, sequencing, risk, public contracts, multi-file edits, or any workflow that needs durable coordination. Read `references/b-nexus/runtime-contract.md` §3 before applying the small-direct threshold. For a small direct workflow, hand off to **b-implement** with the current source of truth, expected scope, and verification need; do not write an execution outline inside `b-orchestrate`.
+Hand off to **b-plan** for non-trivial work, sequencing, risk, public contracts, multi-file edits, or any workflow that needs durable coordination. Read `references/b-agentic/runtime-contract.md` §3 before applying the small-direct threshold. For a small direct workflow, hand off to **b-implement** with the current source of truth, expected scope, and verification need; do not write an execution outline inside `b-orchestrate`.
 
-Read `references/b-nexus/runtime-contract.md` §2 before treating a saved or chat plan as approved. Do not implement from an unapproved non-trivial plan unless the user explicitly delegated that exact approval after seeing the plan.
+Read `references/b-agentic/runtime-contract.md` §2 before treating a saved or chat plan as approved. Do not implement from an unapproved non-trivial plan unless the user explicitly delegated that exact approval after seeing the plan.
 
 ### Step 4 - Route implementation and verification
 
@@ -86,11 +86,11 @@ Hand off to **b-review** against the current diff with the spec or approved plan
 - Concrete behavior-preserving transform, including simplify -> **b-refactor**.
 - New product decision or broad redesign -> **b-spec** or **b-plan**.
 
-Read `references/b-nexus/runtime-contract.md` §7 before applying the review-fix loop or stopping on repeated failures. Re-review after each coherent fix set until **b-review** returns **READY FOR PR**, returns **READY WITH FOLLOW-UPS** accepted by the user, or reports a blocker.
+Read `references/b-agentic/runtime-contract.md` §7 before applying the review-fix loop or stopping on repeated failures. Re-review after each coherent fix set until **b-review** returns **READY FOR PR**, returns **READY WITH FOLLOW-UPS** accepted by the user, or reports a blocker.
 
 ### Step 7 - Close the workflow
 
-Read `references/b-nexus/runtime-contract.md` §9 before reporting non-trivial workflow status or handing off unresolved work. Report the final review verdict, verification run, skipped checks, blockers, and remaining follow-ups. Do not claim **READY FOR PR** when the review had no baseline, required verification was skipped, or unsupported browser/DOM/e2e evidence remains relevant but absent.
+Read `references/b-agentic/runtime-contract.md` §9 before reporting non-trivial workflow status or handing off unresolved work. Report the final review verdict, verification run, skipped checks, blockers, and remaining follow-ups. Do not claim **READY FOR PR** when the review had no baseline, required verification was skipped, or unsupported browser/DOM/e2e evidence remains relevant but absent.
 
 ## Output format
 
@@ -98,7 +98,7 @@ Read `references/b-nexus/runtime-contract.md` §9 before reporting non-trivial w
 Workflow goal -> Phase state -> Changes/verification -> Review verdict -> Blockers/follow-ups -> Next
 ```
 
-Read `references/b-nexus/runtime-contract.md` §9 before closing a non-trivial orchestration with status or handoff schemas.
+Read `references/b-agentic/runtime-contract.md` §9 before closing a non-trivial orchestration with status or handoff schemas.
 
 ## Rules
 

@@ -9,7 +9,7 @@ description: >
   fixtures.
 compatibility: opencode
 metadata:
-  suite: b-nexus
+  suite: b-agentic
 ---
 
 # b-debug
@@ -38,17 +38,17 @@ Confirm root cause, fix minimally, verify, and remove probes. If the user asks o
 - `brave-discovery` + `firecrawl-extraction` *(optional, for public errors, recent deprecations, or upstream advisories after the privacy gate)*
 - Native search and `bash` - exact errors, config, repro commands, profilers, and diagnostics.
 
-If required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native analysis, slower without Serena.
+If required tools are unavailable, read `references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native analysis, slower without Serena.
 
 ## Steps
 
 ### Step 1 - Frame the symptom
 
-Collect exact failure, expected vs actual behavior, repro notes, determinism, and for perf bugs workload/baseline/threshold. Read `references/b-nexus/runtime-contract.md` §5 before using the baseline source taxonomy when expected behavior is disputed or weak. Check the regression window when available: recent commits, dependency or lockfile changes, config drift, feature flags, data shape changes, and environment differences.
+Collect exact failure, expected vs actual behavior, repro notes, determinism, and for perf bugs workload/baseline/threshold. Read `references/b-agentic/runtime-contract.md` §5 before using the baseline source taxonomy when expected behavior is disputed or weak. Check the regression window when available: recent commits, dependency or lockfile changes, config drift, feature flags, data shape changes, and environment differences.
 
 For non-trivial or blocked bugs, keep a repro record: command or interaction, workspace or target, relevant versions/config flags, data mode, expected behavior, actual behavior, determinism, and strongest evidence. Do not include secret values or private data.
 
-If production impact, data loss, or security risk is active, read `references/b-nexus/runtime-contract.md` §6 before identifying containment or asking for shared-environment action. Treat containment as a reversible mitigation, not the final fix; record what remains unproven until root cause is confirmed.
+If production impact, data loss, or security risk is active, read `references/b-agentic/runtime-contract.md` §6 before identifying containment or asking for shared-environment action. Treat containment as a reversible mitigation, not the final fix; record what remains unproven until root cause is confirmed.
 
 ### Step 2 - Rank suspects only as needed
 
@@ -62,19 +62,19 @@ Use the cheapest proof: exact error search, local diagnostics, narrow repro comm
 
 Temporary probes are allowed only when cheaper evidence is insufficient. Use instrumentation when the symptom is intermittent, remote-only, timing-dependent, or hidden behind swallowed errors and a bounded probe can collect decisive evidence; otherwise request the missing repro data or hand off to **b-plan** for structural diagnosis work. Tag every probe with `b-debug-probe` in the language-appropriate comment form.
 
-If the agent cannot reproduce a user-reproducible symptom, read `references/b-nexus/runtime-contract.md` §10 before applying the cannot-reproduce protocol; do not patch defensively.
+If the agent cannot reproduce a user-reproducible symptom, read `references/b-agentic/runtime-contract.md` §10 before applying the cannot-reproduce protocol; do not patch defensively.
 
 Before applying the final fix, state: `Root cause: <what fails> because <why>`.
 
 ### Step 4 - Apply the minimal fix
 
-Use Serena for symbol edits. Read `references/b-nexus/runtime-contract.md` §6 before applying small line/prose/config patches under the global patch discipline.
+Use Serena for symbol edits. Read `references/b-agentic/runtime-contract.md` §6 before applying small line/prose/config patches under the global patch discipline.
 
 Do not bundle cleanup or redesign. If urgent containment was applied before root cause, continue diagnosis or hand off with the mitigation clearly labeled as containment. If the confirmed cause needs a structural change, hand off to **b-plan** with root cause, evidence, and any attempted minimal fix.
 
 ### Step 5 - Verify and clean up
 
-Read `references/b-nexus/runtime-contract.md` §7 before choosing verification or applying skipped-check labels. Run the narrowest check that proves the symptom changed. For nondeterminism, run the stress repro long enough to support confidence. For perf, report before/after measurements.
+Read `references/b-agentic/runtime-contract.md` §7 before choosing verification or applying skipped-check labels. Run the narrowest check that proves the symptom changed. For nondeterminism, run the stress repro long enough to support confidence. For perf, report before/after measurements.
 
 Remove all `b-debug-probe` markers and scan for untagged debug leftovers (`console.log`, `print`, breakpoints, fake clocks, profiler hooks). Re-run verification after cleanup. Mention restart/reload requirements when config or startup changed.
 
@@ -84,16 +84,16 @@ Remove all `b-debug-probe` markers and scan for untagged debug leftovers (`conso
 Symptoms -> Root cause -> Fix -> Verification -> Cleanup/next
 ```
 
-Read `references/b-nexus/runtime-contract.md` §9 before closing a non-trivial debug run with a status block.
+Read `references/b-agentic/runtime-contract.md` §9 before closing a non-trivial debug run with a status block.
 
 ## Rules
 
 - Do not apply the final fix before root cause is confirmed. Approved containment may happen first only to reduce active production, data-loss, or security impact, and must be labeled as containment.
 - Measure perf bugs before and after.
 - Surface cannot-reproduce gaps instead of speculative fixes.
-- Read `references/b-nexus/runtime-contract.md` §6 before manual patches under the global patch discipline and §7 before applying the verification ladder, iteration cap, or skipped-check labels.
+- Read `references/b-agentic/runtime-contract.md` §6 before manual patches under the global patch discipline and §7 before applying the verification ladder, iteration cap, or skipped-check labels.
 - Verify probe removal before reporting success.
 
 ## Reference pointers
 
-- Read `references/b-nexus/performance-checklist.md` before diagnosing a slowdown that spans layers or lacks a clear measurement playbook.
+- Read `references/b-agentic/performance-checklist.md` before diagnosing a slowdown that spans layers or lacks a clear measurement playbook.

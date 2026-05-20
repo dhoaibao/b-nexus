@@ -8,7 +8,7 @@ description: >
   Unlike b-plan, b-spec decides the target outcome before sequencing work.
 compatibility: opencode
 metadata:
-  suite: b-nexus
+  suite: b-agentic
 ---
 
 # b-spec
@@ -38,7 +38,7 @@ If `$ARGUMENTS` is present, treat it as the rough request and proceed directly.
 - `gitnexus-radar` *(optional, for unfamiliar shared surfaces or route/tool context)*
 - `context7-docs` *(optional, for one narrow feasibility check)*
 
-If required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native reads and a short clarification loop.
+If required tools are unavailable, read `references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native reads and a short clarification loop.
 
 ## Steps
 
@@ -59,7 +59,7 @@ Restate the ask in one sentence, then ask only what blocks a concrete spec:
 - success criteria
 - non-goals when scope could sprawl
 
-Read `references/b-nexus/runtime-contract.md` §1 before applying the clarification budget. Prefer one blocking question at a time when the answer changes the next question. After two unresolved rounds, stop asking open questions: offer two concrete interpretations with named assumptions and ask the user to pick or override.
+Read `references/b-agentic/runtime-contract.md` §1 before applying the clarification budget. Prefer one blocking question at a time when the answer changes the next question. After two unresolved rounds, stop asking open questions: offer two concrete interpretations with named assumptions and ask the user to pick or override.
 
 ### Step 3 - Use local evidence before asking
 
@@ -83,13 +83,13 @@ Return a compact chat spec by default:
 **Next:** <b-plan | b-implement | b-research>
 ```
 
-Read `references/b-nexus/runtime-contract.md` §9 before emitting a handoff envelope when another skill owns the next step. Carry confirmed decisions and assumptions into that envelope.
+Read `references/b-agentic/runtime-contract.md` §9 before emitting a handoff envelope when another skill owns the next step. Carry confirmed decisions and assumptions into that envelope.
 
 ## Output format
 
 Use the compact spec shape above. Saved artifacts are not created unless the user explicitly asks.
 
-Read `references/b-nexus/runtime-contract.md` §9 before closing a non-trivial spec run with a status block.
+Read `references/b-agentic/runtime-contract.md` §9 before closing a non-trivial spec run with a status block.
 
 ## Rules
 
