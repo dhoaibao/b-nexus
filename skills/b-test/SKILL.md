@@ -9,7 +9,7 @@ description: >
   visual, and e2e tests are unsupported by this suite.
 compatibility: opencode
 metadata:
-  suite: b-skills
+  suite: b-nexus
 ---
 
 # b-test
@@ -39,7 +39,7 @@ Own non-browser code-level tests: add coverage, fix test-only failures, and avoi
 - `serena-symbol-toolkit` *(preferred for mapping tests to source behavior and editing existing tests)*
 - `context7-docs` *(optional, for testing-framework API or matcher behavior)*
 
-If required tools are unavailable, read `references/b-skills/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native tools and `apply_patch`.
+If required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native tools and `apply_patch`.
 
 ## Steps
 
@@ -49,12 +49,12 @@ Find relevant test files and project commands from manifests or CI. If a failing
 
 ### Step 2 - Choose the lane
 
-Read `references/b-skills/runtime-contract.md` §10 before applying the test-vs-bug decision. Read `references/b-skills/runtime-contract.md` §5 before using the baseline source taxonomy. Acceptable behavior confirmation sources are user-confirmed intent, an approved spec/plan, existing product contract, existing passing tests that define the behavior, source change that intentionally updates behavior, or fetched framework docs for API semantics. If no behavior baseline exists, stop and hand off to **b-spec** for unclear intent or **b-debug** for uncertain product behavior, unless the user explicitly asks for structural coverage only.
+Read `references/b-nexus/runtime-contract.md` §10 before applying the test-vs-bug decision. Read `references/b-nexus/runtime-contract.md` §5 before using the baseline source taxonomy. Acceptable behavior confirmation sources are user-confirmed intent, an approved spec/plan, existing product contract, existing passing tests that define the behavior, source change that intentionally updates behavior, or fetched framework docs for API semantics. If no behavior baseline exists, stop and hand off to **b-spec** for unclear intent or **b-debug** for uncertain product behavior, unless the user explicitly asks for structural coverage only.
 
 - **Failing test:** fix assertion, mock, fixture, setup, async, snapshot, or harness drift only after intended behavior is confirmed.
 - **Write tests:** add regression/unit/integration coverage for known behavior. For TDD or regression work, make the test fail first when feasible, then hand off with the intended behavior, failing test path, command, current failure, likely source area, and verification target before production changes.
 - **Coverage review:** rank missing tests by user impact, changed behavior, risk boundary, and edge-case value; add only the requested/highest-value gaps.
-- **Flaky test:** read `references/b-skills/runtime-contract.md` §10 before applying flake handling, rewriting, or skipping.
+- **Flaky test:** read `references/b-nexus/runtime-contract.md` §10 before applying flake handling, rewriting, or skipping.
 
 Choose test type by the behavior boundary: pure logic gets unit tests, and cross-module contracts get integration or contract tests if the repo already has them. Browser, DOM-rendered, visual, and e2e behavior is unsupported by this suite; stop rather than adding browser or DOM tooling.
 
@@ -64,15 +64,15 @@ If product behavior is uncertain, hand off to **b-debug**.
 
 For failing tests, run the narrow command, read the test and exercised source, classify the failure, and apply snapshot/golden confirmation before updating derived artifacts.
 
-For new tests, cover behavior that matters: happy path, edge cases, error handling, and the regression that would catch an accidental revert. Prefer local fixtures unless an existing shared fixture fits. Read `references/b-skills/runtime-contract.md` §7 before applying the test data lifecycle rule when tests create, mutate, or rely on persistent data.
+For new tests, cover behavior that matters: happy path, edge cases, error handling, and the regression that would catch an accidental revert. Prefer local fixtures unless an existing shared fixture fits. Read `references/b-nexus/runtime-contract.md` §7 before applying the test data lifecycle rule when tests create, mutate, or rely on persistent data.
 
 For coverage review, stop when changed behavior is covered, the next gap is opportunistic, or five gaps have been added with no required gap remaining.
 
-Use Serena for existing test bodies. Read `references/b-skills/runtime-contract.md` §6 before using `apply_patch` for new test files or small non-symbol edits under the global patch discipline.
+Use Serena for existing test bodies. Read `references/b-nexus/runtime-contract.md` §6 before using `apply_patch` for new test files or small non-symbol edits under the global patch discipline.
 
 ### Step 4 - Verify
 
-Run diagnostics on touched test/source files when supported, then the narrowest relevant test. Widen only for shared fixtures/helpers, public contracts, or the repo's normal workflow. Read `references/b-skills/runtime-contract.md` §7 before using skipped-check labels.
+Run diagnostics on touched test/source files when supported, then the narrowest relevant test. Widen only for shared fixtures/helpers, public contracts, or the repo's normal workflow. Read `references/b-nexus/runtime-contract.md` §7 before using skipped-check labels.
 
 ## Output format
 
@@ -80,7 +80,7 @@ Run diagnostics on touched test/source files when supported, then the narrowest 
 Type -> Framework -> Findings -> Changes -> Verification -> Remaining gaps
 ```
 
-Read `references/b-skills/runtime-contract.md` §9 before closing a non-trivial test run with a status block.
+Read `references/b-nexus/runtime-contract.md` §9 before closing a non-trivial test run with a status block.
 
 ## Rules
 
@@ -90,5 +90,5 @@ Read `references/b-skills/runtime-contract.md` §9 before closing a non-trivial 
 - Browser, DOM-rendered, visual, and e2e tests are unsupported by this suite; do not add browser or DOM tooling as a side effect.
 - Do not introduce test, coverage, property-based, fuzzing, or contract-test frameworks without approval.
 - Keep fixture and mock changes local when practical.
-- Read `references/b-skills/runtime-contract.md` §6 before manual patches and §7 before applying the verification ladder or iteration cap.
+- Read `references/b-nexus/runtime-contract.md` §6 before manual patches and §7 before applying the verification ladder or iteration cap.
 - Test utilities belong here when created or changed to support an in-scope test; mechanical relocation belongs to **b-refactor**.

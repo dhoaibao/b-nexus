@@ -9,7 +9,7 @@ description: >
   edits.
 compatibility: opencode
 metadata:
-  suite: b-skills
+  suite: b-nexus
 ---
 
 # b-refactor
@@ -38,7 +38,7 @@ Execute concrete behavior-preserving transforms: lock target, map impact, transf
 - `serena-symbol-toolkit` *(preferred for target locking, references, diagnostics, and symbol edits)*
 - `gitnexus-radar` *(optional, for broad exported/shared impact)*
 
-If required tools are unavailable, read `references/b-skills/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: partial; native search plus `apply_patch` works for local refactors, cross-file work is riskier.
+If required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: partial; native search plus `apply_patch` works for local refactors, cross-file work is riskier.
 
 ## Steps
 
@@ -52,7 +52,7 @@ For `simplify`, `inline`, and `extract`, state the observable behavior that must
 
 Use Serena references as the primary static map, but do not treat them as complete proof for dynamic, config-driven, generated, or prose references. Add exact text search for exported names, config keys, CLI flags, route strings, filenames, docs, and generated consumers when those surfaces could reference the target. Use GitNexus only for broad shared/exported blast-radius questions. Moves across public module boundaries, package boundaries, or published entry points require planning unless the approved scope already names the destination and verification.
 
-Read `references/b-skills/runtime-contract.md` §3 before classifying risk. The local fast path is allowed when the refactor is one file, behavior-preserving, non-exported, LSP-supported, covered by direct semantics or narrow tests, has few/no external references, and has no generated-code consumers.
+Read `references/b-nexus/runtime-contract.md` §3 before classifying risk. The local fast path is allowed when the refactor is one file, behavior-preserving, non-exported, LSP-supported, covered by direct semantics or narrow tests, has few/no external references, and has no generated-code consumers.
 
 Auto-promote risk when the language is non-LSP, references are dynamic/config/prose, the target is exported/shared, or generated code consumes it. Generated consumers require checking generator source or regeneration.
 
@@ -67,7 +67,7 @@ Pick the smallest matching transform:
 - Rename + extract -> extract under the old name, verify, then rename.
 - Move between files -> add destination first, update imports/re-exports/tests/config/barrels, verify diagnostics, then remove origin and re-check references.
 
-Read `references/b-skills/runtime-contract.md` §6 before using `apply_patch` for imports, config, prose, or non-symbol glue under the global patch discipline.
+Read `references/b-nexus/runtime-contract.md` §6 before using `apply_patch` for imports, config, prose, or non-symbol glue under the global patch discipline.
 
 If the work becomes behavioral redesign, hand back to **b-plan** with the locked target and reference map. If the map is too broad for one coherent run, hand back to **b-plan** with proposed verifiable slices.
 
@@ -75,7 +75,7 @@ If the work becomes behavioral redesign, hand back to **b-plan** with the locked
 
 Run diagnostics when supported, then the narrowest risk-appropriate typecheck/build/test. Re-check references for shared/exported targets and inspect diff for unintended scope.
 
-Read `references/b-skills/runtime-contract.md` §7 before applying transform rollback, cascading failure handling, iteration cap, or skipped-check labels. If failures indicate real regression, use **b-debug**; test-mechanic drift goes to **b-test**.
+Read `references/b-nexus/runtime-contract.md` §7 before applying transform rollback, cascading failure handling, iteration cap, or skipped-check labels. If failures indicate real regression, use **b-debug**; test-mechanic drift goes to **b-test**.
 
 ## Output format
 
@@ -83,7 +83,7 @@ Read `references/b-skills/runtime-contract.md` §7 before applying transform rol
 Target -> Risk -> Impact -> Changes -> Verification -> Follow-up
 ```
 
-Read `references/b-skills/runtime-contract.md` §9 before closing a non-trivial refactor run with a status block.
+Read `references/b-nexus/runtime-contract.md` §9 before closing a non-trivial refactor run with a status block.
 
 ## Rules
 

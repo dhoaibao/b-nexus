@@ -8,7 +8,7 @@ description: >
   decisions. Unlike b-plan, b-implement changes code.
 compatibility: opencode
 metadata:
-  suite: b-skills
+  suite: b-nexus
 ---
 
 # b-implement
@@ -40,7 +40,7 @@ If `$ARGUMENTS` is present, treat it as a plan path, plan slug, approved chat pl
 - `gitnexus-radar` *(optional, for shared route/tool/exported-boundary changes)*
 - `context7-docs` *(optional, for one narrow API uncertainty)*
 
-If required tools are unavailable, read `references/b-skills/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native tools; broad symbol work is riskier without Serena.
+If required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native tools; broad symbol work is riskier without Serena.
 
 ## Steps
 
@@ -48,7 +48,7 @@ If required tools are unavailable, read `references/b-skills/runtime-contract.md
 
 Resolve scope in this order: saved plan path, plan slug, explicitly approved chat plan, then small direct request.
 
-For saved plans, read `references/b-skills/runtime-contract.md` §2 before validating approval state, applying the plan staleness gate, or updating durable metadata for a draft plan.
+For saved plans, read `references/b-nexus/runtime-contract.md` §2 before validating approval state, applying the plan staleness gate, or updating durable metadata for a draft plan.
 
 If scope fails the small-direct threshold and no approved plan exists, hand off to **b-plan**. If the goal itself is ambiguous, hand off to **b-spec**.
 
@@ -56,21 +56,21 @@ If scope fails the small-direct threshold and no approved plan exists, hand off 
 
 Run `git status --short`. Preserve unrelated changes, patch around unrelated edits in touched files, and stop if user changes directly conflict.
 
-For non-trivial work, read `references/b-skills/runtime-contract.md` §6 before deciding whether the current checkout is safe or whether isolation would materially reduce risk.
+For non-trivial work, read `references/b-nexus/runtime-contract.md` §6 before deciding whether the current checkout is safe or whether isolation would materially reduce risk.
 
 ### Step 3 - Implement the smallest coherent step
 
 Before editing, state the current step in one line: source of truth, files or symbols expected to change, behavior that must not change, planned verification, and whether approval or a review checkpoint is required.
 
-Use Serena for symbol-aware edits. Read `references/b-skills/runtime-contract.md` §6 before applying manual prose/config/glue patches.
+Use Serena for symbol-aware edits. Read `references/b-nexus/runtime-contract.md` §6 before applying manual prose/config/glue patches.
 
 Stay within approved scope. Stop for new product decisions, stale/wrong plans, or unplanned broad transforms. Tiny local mechanical edits required to complete the approved step may stay here; broad or primary mechanical transforms go to **b-refactor**.
 
 ### Step 4 - Verify before continuing
 
-Run the plan's check when available. Otherwise read `references/b-skills/runtime-contract.md` §7 before choosing verification from the ladder. Prefer touched-file diagnostics when supported, then the narrowest relevant command.
+Run the plan's check when available. Otherwise read `references/b-nexus/runtime-contract.md` §7 before choosing verification from the ladder. Prefer touched-file diagnostics when supported, then the narrowest relevant command.
 
-Classify failures: implementation mistake, stale local context, test harness issue, runtime uncertainty, unresolved API behavior, or external outage. Read `references/b-skills/runtime-contract.md` §7 before applying iteration cap, cascading-failure, transform rollback, or skipped-check labels. Read `references/b-skills/runtime-contract.md` §10 before high-risk completion claims.
+Classify failures: implementation mistake, stale local context, test harness issue, runtime uncertainty, unresolved API behavior, or external outage. Read `references/b-nexus/runtime-contract.md` §7 before applying iteration cap, cascading-failure, transform rollback, or skipped-check labels. Read `references/b-nexus/runtime-contract.md` §10 before high-risk completion claims.
 
 ### Step 5 - Record progress and close
 
@@ -84,7 +84,7 @@ At completion, inspect the diff, run final relevant verification, report cleanup
 Plan source -> Step progress -> Changes -> Verification -> Blockers/Decisions -> Next
 ```
 
-Read `references/b-skills/runtime-contract.md` §9 before closing non-trivial runs with status or handoff schemas.
+Read `references/b-nexus/runtime-contract.md` §9 before closing non-trivial runs with status or handoff schemas.
 
 ## Rules
 
@@ -94,4 +94,4 @@ Read `references/b-skills/runtime-contract.md` §9 before closing non-trivial ru
 - Stop for new decisions instead of guessing.
 - A small direct request still needs real verification.
 - Do not commit unless explicitly asked.
-- Read `references/b-skills/runtime-contract.md` §6 before manual edits under the global patch discipline.
+- Read `references/b-nexus/runtime-contract.md` §6 before manual edits under the global patch discipline.

@@ -51,7 +51,7 @@ Use this reference to make audits repeatable without turning `SKILL.md` into a l
 - Check auth/authz, secrets, private data, destructive commands, external writes, and public-web privacy gates.
 - Require direct evidence for any safe/ready claim; otherwise lower confidence or block.
 
-### b-skills Suite Audit
+### b-nexus Suite Audit
 
 - Check every `skills/*/SKILL.md` for trigger boundary, stop conditions, task-specific workflow, and global-rule duplication.
 - Check matching `commands/*.md` wrappers for one-to-one skill alignment.

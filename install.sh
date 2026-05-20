@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
-# install.sh — Bootstrap or update b-skills for OpenCode
+# install.sh — Bootstrap or update b-nexus for OpenCode
 # Usage:
 #   First time / update:
-#     curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-skills/main/install.sh | bash
+#     curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-nexus/main/install.sh | bash
 #
 # Optional environment overrides:
-#   B_SKILLS_REPO  — git URL to clone (default: https://github.com/dhoaibao/b-skills.git)
-#   B_SKILLS_DIR   — local clone path (default: $HOME/.b-skills)
-#   B_SKILLS_REF   — git ref to check out after clone/pull (default: leave on default branch)
-#   B_SKILLS_INSTALL_MCP — Y to install core MCP defaults; otherwise skipped
-#   B_SKILLS_INSTALL_GITNEXUS — Y to install optional GitNexus MCP when MCP defaults are enabled
-#   B_SKILLS_DRY_RUN — Y to preview file/config changes without writing into OpenCode config
-#   B_SKILLS_REPLACE_AGENTS — Y to replace ~/.config/opencode/AGENTS.md without prompting; N to preserve it
-#   B_SKILLS_UNINSTALL — Y to remove b-skills-managed files from OpenCode config
+#   B_NEXUS_REPO  — git URL to clone (default: https://github.com/dhoaibao/b-nexus.git)
+#   B_NEXUS_DIR   — local clone path (default: $HOME/.b-nexus)
+#   B_NEXUS_REF   — git ref to check out after clone/pull (default: leave on default branch)
+#   B_NEXUS_INSTALL_MCP — Y to install core MCP defaults; otherwise skipped
+#   B_NEXUS_INSTALL_GITNEXUS — Y to install optional GitNexus MCP when MCP defaults are enabled
+#   B_NEXUS_DRY_RUN — Y to preview file/config changes without writing into OpenCode config
+#   B_NEXUS_REPLACE_AGENTS — Y to replace ~/.config/opencode/AGENTS.md without prompting; N to preserve it
+#   B_NEXUS_UNINSTALL — Y to remove b-nexus-managed files from OpenCode config
+#   Legacy B_SKILLS_* environment variables are still honored as fallbacks.
 #   BRAVE_API_KEY  — Brave Search MCP API key
 #   CONTEXT7_API_KEY — Context7 MCP API key
 #   FIRECRAWL_API_KEY — Firecrawl MCP API key
@@ -21,26 +22,31 @@
 #   --dry-run         Preview install changes without writing them
 #   --replace-agents  Replace ~/.config/opencode/AGENTS.md without prompting
 #   --preserve-agents Never replace ~/.config/opencode/AGENTS.md
-#   --uninstall       Remove b-skills-managed files from OpenCode config
+#   --uninstall       Remove b-nexus-managed files from OpenCode config
 
 set -euo pipefail
 
-readonly REPO_URL="${B_SKILLS_REPO:-https://github.com/dhoaibao/b-skills.git}"
-readonly LOCAL_REPO="${B_SKILLS_DIR:-$HOME/.b-skills}"
-readonly REF="${B_SKILLS_REF:-}"
+readonly REPO_URL="${B_NEXUS_REPO:-${B_SKILLS_REPO:-https://github.com/dhoaibao/b-nexus.git}}"
+readonly LOCAL_REPO="${B_NEXUS_DIR:-${B_SKILLS_DIR:-$HOME/.b-nexus}}"
+readonly REF="${B_NEXUS_REF:-${B_SKILLS_REF:-}}"
 readonly OPENCODE_DIR="$HOME/.config/opencode"
-readonly B_SKILLS_METADATA_DIR="$OPENCODE_DIR/b-skills"
-readonly B_SKILLS_BACKUPS_DIR="$B_SKILLS_METADATA_DIR/backups"
+readonly B_NEXUS_METADATA_DIR="$OPENCODE_DIR/b-nexus"
+readonly B_NEXUS_BACKUPS_DIR="$B_NEXUS_METADATA_DIR/backups"
+readonly LEGACY_B_SKILLS_METADATA_DIR="$OPENCODE_DIR/b-skills"
+readonly LEGACY_B_SKILLS_BACKUPS_DIR="$LEGACY_B_SKILLS_METADATA_DIR/backups"
 readonly SKILLS_SRC="$LOCAL_REPO/skills"
 readonly COMMANDS_SRC="$LOCAL_REPO/commands"
 readonly REFERENCES_SRC="$LOCAL_REPO/references"
 readonly RULES_SRC="$LOCAL_REPO/global/AGENTS.md"
 readonly RULES_DST="$OPENCODE_DIR/AGENTS.md"
-readonly RULES_SNAPSHOT_DST="$B_SKILLS_METADATA_DIR/AGENTS.md"
-readonly REFERENCES_DST="$OPENCODE_DIR/references/b-skills"
+readonly RULES_SNAPSHOT_DST="$B_NEXUS_METADATA_DIR/AGENTS.md"
+readonly REFERENCES_DST="$OPENCODE_DIR/references/b-nexus"
 readonly RUNTIME_CONTRACT_DST="$REFERENCES_DST/runtime-contract.md"
 readonly CONFIG_FILE="$OPENCODE_DIR/opencode.json"
-readonly INSTALL_MANIFEST="$B_SKILLS_METADATA_DIR/install.json"
+readonly INSTALL_MANIFEST="$B_NEXUS_METADATA_DIR/install.json"
+readonly LEGACY_B_SKILLS_RULES_SNAPSHOT_DST="$LEGACY_B_SKILLS_METADATA_DIR/AGENTS.md"
+readonly LEGACY_B_SKILLS_REFERENCES_DST="$OPENCODE_DIR/references/b-skills"
+readonly LEGACY_B_SKILLS_INSTALL_MANIFEST="$LEGACY_B_SKILLS_METADATA_DIR/install.json"
 readonly LEGACY_RULES_SNAPSHOT_DST="$OPENCODE_DIR/AGENTS.b-skills.md"
 readonly LEGACY_INSTALL_MANIFEST="$OPENCODE_DIR/b-skills-install.json"
 readonly TIMESTAMP="$(date +%Y%m%d%H%M%S)"
@@ -58,16 +64,16 @@ die()     { printf '❌ %s
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --dry-run)
-      B_SKILLS_DRY_RUN=Y
+      B_NEXUS_DRY_RUN=Y
       ;;
     --replace-agents)
-      B_SKILLS_REPLACE_AGENTS=Y
+      B_NEXUS_REPLACE_AGENTS=Y
       ;;
     --preserve-agents)
-      B_SKILLS_REPLACE_AGENTS=N
+      B_NEXUS_REPLACE_AGENTS=N
       ;;
     --uninstall)
-      B_SKILLS_UNINSTALL=Y
+      B_NEXUS_UNINSTALL=Y
       ;;
     *)
       die "Unknown argument: $1"
@@ -81,11 +87,11 @@ trap 'rc=$?; [ $rc -ne 0 ] && warn "install.sh failed at line $LINENO (exit $rc)
 BRAVE_API_KEY_VALUE="${BRAVE_API_KEY:-}"
 CONTEXT7_API_KEY_VALUE="${CONTEXT7_API_KEY:-}"
 FIRECRAWL_API_KEY_VALUE="${FIRECRAWL_API_KEY:-}"
-INSTALL_MCPS_VALUE="${B_SKILLS_INSTALL_MCP:-}"
-INSTALL_GITNEXUS_VALUE="${B_SKILLS_INSTALL_GITNEXUS:-}"
-DRY_RUN_VALUE="${B_SKILLS_DRY_RUN:-N}"
-REPLACE_AGENTS_VALUE="${B_SKILLS_REPLACE_AGENTS:-}"
-UNINSTALL_VALUE="${B_SKILLS_UNINSTALL:-N}"
+INSTALL_MCPS_VALUE="${B_NEXUS_INSTALL_MCP:-${B_SKILLS_INSTALL_MCP:-}}"
+INSTALL_GITNEXUS_VALUE="${B_NEXUS_INSTALL_GITNEXUS:-${B_SKILLS_INSTALL_GITNEXUS:-}}"
+DRY_RUN_VALUE="${B_NEXUS_DRY_RUN:-${B_SKILLS_DRY_RUN:-N}}"
+REPLACE_AGENTS_VALUE="${B_NEXUS_REPLACE_AGENTS:-${B_SKILLS_REPLACE_AGENTS:-}}"
+UNINSTALL_VALUE="${B_NEXUS_UNINSTALL:-${B_SKILLS_UNINSTALL:-N}}"
 CUSTOM_PROVIDER_ENABLED_VALUE="N"
 CUSTOM_PROVIDER_ID_VALUE=""
 CUSTOM_PROVIDER_NAME_VALUE=""
@@ -122,6 +128,11 @@ resolve_existing_install_manifest() {
     return 0
   fi
 
+  if [ -f "$LEGACY_B_SKILLS_INSTALL_MANIFEST" ]; then
+    printf '%s' "$LEGACY_B_SKILLS_INSTALL_MANIFEST"
+    return 0
+  fi
+
   if [ -f "$LEGACY_INSTALL_MANIFEST" ]; then
     printf '%s' "$LEGACY_INSTALL_MANIFEST"
     return 0
@@ -136,6 +147,11 @@ resolve_existing_rules_snapshot() {
     return 0
   fi
 
+  if [ -f "$LEGACY_B_SKILLS_RULES_SNAPSHOT_DST" ]; then
+    printf '%s' "$LEGACY_B_SKILLS_RULES_SNAPSHOT_DST"
+    return 0
+  fi
+
   if [ -f "$LEGACY_RULES_SNAPSHOT_DST" ]; then
     printf '%s' "$LEGACY_RULES_SNAPSHOT_DST"
     return 0
@@ -144,9 +160,23 @@ resolve_existing_rules_snapshot() {
   return 1
 }
 
+resolve_legacy_install_manifest() {
+  if [ -f "$LEGACY_B_SKILLS_INSTALL_MANIFEST" ]; then
+    printf '%s' "$LEGACY_B_SKILLS_INSTALL_MANIFEST"
+    return 0
+  fi
+
+  if [ -f "$LEGACY_INSTALL_MANIFEST" ]; then
+    printf '%s' "$LEGACY_INSTALL_MANIFEST"
+    return 0
+  fi
+
+  return 1
+}
+
 backup_path_for_file() {
   local file_path="$1"
-  printf '%s/%s.bak-%s' "$B_SKILLS_BACKUPS_DIR" "$(basename "$file_path")" "$TIMESTAMP"
+  printf '%s/%s.bak-%s' "$B_NEXUS_BACKUPS_DIR" "$(basename "$file_path")" "$TIMESTAMP"
 }
 
 wants_mcp_install() {
@@ -234,7 +264,7 @@ backup_file_if_needed() {
     return 0
   }
 
-  ensure_dir "$B_SKILLS_BACKUPS_DIR"
+  ensure_dir "$B_NEXUS_BACKUPS_DIR"
 
   if dry_run_enabled; then
     log "[dry-run] backup $file_path -> $backup_path"
@@ -362,7 +392,7 @@ decide_agents_install_action() {
     return 0
   fi
 
-  printf 'Replace existing OpenCode AGENTS.md with the b-skills runtime kernel? [y/N]: ' > /dev/tty
+  printf 'Replace existing OpenCode AGENTS.md with the b-nexus runtime kernel? [y/N]: ' > /dev/tty
   if IFS= read -r entered_value < /dev/tty; then
     :
   else
@@ -403,16 +433,16 @@ def is_yes(value):
     return (value or "").strip().lower() in {"y", "yes"}
 
 payload = {
-    "suite": "b-skills",
+    "suite": "b-nexus",
     "installedAt": os.environ["TIMESTAMP"],
     "dryRun": is_yes(os.environ.get("DRY_RUN_VALUE", "")),
     "agentsAction": os.environ.get("AGENTS_INSTALL_ACTION", "preserve"),
     "activationState": os.environ.get("RUNTIME_ACTIVATION_STATE", "active"),
     "managedPaths": {
-        "metadataDir": "~/.config/opencode/b-skills",
+        "metadataDir": "~/.config/opencode/b-nexus",
         "skillsDir": "~/.config/opencode/skills",
         "commandsDir": "~/.config/opencode/commands",
-        "referencesDir": "~/.config/opencode/references/b-skills",
+        "referencesDir": "~/.config/opencode/references/b-nexus",
         "runtimeKernel": os.environ["RULES_SNAPSHOT_DST"],
         "runtimeContract": os.environ["RUNTIME_CONTRACT_DST"],
         "suiteRules": os.environ["RULES_SNAPSHOT_DST"],
@@ -434,7 +464,7 @@ print(json.dumps(payload, indent=2))
 PYEOF
   )
 
-  write_text_file "$INSTALL_MANIFEST" "$manifest_content" "b-skills install manifest"
+  write_text_file "$INSTALL_MANIFEST" "$manifest_content" "b-nexus install manifest"
 }
 
 prompt_mcp_install_if_needed() {
@@ -1084,13 +1114,13 @@ sync_directory() {
   cp -R "$source_dir"/. "$target_dir"/
 }
 
-is_b_skills_skill_dir() {
+is_b_nexus_skill_dir() {
   local skill_dir="$1"
   [ -f "$skill_dir/SKILL.md" ] || return 1
-  grep -Eq '^[[:space:]]*suite:[[:space:]]*b-skills[[:space:]]*$' "$skill_dir/SKILL.md"
+  grep -Eq '^[[:space:]]*suite:[[:space:]]*(b-nexus|b-skills)[[:space:]]*$' "$skill_dir/SKILL.md"
 }
 
-is_legacy_b_skills_command_name() {
+is_legacy_b_nexus_command_name() {
   case "$1" in
     b-orchestrate|b-plan|b-spec|b-research|b-implement|b-refactor|b-debug|b-test|b-e2e|b-review)
       return 0
@@ -1101,14 +1131,15 @@ is_legacy_b_skills_command_name() {
   esac
 }
 
-is_b_skills_command_file() {
+is_b_nexus_command_file() {
   local command_file="$1"
   local command_name
   [ -f "$command_file" ] || return 1
+  grep -q '<!-- b-nexus-managed -->' "$command_file" && return 0
   grep -q '<!-- b-skills-managed -->' "$command_file" && return 0
 
   command_name=$(basename "$command_file" .md)
-  is_legacy_b_skills_command_name "$command_name" || return 1
+  is_legacy_b_nexus_command_name "$command_name" || return 1
   grep -Fq "Load the \`$command_name\` skill and follow it exactly for this request." "$command_file" \
     && grep -Fq '$ARGUMENTS' "$command_file"
 }
@@ -1117,10 +1148,10 @@ prune_stale_skills() {
   local source_dir="$1" target_dir="$2" removed=0 skill_name
   [ -d "$target_dir" ] || { printf '0'; return; }
 
-  # Only prune explicitly b-skills-managed entries so unrelated user skills stay intact.
+  # Only prune explicitly b-nexus-managed entries so unrelated user skills stay intact.
   for installed_dir in "$target_dir"/b-*; do
     [ -d "$installed_dir" ] || continue
-    is_b_skills_skill_dir "$installed_dir" || continue
+    is_b_nexus_skill_dir "$installed_dir" || continue
     skill_name=$(basename "$installed_dir")
     if [ ! -d "$source_dir/$skill_name" ] || [ ! -f "$source_dir/$skill_name/SKILL.md" ]; then
       if dry_run_enabled; then
@@ -1139,10 +1170,10 @@ prune_stale_commands() {
   local source_dir="$1" target_dir="$2" removed=0 command_name
   [ -d "$target_dir" ] || { printf '0'; return; }
 
-  # Only prune explicitly b-skills-managed wrappers so unrelated user commands stay intact.
+  # Only prune explicitly b-nexus-managed wrappers so unrelated user commands stay intact.
   for installed_file in "$target_dir"/b-*.md; do
     [ -f "$installed_file" ] || continue
-    is_b_skills_command_file "$installed_file" || continue
+    is_b_nexus_command_file "$installed_file" || continue
     command_name=$(basename "$installed_file")
     if [ ! -f "$source_dir/$command_name" ]; then
       if dry_run_enabled; then
@@ -1181,10 +1212,10 @@ remove_skill_if_managed() {
     return 0
   }
 
-  if is_b_skills_skill_dir "$skill_dir"; then
+  if is_b_nexus_skill_dir "$skill_dir"; then
     remove_path_if_exists "$skill_dir" "skill $skill_name"
   else
-    log "⏭ Preserved skill $skill_name because it is not marked as b-skills-managed"
+    log "⏭ Preserved skill $skill_name because it is not marked as b-nexus-managed"
   fi
 }
 
@@ -1196,10 +1227,10 @@ remove_command_if_managed() {
     return 0
   }
 
-  if is_b_skills_command_file "$command_file"; then
+  if is_b_nexus_command_file "$command_file"; then
     remove_path_if_exists "$command_file" "command $command_name"
   else
-    log "⏭ Preserved command $command_name because it is not marked as b-skills-managed"
+    log "⏭ Preserved command $command_name because it is not marked as b-nexus-managed"
   fi
 }
 
@@ -1209,7 +1240,7 @@ restore_agents_backup_if_available() {
   snapshot_path=$(resolve_existing_rules_snapshot) || return 1
   [ -f "$RULES_DST" ] || return 1
   if ! cmp -s "$RULES_DST" "$snapshot_path"; then
-    log "⏭ Preserved OpenCode AGENTS.md because it has changed since b-skills install"
+    log "⏭ Preserved OpenCode AGENTS.md because it has changed since b-nexus install"
     return 0
   fi
 
@@ -1244,7 +1275,7 @@ PYEOF
   log "✅ OpenCode AGENTS.md restored from $backup_path"
 }
 
-remove_agents_if_b_skills_managed() {
+remove_agents_if_b_nexus_managed() {
   local snapshot_path
   [ -f "$RULES_DST" ] || {
     log "✅ OpenCode AGENTS.md already absent"
@@ -1258,21 +1289,27 @@ remove_agents_if_b_skills_managed() {
     return 0
   fi
 
-  log "⏭ Preserved OpenCode AGENTS.md because it does not match the b-skills snapshot"
+  log "⏭ Preserved OpenCode AGENTS.md because it does not match the b-nexus snapshot"
 }
 
 cleanup_legacy_metadata_paths() {
+  [ -e "$LEGACY_B_SKILLS_REFERENCES_DST" ] && remove_path_if_exists "$LEGACY_B_SKILLS_REFERENCES_DST" "legacy shared references"
+  [ -e "$LEGACY_B_SKILLS_RULES_SNAPSHOT_DST" ] && remove_path_if_exists "$LEGACY_B_SKILLS_RULES_SNAPSHOT_DST" "legacy runtime kernel snapshot"
+  [ -e "$LEGACY_B_SKILLS_INSTALL_MANIFEST" ] && remove_path_if_exists "$LEGACY_B_SKILLS_INSTALL_MANIFEST" "legacy install manifest"
   [ -e "$LEGACY_RULES_SNAPSHOT_DST" ] && remove_path_if_exists "$LEGACY_RULES_SNAPSHOT_DST" "legacy runtime kernel snapshot"
   [ -e "$LEGACY_INSTALL_MANIFEST" ] && remove_path_if_exists "$LEGACY_INSTALL_MANIFEST" "legacy install manifest"
+  remove_dir_if_empty "$LEGACY_B_SKILLS_BACKUPS_DIR" "legacy backups directory"
+  remove_dir_if_empty "$LEGACY_B_SKILLS_METADATA_DIR" "legacy metadata directory"
   return 0
 }
 
 migrate_legacy_backup_files() {
   local legacy_backup_pairs backup_key source_path destination_path
 
-  [ -f "$LEGACY_INSTALL_MANIFEST" ] || return 0
+  local legacy_manifest_path
+  legacy_manifest_path=$(resolve_legacy_install_manifest) || return 0
 
-  legacy_backup_pairs=$(env LEGACY_MANIFEST_PATH="$LEGACY_INSTALL_MANIFEST" python3 - <<'PYEOF'
+  legacy_backup_pairs=$(env LEGACY_MANIFEST_PATH="$legacy_manifest_path" python3 - <<'PYEOF'
 import json
 import os
 from pathlib import Path
@@ -1292,11 +1329,13 @@ PYEOF
 
   while IFS=$'\t' read -r backup_key source_path; do
     [ -n "$source_path" ] || continue
-    destination_path="$B_SKILLS_BACKUPS_DIR/$(basename "$source_path")"
+    destination_path="$B_NEXUS_BACKUPS_DIR/$(basename "$source_path")"
 
     case "$source_path" in
-      "$B_SKILLS_BACKUPS_DIR"/*)
+      "$B_NEXUS_BACKUPS_DIR"/*)
         destination_path="$source_path"
+        ;;
+      "$LEGACY_B_SKILLS_BACKUPS_DIR"/*)
         ;;
       "$OPENCODE_DIR"/*.bak-*)
         ;;
@@ -1310,13 +1349,13 @@ PYEOF
     if [ "$destination_path" != "$source_path" ] && [ -e "$destination_path" ]; then
       log "⏭ Preserved legacy backup $source_path because $destination_path already exists"
     elif [ "$destination_path" != "$source_path" ]; then
-      ensure_dir "$B_SKILLS_BACKUPS_DIR"
+      ensure_dir "$B_NEXUS_BACKUPS_DIR"
 
       if dry_run_enabled; then
         log "[dry-run] move $source_path -> $destination_path"
       else
         mv "$source_path" "$destination_path"
-        log "✅ Moved legacy backup $(basename "$source_path") into $B_SKILLS_BACKUPS_DIR"
+        log "✅ Moved legacy backup $(basename "$source_path") into $B_NEXUS_BACKUPS_DIR"
       fi
     fi
 
@@ -1356,8 +1395,8 @@ remove_dir_if_empty() {
   log "✅ $label removed"
 }
 
-uninstall_b_skills() {
-  section "Uninstall b-skills"
+uninstall_b_nexus() {
+  section "Uninstall b-nexus"
 
   remove_skill_if_managed b-spec
   remove_skill_if_managed b-orchestrate
@@ -1386,25 +1425,25 @@ uninstall_b_skills() {
   remove_path_if_exists "$REFERENCES_DST" "shared references"
 
   if ! restore_agents_backup_if_available; then
-    remove_agents_if_b_skills_managed
+    remove_agents_if_b_nexus_managed
   fi
 
   remove_path_if_exists "$RULES_SNAPSHOT_DST" "runtime kernel snapshot"
   remove_path_if_exists "$INSTALL_MANIFEST" "install manifest"
   cleanup_legacy_metadata_paths
-  remove_dir_if_empty "$B_SKILLS_BACKUPS_DIR" "b-skills backups directory"
-  remove_dir_if_empty "$B_SKILLS_METADATA_DIR" "b-skills metadata directory"
+  remove_dir_if_empty "$B_NEXUS_BACKUPS_DIR" "b-nexus backups directory"
+  remove_dir_if_empty "$B_NEXUS_METADATA_DIR" "b-nexus metadata directory"
 
   section "Done"
   if dry_run_enabled; then
-    log "✅ b-skills uninstall preview completed."
+    log "✅ b-nexus uninstall preview completed."
   else
-    log "✅ b-skills uninstalled from OpenCode."
+    log "✅ b-nexus uninstalled from OpenCode."
   fi
 }
 
 if wants_mcp_install "$UNINSTALL_VALUE"; then
-  uninstall_b_skills
+  uninstall_b_nexus
   trap - EXIT
   exit 0
 fi
@@ -1868,7 +1907,7 @@ PYEOF
   fi
 }
 
-section "Sync b-skills repo"
+section "Sync b-nexus repo"
 if [ -d "$LOCAL_REPO/.git" ]; then
   if [ -n "$(git -C "$LOCAL_REPO" status --porcelain)" ]; then
     die "Local changes detected in $LOCAL_REPO — commit or stash before re-running."
@@ -1926,7 +1965,7 @@ log "✅ Shared references synced"
 
 section "Install runtime rules"
 decide_agents_install_action
-write_file_from_source "$RULES_SRC" "$RULES_SNAPSHOT_DST" "b-skills runtime kernel snapshot"
+write_file_from_source "$RULES_SRC" "$RULES_SNAPSHOT_DST" "b-nexus runtime kernel snapshot"
 
 case "$AGENTS_INSTALL_ACTION" in
   replace)
@@ -1939,12 +1978,12 @@ case "$AGENTS_INSTALL_ACTION" in
     RUNTIME_ACTIVATION_STATE="active"
     ;;
   unchanged)
-    log "✅ OpenCode AGENTS.md already matches b-skills"
+    log "✅ OpenCode AGENTS.md already matches b-nexus"
     RUNTIME_ACTIVATION_STATE="active"
     ;;
   preserve)
-    log "⏭ Preserved existing OpenCode AGENTS.md; b-skills runtime kernel is pending"
-    log "   b-skills runtime kernel snapshot: $RULES_SNAPSHOT_DST"
+    log "⏭ Preserved existing OpenCode AGENTS.md; b-nexus runtime kernel is pending"
+    log "   b-nexus runtime kernel snapshot: $RULES_SNAPSHOT_DST"
     RUNTIME_ACTIVATION_STATE="pending"
     ;;
 esac
@@ -1962,9 +2001,9 @@ section "Provider setup"
 collect_custom_provider_config
 
 merge_opencode_config
+migrate_legacy_backup_files
 write_install_manifest
 cleanup_legacy_metadata_paths
-migrate_legacy_backup_files
 
 section "MCP defaults"
 if wants_mcp_install "$INSTALL_MCPS_VALUE"; then
@@ -1998,11 +2037,11 @@ section "Done"
 if [ "$RUNTIME_ACTIVATION_STATE" = "pending" ]; then
   log "⚠️  RUNTIME KERNEL NOT ACTIVE"
   log "   Skills, commands, and references were installed, but the active OpenCode AGENTS.md was preserved."
-  log "   b-skills runtime gates, required read gates, and status/handoff rules may not be enforced until activation."
+  log "   b-nexus runtime gates, required read gates, and status/handoff rules may not be enforced until activation."
 elif dry_run_enabled; then
-  log "✅ b-skills install preview completed."
+  log "✅ b-nexus install preview completed."
 else
-  log "✅ b-skills installed successfully for OpenCode."
+  log "✅ b-nexus installed successfully for OpenCode."
 fi
 log "   Skills:       $OPENCODE_DIR/skills"
 log "   Commands:     $OPENCODE_DIR/commands"

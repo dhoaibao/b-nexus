@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORK_DIR="$(mktemp -d /tmp/b-skills-smoke.XXXXXX)"
+WORK_DIR="$(mktemp -d /tmp/b-nexus-smoke.XXXXXX)"
 
 cleanup() {
   rm -rf "$WORK_DIR"
@@ -60,7 +60,7 @@ make_repo_snapshot() {
   rm -rf "$snapshot_dir/.git" "$snapshot_dir/.opencode"
   git -C "$snapshot_dir" init -q
   git -C "$snapshot_dir" add .
-  git -C "$snapshot_dir" -c user.name='b-skills smoke' -c user.email='smoke@example.com' commit -qm 'snapshot'
+  git -C "$snapshot_dir" -c user.name='b-nexus smoke' -c user.email='smoke@example.com' commit -qm 'snapshot'
 }
 
 run_install_status() {
@@ -70,10 +70,10 @@ run_install_status() {
   local rc=0
   set +e
   HOME="$sandbox/home" \
-  B_SKILLS_REPO="$repo_snapshot" \
-  B_SKILLS_DIR="$sandbox/source" \
-  B_SKILLS_INSTALL_MCP="$install_mcp" \
-  B_SKILLS_INSTALL_GITNEXUS=N \
+  B_NEXUS_REPO="$repo_snapshot" \
+  B_NEXUS_DIR="$sandbox/source" \
+  B_NEXUS_INSTALL_MCP="$install_mcp" \
+  B_NEXUS_INSTALL_GITNEXUS=N \
   bash "$ROOT_DIR/install.sh" "$@" >/dev/null 2>&1
   rc=$?
   set -e
@@ -86,10 +86,10 @@ run_install_output() {
   shift 3
 
   HOME="$sandbox/home" \
-  B_SKILLS_REPO="$repo_snapshot" \
-  B_SKILLS_DIR="$sandbox/source" \
-  B_SKILLS_INSTALL_MCP="$install_mcp" \
-  B_SKILLS_INSTALL_GITNEXUS=N \
+  B_NEXUS_REPO="$repo_snapshot" \
+  B_NEXUS_DIR="$sandbox/source" \
+  B_NEXUS_INSTALL_MCP="$install_mcp" \
+  B_NEXUS_INSTALL_GITNEXUS=N \
   bash "$ROOT_DIR/install.sh" "$@"
 }
 
@@ -111,10 +111,10 @@ run_piped_install_with_tty_status() {
 #!/usr/bin/env bash
 set -euo pipefail
 export HOME="$sandbox/home"
-export B_SKILLS_REPO="$repo_snapshot"
-export B_SKILLS_DIR="$sandbox/source"
-export B_SKILLS_INSTALL_MCP=N
-export B_SKILLS_INSTALL_GITNEXUS=N
+export B_NEXUS_REPO="$repo_snapshot"
+export B_NEXUS_DIR="$sandbox/source"
+export B_NEXUS_INSTALL_MCP=N
+export B_NEXUS_INSTALL_GITNEXUS=N
 cat "$ROOT_DIR/install.sh" | bash
 EOF
   chmod +x "$runner"
@@ -130,6 +130,8 @@ EOF
 main() {
   local snapshot_repo="$WORK_DIR/repo-snapshot"
   local sandbox_fresh="$WORK_DIR/fresh"
+  local sandbox_legacy_env="$WORK_DIR/legacy-env"
+  local sandbox_legacy_migration="$WORK_DIR/legacy-migration"
   local sandbox_preserve="$WORK_DIR/preserve"
   local sandbox_replace="$WORK_DIR/replace"
   local sandbox_dry_run="$WORK_DIR/dry-run"
@@ -154,22 +156,54 @@ main() {
   assert_no_file "$sandbox_fresh/home/.config/opencode/skills/b-e2e/SKILL.md"
   assert_file "$sandbox_fresh/home/.config/opencode/commands/b-plan.md"
   assert_no_file "$sandbox_fresh/home/.config/opencode/commands/b-e2e.md"
-  assert_no_file "$sandbox_fresh/home/.config/opencode/references/b-skills/domain-glossary.md"
-  assert_no_file "$sandbox_fresh/home/.config/opencode/references/b-skills/security-checklist.md"
-  assert_no_file "$sandbox_fresh/home/.config/opencode/references/b-skills/testing-patterns.md"
-  assert_no_file "$sandbox_fresh/home/.config/opencode/references/b-skills/accessibility-checklist.md"
+  assert_no_file "$sandbox_fresh/home/.config/opencode/references/b-nexus/domain-glossary.md"
+  assert_no_file "$sandbox_fresh/home/.config/opencode/references/b-nexus/security-checklist.md"
+  assert_no_file "$sandbox_fresh/home/.config/opencode/references/b-nexus/testing-patterns.md"
+  assert_no_file "$sandbox_fresh/home/.config/opencode/references/b-nexus/accessibility-checklist.md"
   assert_file "$sandbox_fresh/home/.config/opencode/AGENTS.md"
-  assert_file "$sandbox_fresh/home/.config/opencode/b-skills/AGENTS.md"
-  assert_file "$sandbox_fresh/home/.config/opencode/b-skills/install.json"
-  assert_no_file "$sandbox_fresh/home/.config/opencode/b-skills/backups"
+  assert_file "$sandbox_fresh/home/.config/opencode/b-nexus/AGENTS.md"
+  assert_file "$sandbox_fresh/home/.config/opencode/b-nexus/install.json"
+  assert_no_file "$sandbox_fresh/home/.config/opencode/b-nexus/backups"
   assert_no_file "$sandbox_fresh/home/.config/opencode/AGENTS.b-skills.md"
   assert_no_file "$sandbox_fresh/home/.config/opencode/b-skills-install.json"
-  assert_equal_files "$sandbox_fresh/home/.config/opencode/AGENTS.md" "$sandbox_fresh/home/.config/opencode/b-skills/AGENTS.md"
-  assert_contains "$sandbox_fresh/home/.config/opencode/b-skills/install.json" '"agentsAction": "replace"'
-  assert_contains "$sandbox_fresh/home/.config/opencode/b-skills/install.json" '"activationState": "active"'
+  assert_no_file "$sandbox_fresh/home/.config/opencode/b-skills/AGENTS.md"
+  assert_equal_files "$sandbox_fresh/home/.config/opencode/AGENTS.md" "$sandbox_fresh/home/.config/opencode/b-nexus/AGENTS.md"
+  assert_contains "$sandbox_fresh/home/.config/opencode/b-nexus/install.json" '"agentsAction": "replace"'
+  assert_contains "$sandbox_fresh/home/.config/opencode/b-nexus/install.json" '"activationState": "active"'
 
   expect_install_status 0 "$sandbox_fresh" "$snapshot_repo" N
-  assert_file "$sandbox_fresh/home/.config/opencode/b-skills/install.json"
+  assert_file "$sandbox_fresh/home/.config/opencode/b-nexus/install.json"
+
+  mkdir -p "$sandbox_legacy_env/home"
+  HOME="$sandbox_legacy_env/home" \
+  B_SKILLS_REPO="$snapshot_repo" \
+  B_SKILLS_DIR="$sandbox_legacy_env/source" \
+  B_SKILLS_INSTALL_MCP=N \
+  B_SKILLS_INSTALL_GITNEXUS=N \
+  bash "$ROOT_DIR/install.sh" >/dev/null
+  assert_file "$sandbox_legacy_env/home/.config/opencode/b-nexus/install.json"
+  assert_contains "$sandbox_legacy_env/home/.config/opencode/b-nexus/install.json" '"suite": "b-nexus"'
+
+  mkdir -p "$sandbox_legacy_migration/home/.config/opencode/b-skills/backups" "$sandbox_legacy_migration/home/.config/opencode/references/b-skills"
+  printf '# b-skills — OpenCode Runtime Kernel\n' > "$sandbox_legacy_migration/home/.config/opencode/b-skills/AGENTS.md"
+  cp "$sandbox_legacy_migration/home/.config/opencode/b-skills/AGENTS.md" "$sandbox_legacy_migration/home/.config/opencode/AGENTS.md"
+  printf 'legacy-user-rules\n' > "$sandbox_legacy_migration/home/.config/opencode/b-skills/backups/AGENTS.md.bak-old"
+  printf 'legacy contract\n' > "$sandbox_legacy_migration/home/.config/opencode/references/b-skills/runtime-contract.md"
+  cat > "$sandbox_legacy_migration/home/.config/opencode/b-skills/install.json" <<EOF
+{
+  "suite": "b-skills",
+  "backups": {
+    "globalAgents": "$sandbox_legacy_migration/home/.config/opencode/b-skills/backups/AGENTS.md.bak-old",
+    "config": "none"
+  }
+}
+EOF
+  expect_install_status 2 "$sandbox_legacy_migration" "$snapshot_repo" N
+  assert_no_file "$sandbox_legacy_migration/home/.config/opencode/references/b-skills/runtime-contract.md"
+  assert_no_file "$sandbox_legacy_migration/home/.config/opencode/b-skills/AGENTS.md"
+  assert_no_file "$sandbox_legacy_migration/home/.config/opencode/b-skills/install.json"
+  assert_file "$sandbox_legacy_migration/home/.config/opencode/b-nexus/backups/AGENTS.md.bak-old"
+  assert_contains "$sandbox_legacy_migration/home/.config/opencode/b-nexus/install.json" '"activationState": "pending"'
 
   mkdir -p "$sandbox_preserve/home/.config/opencode"
   printf 'user-global-rules\n' > "$sandbox_preserve/home/.config/opencode/AGENTS.md"
@@ -182,19 +216,19 @@ main() {
   assert_contains "$preserve_output_file" 'RUNTIME KERNEL NOT ACTIVE'
   assert_contains "$preserve_output_file" 'runtime gates, required read gates, and status/handoff rules may not be enforced'
   assert_text_equals "$sandbox_preserve/home/.config/opencode/AGENTS.md" $'user-global-rules\n'
-  assert_file "$sandbox_preserve/home/.config/opencode/b-skills/AGENTS.md"
+  assert_file "$sandbox_preserve/home/.config/opencode/b-nexus/AGENTS.md"
   assert_no_file "$sandbox_preserve/home/.config/opencode/AGENTS.b-skills.md"
-  assert_contains "$sandbox_preserve/home/.config/opencode/b-skills/install.json" '"agentsAction": "preserve"'
-  assert_contains "$sandbox_preserve/home/.config/opencode/b-skills/install.json" '"activationState": "pending"'
+  assert_contains "$sandbox_preserve/home/.config/opencode/b-nexus/install.json" '"agentsAction": "preserve"'
+  assert_contains "$sandbox_preserve/home/.config/opencode/b-nexus/install.json" '"activationState": "pending"'
 
   mkdir -p "$sandbox_replace/home/.config/opencode"
   printf '{"existing": true}\n' > "$sandbox_replace/home/.config/opencode/opencode.json"
   printf 'legacy-rules\n' > "$sandbox_replace/home/.config/opencode/AGENTS.md"
   expect_install_status 0 "$sandbox_replace" "$snapshot_repo" Y --replace-agents
-  assert_file "$sandbox_replace/home/.config/opencode/b-skills/AGENTS.md"
+  assert_file "$sandbox_replace/home/.config/opencode/b-nexus/AGENTS.md"
   assert_contains "$sandbox_replace/home/.config/opencode/opencode.json" '"mcp"'
-  compgen -G "$sandbox_replace/home/.config/opencode/b-skills/backups/opencode.json.bak-*" >/dev/null || fail 'expected config backup after config mutation'
-  compgen -G "$sandbox_replace/home/.config/opencode/b-skills/backups/AGENTS.md.bak-*" >/dev/null || fail 'expected AGENTS backup after replacement'
+  compgen -G "$sandbox_replace/home/.config/opencode/b-nexus/backups/opencode.json.bak-*" >/dev/null || fail 'expected config backup after config mutation'
+  compgen -G "$sandbox_replace/home/.config/opencode/b-nexus/backups/AGENTS.md.bak-*" >/dev/null || fail 'expected AGENTS backup after replacement'
 
   mkdir -p "$sandbox_dry_run/home/.config/opencode"
   printf 'keep-me\n' > "$sandbox_dry_run/home/.config/opencode/AGENTS.md"
@@ -202,16 +236,16 @@ main() {
   expect_install_status 0 "$sandbox_dry_run" "$snapshot_repo" Y --dry-run --replace-agents
   assert_text_equals "$sandbox_dry_run/home/.config/opencode/AGENTS.md" $'keep-me\n'
   assert_text_equals "$sandbox_dry_run/home/.config/opencode/opencode.json" $'{"dryRun": false}\n'
-  [ ! -e "$sandbox_dry_run/home/.config/opencode/b-skills/install.json" ] || fail 'dry-run should not write install manifest'
+  [ ! -e "$sandbox_dry_run/home/.config/opencode/b-nexus/install.json" ] || fail 'dry-run should not write install manifest'
 
   mkdir -p "$sandbox_piped/home/.config/opencode"
   printf 'legacy-rules\n' > "$sandbox_piped/home/.config/opencode/AGENTS.md"
   rc="$(run_piped_install_with_tty_status "$sandbox_piped" "$snapshot_repo" $'y\nn\n')"
   [ "$rc" -eq 0 ] || fail "expected piped install exit 0, got $rc"
-  assert_equal_files "$sandbox_piped/home/.config/opencode/AGENTS.md" "$sandbox_piped/home/.config/opencode/b-skills/AGENTS.md"
-  assert_contains "$sandbox_piped/home/.config/opencode/b-skills/install.json" '"agentsAction": "replace"'
-  assert_contains "$sandbox_piped/home/.config/opencode/b-skills/install.json" '"activationState": "active"'
-  compgen -G "$sandbox_piped/home/.config/opencode/b-skills/backups/AGENTS.md.bak-*" >/dev/null || fail 'expected AGENTS backup after prompted replacement'
+  assert_equal_files "$sandbox_piped/home/.config/opencode/AGENTS.md" "$sandbox_piped/home/.config/opencode/b-nexus/AGENTS.md"
+  assert_contains "$sandbox_piped/home/.config/opencode/b-nexus/install.json" '"agentsAction": "replace"'
+  assert_contains "$sandbox_piped/home/.config/opencode/b-nexus/install.json" '"activationState": "active"'
+  compgen -G "$sandbox_piped/home/.config/opencode/b-nexus/backups/AGENTS.md.bak-*" >/dev/null || fail 'expected AGENTS backup after prompted replacement'
 
   mkdir -p "$sandbox_provider_delete/home/.config/opencode"
   cat > "$sandbox_provider_delete/home/.config/opencode/opencode.json" <<'EOF'
@@ -240,26 +274,26 @@ EOF
   [ "$rc" -eq 0 ] || fail "expected provider-delete install exit 0, got $rc"
   assert_contains "$sandbox_provider_delete/home/.config/opencode/opencode.json" '"keep-me"'
   assert_not_contains "$sandbox_provider_delete/home/.config/opencode/opencode.json" '"remove-me"'
-  assert_contains "$sandbox_provider_delete/home/.config/opencode/b-skills/install.json" '"customProvider": "openrouter"'
+  assert_contains "$sandbox_provider_delete/home/.config/opencode/b-nexus/install.json" '"customProvider": "openrouter"'
 
   mkdir -p "$sandbox_uninstall/home/.config/opencode"
   printf 'legacy-rules\n' > "$sandbox_uninstall/home/.config/opencode/AGENTS.md"
   expect_install_status 0 "$sandbox_uninstall" "$snapshot_repo" N --replace-agents
-  compgen -G "$sandbox_uninstall/home/.config/opencode/b-skills/backups/AGENTS.md.bak-*" >/dev/null || fail 'expected AGENTS backup before uninstall'
+  compgen -G "$sandbox_uninstall/home/.config/opencode/b-nexus/backups/AGENTS.md.bak-*" >/dev/null || fail 'expected AGENTS backup before uninstall'
   run_install_output "$sandbox_uninstall" "$snapshot_repo" N --uninstall >/dev/null
   assert_no_file "$sandbox_uninstall/home/.config/opencode/skills/b-plan/SKILL.md"
   assert_no_file "$sandbox_uninstall/home/.config/opencode/commands/b-plan.md"
-  assert_no_file "$sandbox_uninstall/home/.config/opencode/references/b-skills/runtime-contract.md"
-  assert_no_file "$sandbox_uninstall/home/.config/opencode/b-skills/AGENTS.md"
-  assert_no_file "$sandbox_uninstall/home/.config/opencode/b-skills/install.json"
-  compgen -G "$sandbox_uninstall/home/.config/opencode/b-skills/backups/AGENTS.md.bak-*" >/dev/null || fail 'expected AGENTS backup to remain after uninstall'
+  assert_no_file "$sandbox_uninstall/home/.config/opencode/references/b-nexus/runtime-contract.md"
+  assert_no_file "$sandbox_uninstall/home/.config/opencode/b-nexus/AGENTS.md"
+  assert_no_file "$sandbox_uninstall/home/.config/opencode/b-nexus/install.json"
+  compgen -G "$sandbox_uninstall/home/.config/opencode/b-nexus/backups/AGENTS.md.bak-*" >/dev/null || fail 'expected AGENTS backup to remain after uninstall'
   assert_text_equals "$sandbox_uninstall/home/.config/opencode/AGENTS.md" $'legacy-rules\n'
 
   mkdir -p "$sandbox_uninstall/home/.config/opencode"
   printf 'manual backup\n' > "$sandbox_uninstall/home/.config/opencode/AGENTS.md.bak-manual"
   expect_install_status 2 "$sandbox_uninstall" "$snapshot_repo" N
   assert_file "$sandbox_uninstall/home/.config/opencode/AGENTS.md.bak-manual"
-  assert_no_file "$sandbox_uninstall/home/.config/opencode/b-skills/backups/AGENTS.md.bak-manual"
+  assert_no_file "$sandbox_uninstall/home/.config/opencode/b-nexus/backups/AGENTS.md.bak-manual"
 
   mkdir -p "$sandbox_uninstall_modified/home/.config/opencode"
   printf 'legacy-rules\n' > "$sandbox_uninstall_modified/home/.config/opencode/AGENTS.md"
@@ -269,9 +303,9 @@ EOF
   assert_text_equals "$sandbox_uninstall_modified/home/.config/opencode/AGENTS.md" $'user-edited-rules\n'
 
   mkdir -p "$sandbox_uninstall_merged/home/.config/opencode"
-  printf '# b-skills — OpenCode Runtime Kernel\ncustom-user-rules\n' > "$sandbox_uninstall_merged/home/.config/opencode/AGENTS.md"
+  printf '# b-nexus — OpenCode Runtime Kernel\ncustom-user-rules\n' > "$sandbox_uninstall_merged/home/.config/opencode/AGENTS.md"
   run_install_output "$sandbox_uninstall_merged" "$snapshot_repo" N --uninstall >/dev/null
-  assert_text_equals "$sandbox_uninstall_merged/home/.config/opencode/AGENTS.md" $'# b-skills — OpenCode Runtime Kernel\ncustom-user-rules\n'
+  assert_text_equals "$sandbox_uninstall_merged/home/.config/opencode/AGENTS.md" $'# b-nexus — OpenCode Runtime Kernel\ncustom-user-rules\n'
 
   mkdir -p "$sandbox_uninstall_custom/home/.config/opencode/skills/b-plan" "$sandbox_uninstall_custom/home/.config/opencode/commands"
   printf '%s\n' 'custom skill' > "$sandbox_uninstall_custom/home/.config/opencode/skills/b-plan/SKILL.md"

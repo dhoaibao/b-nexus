@@ -1,13 +1,13 @@
-# b-skills — Repo conventions & skill authoring
+# b-nexus — Agent Workflow Kernel Authoring
 
-Guidelines for creating, editing, and maintaining the install-only OpenCode skill suite in this repository.
+Guidelines for creating, editing, and maintaining the install-only OpenCode agent workflow kernel in this repository.
 
 ## Scope
 
 - This file is maintainer guidance for the source repository.
 - Keep root docs targeted: `README.md` is the brief repo overview, `AGENTS.md` is maintainer guidance for this repo, and `REFERENCE.md` is the reference guide for each skill in this repo.
-- Runtime suite behavior lives in `global/AGENTS.md` (kernel), `references/runtime-contract.md` (detailed contract), and `skills/*/SKILL.md` (per-skill).
-- `install.sh` deploys runtime files to `~/.config/opencode/`, always writes `b-skills/AGENTS.md`, and replaces `AGENTS.md` only when missing or approved.
+- Runtime behavior lives in `global/AGENTS.md` (kernel), `references/runtime-contract.md` (detailed contract), and `skills/*/SKILL.md` (per-skill workflow units).
+- `install.sh` deploys runtime files to `~/.config/opencode/`, always writes `b-nexus/AGENTS.md`, and replaces `AGENTS.md` only when missing or approved.
 - When authoring runtime-facing skill prose, reference `AGENTS.md`. Long-form schemas, rubrics, and edge-case protocols live in `references/runtime-contract.md`; when a skill depends on one of them, phrase the instruction as a required read gate rather than a passive pointer.
 - Runtime conformance depends on explicit read gates plus the runtime gate checklist, not passive reminders. Keep those gates local to the step that uses the shared schema, checklist, or protocol.
 
@@ -24,7 +24,7 @@ Guidelines for creating, editing, and maintaining the install-only OpenCode skil
 - `skills/b-review/SKILL.md` — Pre-PR changed-code review
 - `skills/b-audit/SKILL.md` — Repository and suite-slice audits
 - `references/` — Reusable checklists and the detailed runtime contract
-- `global/AGENTS.md` — Runtime kernel source (installs as `b-skills/AGENTS.md`)
+- `global/AGENTS.md` — Runtime kernel source (installs as `b-nexus/AGENTS.md`)
 - `commands/` — Thin slash-command wrappers
 
 ---
@@ -43,7 +43,7 @@ description: >
   Do NOT include usage instructions — those go in the skill body.]
 compatibility: opencode
 metadata:
-  suite: b-skills
+  suite: b-nexus
 ---
 ```
 
@@ -58,7 +58,7 @@ metadata:
 
 **Repo conventions:**
 - Set `compatibility: opencode`
-- Set `metadata.suite: b-skills`
+- Set `metadata.suite: b-nexus`
 
 **Do not carry forward Claude-only frontmatter fields** such as top-level `effort`, `model`, `disable-model-invocation`, `user-invocable`, or `paths`.
 
@@ -92,7 +92,7 @@ Top-level `references/*.md` files are allowed when two or more skills need the s
 
 - Keep them short, task-oriented, and reusable across skills.
 - They may define optional conventions, such as glossary/domain-doc layouts, when adding a whole new skill would be overkill.
-- If a skill points at a shared reference, ensure `install.sh` syncs it into `~/.config/opencode/references/b-skills/`.
+- If a skill points at a shared reference, ensure `install.sh` syncs it into `~/.config/opencode/references/b-nexus/`.
 - Treat reference-file changes like runtime-facing guidance: keep `README.md` and `REFERENCE.md` aligned in the same commit.
 
 ---
@@ -107,7 +107,7 @@ description: >
   lists; those live in AGENTS.md and maintainer docs.]
 compatibility: opencode
 metadata:
-  suite: b-skills
+  suite: b-nexus
 ---
 
 # b-example
@@ -132,7 +132,7 @@ the skill; the bundle definition in `AGENTS.md` is the source of
 truth, including session-init steps, fallback ladder, and cost/approval
 caveats.
 
-Fallbacks: if required tools are unavailable, read `references/b-skills/runtime-contract.md` §4 before applying fallbacks. Skills add only skill-specific stop/degrade behavior.
+Fallbacks: if required tools are unavailable, read `references/b-nexus/runtime-contract.md` §4 before applying fallbacks. Skills add only skill-specific stop/degrade behavior.
 
 Graceful degradation: [✅ Possible / ⚠️ Partial / ❌ Not possible] — [brief explanation]
 
