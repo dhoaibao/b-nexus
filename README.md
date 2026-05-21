@@ -42,16 +42,23 @@ If an existing `~/.claude/CLAUDE.md` is preserved, the installer exits with `act
 
 Settings and MCP configuration are installed as templates only in this release:
 - `claude/settings.recommended.json` contains suggested `permissions`, `skillOverrides`, and `disableSkillShellExecution` settings.
-- `claude/mcp.project.template.json` contains a project `.mcp.json` template for Serena, Context7, Brave Search, Firecrawl, and Playwright MCP.
+- `claude/mcp.safe.template.json` contains Serena for local semantic code work.
+- `claude/mcp.research.template.json` contains Context7, Brave Search, and Firecrawl for external evidence.
+- `claude/mcp.browser.template.json` contains isolated Playwright MCP for browser/DOM/visual/e2e evidence.
+- `claude/mcp.architecture.template.json` contains Serena plus optional GitNexus graph radar.
+- `claude/mcp.project.template.json` remains the full convenience example for the original non-GitNexus MCP surfaces in one project config.
 
 To apply those templates instead of only installing copies under `~/.claude/b-agentic/templates/`, use explicit flags after review:
 
 ```bash
 install.sh --install-settings        # writes ~/.claude/settings.json only when missing
 install.sh --replace-settings        # backs up and replaces ~/.claude/settings.json
-install.sh --install-project-mcp     # writes .mcp.json in the current project only when missing
+install.sh --install-project-mcp     # writes project profile to .mcp.json only when missing
 install.sh --replace-project-mcp     # backs up and replaces the current project's .mcp.json
+install.sh --install-project-mcp --mcp-profile safe
 ```
+
+Available MCP profiles are `safe`, `research`, `browser`, `architecture`, and `project`. The default profile for `--install-project-mcp` is still `project` for compatibility. Profiles use environment placeholders such as `${BRAVE_API_KEY}` and `${FIRECRAWL_API_KEY}`; set secrets in your environment, not in tracked files.
 
 The first Claude-native release supports personal-global install only. Project-local `.claude/` installs, plugin packaging, hooks, and dynamic context injection are deferred until validator and smoke coverage prove global parity.
 

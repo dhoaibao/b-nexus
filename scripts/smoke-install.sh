@@ -111,6 +111,10 @@ main() {
   assert_file "$sandbox_fresh/home/.claude/b-agentic/references/runtime-contract.md"
   assert_file "$sandbox_fresh/home/.claude/b-agentic/templates/settings.recommended.json"
   assert_file "$sandbox_fresh/home/.claude/b-agentic/templates/mcp.project.template.json"
+  assert_file "$sandbox_fresh/home/.claude/b-agentic/templates/mcp.safe.template.json"
+  assert_file "$sandbox_fresh/home/.claude/b-agentic/templates/mcp.research.template.json"
+  assert_file "$sandbox_fresh/home/.claude/b-agentic/templates/mcp.browser.template.json"
+  assert_file "$sandbox_fresh/home/.claude/b-agentic/templates/mcp.architecture.template.json"
   assert_file "$sandbox_fresh/home/.claude/b-agentic/install.json"
   assert_no_path "$sandbox_fresh/home/.claude/commands"
   assert_no_path "$sandbox_fresh/home/.config/opencode"
@@ -144,11 +148,35 @@ main() {
   expect_install_status 0 "$sandbox_config" "$snapshot_repo" --install-settings --install-project-mcp
   assert_file "$sandbox_config/home/.claude/settings.json"
   assert_file "$sandbox_config/project/.mcp.json"
+  assert_contains "$sandbox_config/project/.mcp.json" '"playwright"'
+  assert_not_contains "$sandbox_config/project/.mcp.json" '"gitnexus"'
   assert_contains "$sandbox_config/home/.claude/b-agentic/install.json" '"settingsAction": "install"'
   assert_contains "$sandbox_config/home/.claude/b-agentic/install.json" '"mcpAction": "install"'
+  assert_contains "$sandbox_config/home/.claude/b-agentic/install.json" '"mcpProfile": "project"'
   expect_install_status 0 "$sandbox_config" "$snapshot_repo" --uninstall
   assert_no_path "$sandbox_config/home/.claude/settings.json"
   assert_no_path "$sandbox_config/project/.mcp.json"
+
+  local sandbox_profile="$WORK_DIR/profile"
+  mkdir -p "$sandbox_profile/home"
+  expect_install_status 0 "$sandbox_profile" "$snapshot_repo" --install-project-mcp --mcp-profile safe
+  assert_file "$sandbox_profile/project/.mcp.json"
+  assert_contains "$sandbox_profile/project/.mcp.json" '"serena"'
+  assert_not_contains "$sandbox_profile/project/.mcp.json" '"brave-search"'
+  assert_contains "$sandbox_profile/home/.claude/b-agentic/install.json" '"mcpProfile": "safe"'
+  expect_install_status 0 "$sandbox_profile" "$snapshot_repo" --uninstall
+  assert_no_path "$sandbox_profile/project/.mcp.json"
+
+  local sandbox_bad_profile="$WORK_DIR/bad-profile"
+  mkdir -p "$sandbox_bad_profile/home"
+  expect_install_status 1 "$sandbox_bad_profile" "$snapshot_repo" --install-project-mcp --mcp-profile unknown
+
+  local sandbox_profile_dry_run="$WORK_DIR/profile-dry-run"
+  mkdir -p "$sandbox_profile_dry_run/home"
+  expect_install_status 0 "$sandbox_profile_dry_run" "$snapshot_repo" --dry-run --install-project-mcp --mcp-profile research
+  assert_no_path "$sandbox_profile_dry_run/home/.claude"
+  assert_no_path "$sandbox_profile_dry_run/project/.mcp.json"
+  assert_no_path "$sandbox_profile_dry_run/source"
 
   mkdir -p "$sandbox_uninstall/home"
   expect_install_status 0 "$sandbox_uninstall" "$snapshot_repo"

@@ -151,6 +151,7 @@ kernel = kernel_path.read_text() if kernel_path.exists() else ''
 runtime_contract_path = root / 'references' / 'runtime-contract.md'
 runtime_contract = runtime_contract_path.read_text() if runtime_contract_path.exists() else ''
 install_sh = (root / 'install.sh').read_text() if (root / 'install.sh').exists() else ''
+claude_readme = (root / 'claude' / 'README.md').read_text() if (root / 'claude' / 'README.md').exists() else ''
 
 if not kernel_path.exists():
     errors.append('global/CLAUDE.md: missing Claude Code kernel source')
@@ -211,11 +212,72 @@ for required in ['$HOME/.claude', 'global/CLAUDE.md', 'skills', 'references/b-ag
 if '~/.config/opencode' in install_sh or 'opencode.json' in install_sh:
     errors.append('install.sh: contains stale OpenCode install target')
 
+expected_mcp_profiles = {
+    'safe': root / 'claude' / 'mcp.safe.template.json',
+    'research': root / 'claude' / 'mcp.research.template.json',
+    'browser': root / 'claude' / 'mcp.browser.template.json',
+    'architecture': root / 'claude' / 'mcp.architecture.template.json',
+    'project': root / 'claude' / 'mcp.project.template.json',
+}
+
+for profile, path in expected_mcp_profiles.items():
+    if not path.exists():
+        errors.append(f'{path}: missing MCP profile template')
+    if f'`{profile}`' not in claude_readme and f' {profile} ' not in claude_readme:
+        errors.append(f'claude/README.md: missing MCP profile {profile!r}')
+    if f'mcp.{profile}.template.json' not in claude_readme and profile != 'project':
+        errors.append(f'claude/README.md: missing template name mcp.{profile}.template.json')
+
+secret_literal_patterns = [
+    re.compile(r'fc-[A-Za-z0-9_-]{8,}'),
+    re.compile(r'YOUR[_-]?API[_-]?KEY', re.IGNORECASE),
+    re.compile(r'your-api-key', re.IGNORECASE),
+]
+
 for json_path in sorted((root / 'claude').glob('*.json')):
     try:
-        json.loads(json_path.read_text())
+        data = json.loads(json_path.read_text())
     except Exception as exc:
         errors.append(f'{json_path}: invalid JSON: {exc}')
+        continue
+
+    text = json_path.read_text()
+    for pattern in secret_literal_patterns:
+        if pattern.search(text):
+            errors.append(f'{json_path}: contains secret-looking placeholder/literal {pattern.pattern!r}')
+
+    if json_path.name.startswith('mcp.'):
+        servers = data.get('mcpServers')
+        if not isinstance(servers, dict) or not servers:
+            errors.append(f'{json_path}: missing non-empty mcpServers object')
+            continue
+
+        if 'brave-search' in servers:
+            env = servers['brave-search'].get('env', {})
+            if env.get('BRAVE_API_KEY') != '${BRAVE_API_KEY}':
+                errors.append(f'{json_path}: brave-search must use ${{BRAVE_API_KEY}} placeholder')
+            args = servers['brave-search'].get('args', [])
+            if '@brave/brave-search-mcp-server' not in args:
+                errors.append(f'{json_path}: brave-search must use @brave/brave-search-mcp-server')
+
+        if 'firecrawl' in servers:
+            env = servers['firecrawl'].get('env', {})
+            if env.get('FIRECRAWL_API_KEY') != '${FIRECRAWL_API_KEY}':
+                errors.append(f'{json_path}: firecrawl must use ${{FIRECRAWL_API_KEY}} placeholder')
+
+        if 'playwright' in servers and '--isolated' not in servers['playwright'].get('args', []):
+            errors.append(f'{json_path}: playwright must use --isolated by default')
+
+        if 'context7' in servers:
+            server = servers['context7']
+            if server.get('type') != 'http' or server.get('url') != 'https://mcp.context7.com/mcp':
+                errors.append(f'{json_path}: context7 must use the official MCP HTTP endpoint')
+
+        if 'gitnexus' in servers and json_path.name != 'mcp.architecture.template.json':
+            errors.append(f'{json_path}: gitnexus belongs only in the architecture profile')
+
+if '--mcp-profile' not in install_sh or 'mcpProfile' not in install_sh:
+    errors.append('install.sh: missing MCP profile installer support')
 
 if errors:
     for error in errors:

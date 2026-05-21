@@ -6,6 +6,8 @@ When this document cites `global/CLAUDE.md`, that is the source-repo runtime ker
 
 Runtime enforcement is intentionally mechanical: `global/CLAUDE.md` owns the runtime gate checklist, each skill step uses explicit read gates for shared schemas/protocols/checklists, Claude skills expose `/b-*` slash commands, and `scripts/validate-skills.sh` rejects passive pointers that would rely on memory.
 
+MCP setup is profile-based and opt-in. The suite ships `safe`, `research`, `browser`, `architecture`, and full `project` `.mcp.json` templates under `claude/`, but runtime skills still choose MCP lazily by evidence need rather than by installed profile. Installer profile flags only write project `.mcp.json` after explicit `--install-project-mcp` or `--replace-project-mcp` intent.
+
 Browser, DOM-rendered, visual, and e2e verification belongs to `b-browser`, not `b-test`. The suite does not add jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent browser/DOM tooling as a project dependency side effect. For UI/browser-relevant work, readiness claims require `b-browser`-verified supplied/CI evidence, existing-tool evidence, approved live-browser evidence, or an accepted follow-up.
 
 Mutating or coordinating Claude Code skills are manual-only in the first migrated release: `b-orchestrate`, `b-plan`, `b-implement`, `b-refactor`, `b-debug`, `b-test`, and `b-browser` use `disable-model-invocation: true`. `b-spec`, `b-research`, `b-review`, and `b-audit` may be model-invocable because they are clarification, discovery, or read-only review surfaces.

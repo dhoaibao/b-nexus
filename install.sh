@@ -7,6 +7,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --replace-memory
 #   curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --install-settings
 #   curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --install-project-mcp
+#   curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --install-project-mcp --mcp-profile safe
 #   curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --uninstall
 
 set -euo pipefail
@@ -35,6 +36,7 @@ INSTALL_SETTINGS_VALUE="${B_AGENTIC_INSTALL_SETTINGS:-N}"
 REPLACE_SETTINGS_VALUE="${B_AGENTIC_REPLACE_SETTINGS:-N}"
 INSTALL_PROJECT_MCP_VALUE="${B_AGENTIC_INSTALL_PROJECT_MCP:-N}"
 REPLACE_PROJECT_MCP_VALUE="${B_AGENTIC_REPLACE_PROJECT_MCP:-N}"
+MCP_PROFILE_VALUE="${B_AGENTIC_MCP_PROFILE:-project}"
 
 SOURCE_DIR="$LOCAL_REPO"
 SKILLS_SRC="$SOURCE_DIR/skills"
@@ -146,6 +148,14 @@ parse_args() {
       --replace-project-mcp)
         INSTALL_PROJECT_MCP_VALUE=Y
         REPLACE_PROJECT_MCP_VALUE=Y
+        ;;
+      --mcp-profile)
+        shift
+        [ "$#" -gt 0 ] || die "--mcp-profile requires one of: safe, research, browser, architecture, project"
+        MCP_PROFILE_VALUE="$1"
+        ;;
+      --mcp-profile=*)
+        MCP_PROFILE_VALUE="${1#--mcp-profile=}"
         ;;
       *)
         die "unknown argument: $1"
@@ -295,9 +305,20 @@ install_optional_config() {
   printf 'preserve\npending\nnone'
 }
 
+mcp_profile_template() {
+  case "$MCP_PROFILE_VALUE" in
+    safe|research|browser|architecture|project)
+      printf '%s/mcp.%s.template.json' "$TEMPLATES_SRC" "$MCP_PROFILE_VALUE"
+      ;;
+    *)
+      die "unknown MCP profile: $MCP_PROFILE_VALUE (expected safe, research, browser, architecture, or project)"
+      ;;
+  esac
+}
+
 write_manifest() {
-  local memory_action="$1" activation_state="$2" memory_backup="$3" settings_action="$4" settings_state="$5" settings_backup="$6" mcp_action="$7" mcp_state="$8" mcp_backup="$9"
-  shift 9
+  local memory_action="$1" activation_state="$2" memory_backup="$3" settings_action="$4" settings_state="$5" settings_backup="$6" mcp_action="$7" mcp_state="$8" mcp_backup="$9" mcp_profile="${10}"
+  shift 10
   local skills=("$@")
 
   if dry_run_enabled; then
@@ -318,6 +339,7 @@ write_manifest() {
     MCP_ACTION="$mcp_action" \
     MCP_STATE="$mcp_state" \
     MCP_BACKUP="$mcp_backup" \
+    MCP_PROFILE="$mcp_profile" \
     CLAUDE_DIR="$CLAUDE_DIR" \
     SKILLS_DST="$SKILLS_DST" \
     REFERENCES_DST="$REFERENCES_DST" \
@@ -342,6 +364,7 @@ manifest = {
     'settingsState': os.environ['SETTINGS_STATE'],
     'mcpAction': os.environ['MCP_ACTION'],
     'mcpState': os.environ['MCP_STATE'],
+    'mcpProfile': os.environ['MCP_PROFILE'],
     'paths': {
         'claudeDir': os.environ['CLAUDE_DIR'],
         'kernel': os.environ['KERNEL_DST'],
@@ -403,6 +426,20 @@ remove_managed_config() {
   fi
 }
 
+remove_managed_mcp_config() {
+  local path="$1"
+  [ -f "$path" ] || return 0
+  local template
+  for template in "$TEMPLATES_DST"/mcp.*.template.json; do
+    [ -f "$template" ] || continue
+    if cmp -s "$path" "$template"; then
+      run_cmd rm -f "$path"
+      return 0
+    fi
+  done
+  warn "preserving modified .mcp.json: $path"
+}
+
 uninstall() {
   log "Uninstalling b-agentic from Claude Code personal config"
   local name
@@ -434,7 +471,7 @@ PY
   settings_path="$(manifest_path_value settings "$SETTINGS_DST")"
   project_mcp_path="$(manifest_path_value projectMcp "$PROJECT_MCP_DST")"
   remove_managed_config "$settings_path" "$TEMPLATES_DST/settings.recommended.json" "settings.json"
-  remove_managed_config "$project_mcp_path" "$TEMPLATES_DST/mcp.project.template.json" ".mcp.json"
+  remove_managed_mcp_config "$project_mcp_path"
   run_cmd rm -rf "$METADATA_DIR"
   log "Uninstall complete. User-owned Claude Code files were preserved."
 }
@@ -477,15 +514,17 @@ main() {
   settings_state="${settings_lines[1]:-none}"
   settings_backup="${settings_lines[2]:-none}"
 
-  local mcp_result mcp_action mcp_state mcp_backup
+  local mcp_result mcp_action mcp_state mcp_backup mcp_template
   local -a mcp_lines
-  mcp_result="$(install_optional_config "$INSTALL_PROJECT_MCP_VALUE" "$REPLACE_PROJECT_MCP_VALUE" "$TEMPLATES_SRC/mcp.project.template.json" "$PROJECT_MCP_DST")"
+  mcp_template="$(mcp_profile_template)"
+  [ -f "$mcp_template" ] || die "missing MCP profile template: $mcp_template"
+  mcp_result="$(install_optional_config "$INSTALL_PROJECT_MCP_VALUE" "$REPLACE_PROJECT_MCP_VALUE" "$mcp_template" "$PROJECT_MCP_DST")"
   readarray -t mcp_lines <<< "$mcp_result"
   mcp_action="${mcp_lines[0]:-skip}"
   mcp_state="${mcp_lines[1]:-none}"
   mcp_backup="${mcp_lines[2]:-none}"
 
-  write_manifest "$memory_action" "$activation_state" "$memory_backup" "$settings_action" "$settings_state" "$settings_backup" "$mcp_action" "$mcp_state" "$mcp_backup" "${installed_skills[@]}"
+  write_manifest "$memory_action" "$activation_state" "$memory_backup" "$settings_action" "$settings_state" "$settings_backup" "$mcp_action" "$mcp_state" "$mcp_backup" "$MCP_PROFILE_VALUE" "${installed_skills[@]}"
 
   log "b-agentic Claude Code install complete"
   log "activationState: $activation_state"
