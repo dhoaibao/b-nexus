@@ -338,7 +338,7 @@ Skills reference MCP bundles by name instead of repeating per-tool MCP lists. Na
 #### `context7-docs`
 
 - **Server:** `context7`
-- **Install source:** default Claude Code user-scope MCP template using `https://mcp.context7.com/mcp` with the `${CONTEXT7_API_KEY}` header placeholder. Context7 CLI + Skills setup remains a user-run alternative, not part of b-agentic install.
+- **Install source:** default Claude Code user-scope MCP template using `https://mcp.context7.com/mcp` with the `${CONTEXT7_API_KEY:-}` optional header placeholder. Interactive installs may write a user-provided concrete key to user-scope `~/.claude.json`. Context7 CLI + Skills setup remains a user-run alternative, not part of b-agentic install.
 - **Tools:** `resolve-library-id`, `query-docs`.
 - **Version pinning:** before querying, pin from manifests **and lockfiles** (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `poetry.lock`, `uv.lock`, `go.sum`, `Cargo.lock`, etc.). In monorepos, use the closest workspace. Ask when versions conflict.
 - **Fallback:** if Context7 cannot answer, prefer the library's own documentation URL pattern (e.g., `<library>.dev/docs/`) over generic web search.
@@ -346,14 +346,14 @@ Skills reference MCP bundles by name instead of repeating per-tool MCP lists. Na
 #### `brave-discovery`
 
 - **Server:** `brave-search`
-- **Install source:** default Claude Code user-scope MCP template using `npx -y @brave/brave-search-mcp-server --transport stdio` and the `${BRAVE_API_KEY}` environment placeholder.
+- **Install source:** default Claude Code user-scope MCP template using `npx -y @brave/brave-search-mcp-server --transport stdio` and the `${BRAVE_API_KEY}` environment placeholder. Interactive installs may write a user-provided concrete key to user-scope `~/.claude.json`.
 - **Tools:** `brave_web_search`, plus `brave_news_search` for recency-sensitive questions and `brave_image_search` when visual evidence is material.
 - **Role:** open-web discovery only. Use it to find unknown official URLs, recent advisories/release notes, and comparison sources, then pass discovered URLs to `firecrawl-extraction` when the final answer depends on page substance rather than result metadata.
 
 #### `firecrawl-extraction` (default tier)
 
 - **Server:** `firecrawl`
-- **Install source:** default Claude Code user-scope MCP template using `npx -y firecrawl-mcp` and the `${FIRECRAWL_API_KEY}` environment placeholder.
+- **Install source:** default Claude Code user-scope MCP template using `npx -y firecrawl-mcp` and the `${FIRECRAWL_API_KEY}` environment placeholder. Interactive installs may write a user-provided concrete key to user-scope `~/.claude.json`.
 - **Tools:** `firecrawl_scrape`, `firecrawl_parse`.
 - **Use for:** content extraction from a known URL or local document.
 - **Format selection:** for specific data points, fields, prices, API parameters, tables, or lists, prefer structured extraction or query over full markdown. Use full markdown only when full-page understanding, summarization, or quoted context is needed.

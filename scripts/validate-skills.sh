@@ -265,8 +265,8 @@ for json_path in sorted((root / 'claude').glob('*.json')):
             if server.get('type') != 'http' or server.get('url') != 'https://mcp.context7.com/mcp':
                 errors.append(f'{json_path}: context7 must use the official MCP HTTP endpoint')
             headers = server.get('headers', {})
-            if headers.get('CONTEXT7_API_KEY') != '${CONTEXT7_API_KEY}':
-                errors.append(f'{json_path}: context7 must use ${{CONTEXT7_API_KEY}} header placeholder')
+            if headers.get('CONTEXT7_API_KEY') != '${CONTEXT7_API_KEY:-}':
+                errors.append(f'{json_path}: context7 must use ${{CONTEXT7_API_KEY:-}} optional header placeholder')
 
         if 'gitnexus' in servers and json_path.name != 'mcp.user.template.json':
             errors.append(f'{json_path}: gitnexus belongs only in the global user config')

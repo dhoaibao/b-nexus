@@ -43,8 +43,9 @@ Plain install merges `mcp.user.template.json` into `~/.claude.json` under top-le
 | `gitnexus` | Optional graph radar for architecture and blast-radius work. |
 
 MCP safety rules:
-- Use environment-variable placeholders such as `${CONTEXT7_API_KEY}`, `${BRAVE_API_KEY}`, and `${FIRECRAWL_API_KEY}`; never commit real API keys.
+- Use environment-variable placeholders such as `${CONTEXT7_API_KEY:-}`, `${BRAVE_API_KEY}`, and `${FIRECRAWL_API_KEY}` in templates; never commit real API keys.
+- During an interactive install, prompt for Context7, Brave Search, and Firecrawl API keys and write provided values directly to user-scope `~/.claude.json`. Leave a prompt blank to keep the placeholder. Non-interactive installs skip prompts.
 - Keep Playwright configured with `--isolated` unless a user explicitly opts into persistent browser state outside the tracked worktree.
 - Do not include Claude hooks, generated root guidance, indexes, memories, or setup commands in MCP templates.
 - Treat GitNexus as optional power-user radar. Users must run `gitnexus analyze` or `gitnexus setup` themselves if they want indexing, generated skills, hooks, or global MCP config.
-- Context7 may also offer CLI + Skills setup through `npx ctx7 setup`; b-agentic uses the MCP HTTP endpoint with the `${CONTEXT7_API_KEY}` header placeholder and does not run Context7 setup commands during install.
+- Context7 may also offer CLI + Skills setup through `npx ctx7 setup`; b-agentic uses the MCP HTTP endpoint with the `${CONTEXT7_API_KEY:-}` optional header placeholder unless the installer prompt writes a concrete key, and does not run Context7 setup commands during install.

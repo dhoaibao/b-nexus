@@ -27,6 +27,10 @@ readonly TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 DRY_RUN_VALUE="${B_AGENTIC_DRY_RUN:-N}"
 REPLACE_MEMORY_VALUE="${B_AGENTIC_REPLACE_MEMORY:-}"
 UNINSTALL_VALUE="${B_AGENTIC_UNINSTALL:-N}"
+PROMPT_API_KEYS_VALUE="${B_AGENTIC_PROMPT_API_KEYS:-auto}"
+CONTEXT7_API_KEY_INPUT=""
+BRAVE_API_KEY_INPUT=""
+FIRECRAWL_API_KEY_INPUT=""
 
 SOURCE_DIR="$LOCAL_REPO"
 SKILLS_SRC="$SOURCE_DIR/skills"
@@ -72,6 +76,66 @@ run_cmd() {
     return 0
   fi
   "$@"
+}
+
+can_prompt_api_keys() {
+  ! dry_run_enabled || return 1
+  case "$PROMPT_API_KEYS_VALUE" in
+    n|N|no|NO|No|false|FALSE|0) return 1 ;;
+    auto|AUTO|Auto|y|Y|yes|YES|Yes|true|TRUE|1) ;;
+    *) die "invalid B_AGENTIC_PROMPT_API_KEYS value: $PROMPT_API_KEYS_VALUE" ;;
+  esac
+  [ -r /dev/tty ] && [ -w /dev/tty ]
+}
+
+mcp_secret_configured() {
+  local server="$1" section="$2" key="$3"
+  [ -f "$CLAUDE_JSON_DST" ] || return 1
+  python3 - "$CLAUDE_JSON_DST" "$server" "$section" "$key" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+server, section, key = sys.argv[2:5]
+try:
+    data = json.loads(path.read_text())
+except Exception:
+    sys.exit(1)
+
+value = (
+    data.get('mcpServers', {})
+    .get(server, {})
+    .get(section, {})
+    .get(key)
+)
+if isinstance(value, str) and value and not value.startswith('${'):
+    sys.exit(0)
+sys.exit(1)
+PY
+}
+
+prompt_secret() {
+  local label="$1" value=""
+  printf '%s (leave blank to skip): ' "$label" > /dev/tty
+  IFS= read -r -s value < /dev/tty || value=""
+  printf '\n' > /dev/tty
+  printf '%s' "$value"
+}
+
+collect_api_keys() {
+  can_prompt_api_keys || return 0
+
+  printf '\nOptional MCP API keys. Values are written to %s and never to tracked templates.\n' "$CLAUDE_JSON_DST" > /dev/tty
+  if ! mcp_secret_configured context7 headers CONTEXT7_API_KEY; then
+    CONTEXT7_API_KEY_INPUT="$(prompt_secret 'Context7 API key')"
+  fi
+  if ! mcp_secret_configured brave-search env BRAVE_API_KEY; then
+    BRAVE_API_KEY_INPUT="$(prompt_secret 'Brave Search API key')"
+  fi
+  if ! mcp_secret_configured firecrawl env FIRECRAWL_API_KEY; then
+    FIRECRAWL_API_KEY_INPUT="$(prompt_secret 'Firecrawl API key')"
+  fi
 }
 
 ensure_dir() {
@@ -124,6 +188,12 @@ parse_args() {
         ;;
       --uninstall)
         UNINSTALL_VALUE=Y
+        ;;
+      --prompt-api-keys)
+        PROMPT_API_KEYS_VALUE=Y
+        ;;
+      --no-prompt-api-keys)
+        PROMPT_API_KEYS_VALUE=N
         ;;
       *)
         die "unknown argument: $1"
@@ -312,10 +382,26 @@ def merge(existing, incoming):
         return merged
     return existing
 
+def migrate_managed_values(data):
+    if label != 'mcp':
+        return
+    servers = data.get('mcpServers')
+    if not isinstance(servers, dict):
+        return
+    context7 = servers.get('context7')
+    if not isinstance(context7, dict):
+        return
+    headers = context7.get('headers')
+    if not isinstance(headers, dict):
+        return
+    if headers.get('CONTEXT7_API_KEY') == '${CONTEXT7_API_KEY}':
+        headers['CONTEXT7_API_KEY'] = '${CONTEXT7_API_KEY:-}'
+
 if not isinstance(current, dict):
     raise SystemExit(f'{label} merge requires existing target to be a JSON object')
 
 merged = merge(current, recommended)
+migrate_managed_values(merged)
 if merged == current:
     raise SystemExit(2)
 tmp.write_text(json.dumps(merged, indent=2, sort_keys=True) + '\n')
@@ -348,6 +434,77 @@ install_settings_config() {
 
 install_mcp_config() {
   merge_json_file "$TEMPLATES_SRC/mcp.user.template.json" "$CLAUDE_JSON_DST" "mcp" "claudeJson"
+}
+
+apply_prompted_mcp_keys() {
+  local action="$1" current_backup="$2"
+  if [ -z "$CONTEXT7_API_KEY_INPUT" ] && [ -z "$BRAVE_API_KEY_INPUT" ] && [ -z "$FIRECRAWL_API_KEY_INPUT" ]; then
+    printf 'none'
+    return 0
+  fi
+  if dry_run_enabled; then
+    printf 'none'
+    return 0
+  fi
+
+  local tmp rc
+  tmp="$(mktemp "${TMPDIR:-/tmp}/b-agentic-mcp-keys.XXXXXX")"
+  chmod 600 "$tmp"
+  if env \
+    CLAUDE_JSON_DST="$CLAUDE_JSON_DST" \
+    JSON_TMP="$tmp" \
+    CONTEXT7_API_KEY_INPUT="$CONTEXT7_API_KEY_INPUT" \
+    BRAVE_API_KEY_INPUT="$BRAVE_API_KEY_INPUT" \
+    FIRECRAWL_API_KEY_INPUT="$FIRECRAWL_API_KEY_INPUT" \
+    python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+path = Path(os.environ['CLAUDE_JSON_DST'])
+tmp = Path(os.environ['JSON_TMP'])
+data = json.loads(path.read_text())
+servers = data.setdefault('mcpServers', {})
+
+updates = {
+    ('context7', 'headers', 'CONTEXT7_API_KEY'): os.environ.get('CONTEXT7_API_KEY_INPUT', ''),
+    ('brave-search', 'env', 'BRAVE_API_KEY'): os.environ.get('BRAVE_API_KEY_INPUT', ''),
+    ('firecrawl', 'env', 'FIRECRAWL_API_KEY'): os.environ.get('FIRECRAWL_API_KEY_INPUT', ''),
+}
+
+for (server_name, section_name, key_name), value in updates.items():
+    if not value:
+        continue
+    server = servers.setdefault(server_name, {})
+    section = server.setdefault(section_name, {})
+    section[key_name] = value
+
+if json.loads(path.read_text()) == data:
+    raise SystemExit(2)
+tmp.write_text(json.dumps(data, indent=2, sort_keys=True) + '\n')
+PY
+  then
+    rc=0
+  else
+    rc=$?
+  fi
+
+  if [ "$rc" -eq 2 ]; then
+    rm -f "$tmp"
+    printf 'none'
+    return 0
+  fi
+  if [ "$rc" -ne 0 ]; then
+    rm -f "$tmp"
+    die "failed to write prompted MCP API keys: $CLAUDE_JSON_DST"
+  fi
+
+  local backup="$current_backup"
+  if [ "$action" != "write" ] && [ "$backup" = "none" ]; then
+    backup="$(backup_file "$CLAUDE_JSON_DST")"
+  fi
+  run_cmd mv "$tmp" "$CLAUDE_JSON_DST"
+  printf '%s' "${backup:-none}"
 }
 
 write_manifest() {
@@ -574,12 +731,48 @@ def cleanup(current_value, incoming_value, original_value):
 
     return current_value
 
+def managed_mcp_server(current_server, incoming_server, server_name):
+    if not isinstance(current_server, dict) or not isinstance(incoming_server, dict):
+        return False
+    normalized = json.loads(json.dumps(current_server))
+    if server_name == 'context7':
+        headers = normalized.get('headers')
+        incoming_headers = incoming_server.get('headers', {})
+        if isinstance(headers, dict) and isinstance(incoming_headers, dict) and 'CONTEXT7_API_KEY' in headers:
+            headers['CONTEXT7_API_KEY'] = incoming_headers.get('CONTEXT7_API_KEY')
+    elif server_name == 'brave-search':
+        env = normalized.get('env')
+        incoming_env = incoming_server.get('env', {})
+        if isinstance(env, dict) and isinstance(incoming_env, dict) and 'BRAVE_API_KEY' in env:
+            env['BRAVE_API_KEY'] = incoming_env.get('BRAVE_API_KEY')
+    elif server_name == 'firecrawl':
+        env = normalized.get('env')
+        incoming_env = incoming_server.get('env', {})
+        if isinstance(env, dict) and isinstance(incoming_env, dict) and 'FIRECRAWL_API_KEY' in env:
+            env['FIRECRAWL_API_KEY'] = incoming_env.get('FIRECRAWL_API_KEY')
+    return normalized == incoming_server
+
 if not isinstance(current, dict) or not isinstance(incoming, dict) or not isinstance(original, dict):
     raise SystemExit(f'{label} cleanup requires JSON object inputs')
 
 cleaned = cleanup(current, incoming, original)
+if label == '.claude.json':
+    cleaned_servers = cleaned.get('mcpServers')
+    incoming_servers = incoming.get('mcpServers', {})
+    original_servers = original.get('mcpServers', {})
+    if isinstance(cleaned_servers, dict) and isinstance(incoming_servers, dict):
+        for server_name in incoming_servers:
+            if not isinstance(original_servers, dict) or server_name not in original_servers:
+                cleaned_servers.pop(server_name, None)
+                continue
+            if managed_mcp_server(cleaned_servers.get(server_name), incoming_servers.get(server_name), server_name):
+                cleaned_servers.pop(server_name, None)
+        if not cleaned_servers:
+            cleaned.pop('mcpServers', None)
 if cleaned == current:
     raise SystemExit(2)
+if cleaned == {}:
+    raise SystemExit(3)
 tmp_path.write_text(json.dumps(cleaned, indent=2, sort_keys=True) + '\n')
 PY
   then
@@ -591,6 +784,11 @@ PY
   if [ "$rc" -eq 2 ]; then
     rm -f "$tmp"
     warn "preserving modified $label: $path"
+    return 0
+  fi
+  if [ "$rc" -eq 3 ]; then
+    rm -f "$tmp"
+    rm -f "$path"
     return 0
   fi
   if [ "$rc" -ne 0 ]; then
@@ -683,6 +881,11 @@ main() {
   mcp_action="${mcp_lines[0]:-skip}"
   mcp_state="${mcp_lines[1]:-none}"
   mcp_backup="${mcp_lines[2]:-none}"
+  collect_api_keys
+  prompted_mcp_backup="$(apply_prompted_mcp_keys "$mcp_action" "$mcp_backup")"
+  if [ "$prompted_mcp_backup" != "none" ]; then
+    mcp_backup="$prompted_mcp_backup"
+  fi
 
   write_manifest "$memory_action" "$activation_state" "$memory_backup" "$settings_action" "$settings_state" "$settings_backup" "$mcp_action" "$mcp_state" "$mcp_backup" "${installed_skills[@]}"
 

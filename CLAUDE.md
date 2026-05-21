@@ -142,7 +142,7 @@ Rules:
 - Always include a `Graceful degradation:` line summarizing skill-specific fallback.
 - Prefer the lightest capable tool. Do not force MCP-first behavior for exact strings, manifests, prose, small file reads, or other cases where native tools are cheaper and equally reliable.
 - Do not list unsafe tool variants in skill workflows; approval is required per invocation.
-- Do not commit API keys or secret-looking placeholders in MCP templates. Use Claude Code environment expansion such as `${CONTEXT7_API_KEY}`, `${BRAVE_API_KEY}`, and `${FIRECRAWL_API_KEY}`.
+- Do not commit API keys or secret-looking placeholders in MCP templates. Use Claude Code environment expansion such as `${CONTEXT7_API_KEY:-}`, `${BRAVE_API_KEY}`, and `${FIRECRAWL_API_KEY}` in templates; installer prompts may write user-provided keys only to user-scope `~/.claude.json`.
 
 GitNexus-specific criteria:
 - GitNexus is always optional radar. It is never a primary dependency and never acts as the editing layer.

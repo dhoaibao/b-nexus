@@ -81,11 +81,38 @@ run_install_status() {
   HOME="$sandbox/home" \
   B_AGENTIC_REPO="$repo_snapshot" \
   B_AGENTIC_DIR="$sandbox/source" \
+  B_AGENTIC_PROMPT_API_KEYS=N \
   bash "$ROOT_DIR/install.sh" "$@" >/dev/null 2>&1
   rc=$?
   set -e
 
   printf '%s' "$rc"
+}
+
+run_install_with_tty_status() {
+  local sandbox="$1" repo_snapshot="$2" input="$3"
+  shift 3
+
+  local rc=0
+  set +e
+  env \
+    HOME="$sandbox/home" \
+    B_AGENTIC_REPO="$repo_snapshot" \
+    B_AGENTIC_DIR="$sandbox/source" \
+    script -q -e -c "bash '$ROOT_DIR/install.sh' $*" /dev/null <<< "$input" >/dev/null 2>&1
+  rc=$?
+  set -e
+
+  printf '%s' "$rc"
+}
+
+expect_install_with_tty_status() {
+  local expected="$1" sandbox="$2" repo_snapshot="$3" input="$4"
+  shift 4
+
+  local rc
+  rc="$(run_install_with_tty_status "$sandbox" "$repo_snapshot" "$input" "$@")"
+  [ "$rc" -eq "$expected" ] || fail "expected TTY install exit $expected, got $rc"
 }
 
 expect_install_status() {
@@ -105,6 +132,9 @@ main() {
   local sandbox_dry_run="$WORK_DIR/dry-run"
   local sandbox_config="$WORK_DIR/config"
   local sandbox_uninstall="$WORK_DIR/uninstall"
+  local sandbox_mcp_migration="$WORK_DIR/mcp-migration"
+  local sandbox_prompt_keys="$WORK_DIR/prompt-keys"
+  local sandbox_prompt_reinstall="$WORK_DIR/prompt-reinstall"
 
   require_bin git
   require_bin python3
@@ -133,13 +163,34 @@ main() {
   assert_file "$sandbox_fresh/home/.claude/settings.json"
   assert_file "$sandbox_fresh/home/.claude.json"
   assert_json_value "$sandbox_fresh/home/.claude.json" "set(data['mcpServers']) == {'serena', 'context7', 'brave-search', 'firecrawl', 'playwright', 'gitnexus'}"
-  assert_json_value "$sandbox_fresh/home/.claude.json" "data['mcpServers']['context7']['headers']['CONTEXT7_API_KEY'] == '\${CONTEXT7_API_KEY}'"
+  assert_json_value "$sandbox_fresh/home/.claude.json" "data['mcpServers']['context7']['headers']['CONTEXT7_API_KEY'] == '\${CONTEXT7_API_KEY:-}'"
   assert_json_value "$sandbox_fresh/home/.claude.json" "data['mcpServers']['playwright']['args'][-1] == '--isolated'"
   assert_contains "$sandbox_fresh/home/.claude/b-agentic/install.json" '"settingsAction": "write"'
   assert_contains "$sandbox_fresh/home/.claude/b-agentic/install.json" '"mcpAction": "write"'
   assert_contains "$sandbox_fresh/home/.claude/b-agentic/install.json" '"skills"'
 
   expect_install_status 0 "$sandbox_fresh" "$snapshot_repo"
+
+  mkdir -p "$sandbox_prompt_keys/home"
+  expect_install_with_tty_status 0 "$sandbox_prompt_keys" "$snapshot_repo" $'ctx7-test-key\nbrave-test-key\nfirecrawl-test-key\n' --prompt-api-keys
+  assert_json_value "$sandbox_prompt_keys/home/.claude.json" "data['mcpServers']['context7']['headers']['CONTEXT7_API_KEY'] == 'ctx7-test-key'"
+  assert_json_value "$sandbox_prompt_keys/home/.claude.json" "data['mcpServers']['brave-search']['env']['BRAVE_API_KEY'] == 'brave-test-key'"
+  assert_json_value "$sandbox_prompt_keys/home/.claude.json" "data['mcpServers']['firecrawl']['env']['FIRECRAWL_API_KEY'] == 'firecrawl-test-key'"
+  assert_contains "$sandbox_prompt_keys/home/.claude/b-agentic/templates/mcp.user.template.json" '${BRAVE_API_KEY}'
+  assert_not_contains "$sandbox_prompt_keys/home/.claude/b-agentic/templates/mcp.user.template.json" 'brave-test-key'
+  expect_install_status 0 "$sandbox_prompt_keys" "$snapshot_repo" --uninstall
+  assert_no_path "$sandbox_prompt_keys/home/.claude.json"
+
+  mkdir -p "$sandbox_prompt_reinstall/home"
+  expect_install_status 0 "$sandbox_prompt_reinstall" "$snapshot_repo"
+  expect_install_with_tty_status 0 "$sandbox_prompt_reinstall" "$snapshot_repo" $'ctx7-reinstall-key\nbrave-reinstall-key\nfirecrawl-reinstall-key\n' --prompt-api-keys
+  expect_install_status 0 "$sandbox_prompt_reinstall" "$snapshot_repo" --uninstall
+  assert_no_path "$sandbox_prompt_reinstall/home/.claude.json"
+
+  mkdir -p "$sandbox_mcp_migration/home"
+  printf '{"mcpServers":{"context7":{"type":"http","url":"https://mcp.context7.com/mcp","headers":{"CONTEXT7_API_KEY":"${CONTEXT7_API_KEY}"}}}}\n' > "$sandbox_mcp_migration/home/.claude.json"
+  expect_install_status 0 "$sandbox_mcp_migration" "$snapshot_repo"
+  assert_json_value "$sandbox_mcp_migration/home/.claude.json" "data['mcpServers']['context7']['headers']['CONTEXT7_API_KEY'] == '\${CONTEXT7_API_KEY:-}'"
 
   mkdir -p "$sandbox_preserve/home/.claude"
   printf '# User Claude Memory\n' > "$sandbox_preserve/home/.claude/CLAUDE.md"
