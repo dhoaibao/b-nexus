@@ -151,7 +151,7 @@ main() {
   assert_file "$sandbox_fresh/home/.claude/CLAUDE.md"
   assert_file "$sandbox_fresh/home/.claude/b-agentic/CLAUDE.md"
   assert_file "$sandbox_fresh/home/.claude/b-agentic/references/contract/index.md"
-  assert_file "$sandbox_fresh/home/.claude/b-agentic/templates/settings.recommended.json"
+  assert_file "$sandbox_fresh/home/.claude/b-agentic/templates/settings.template.json"
   assert_file "$sandbox_fresh/home/.claude/b-agentic/templates/mcp.user.template.json"
   assert_file "$sandbox_fresh/home/.claude/b-agentic/install.json"
   assert_no_path "$sandbox_fresh/home/.claude/commands"

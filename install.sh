@@ -35,7 +35,7 @@ FIRECRAWL_API_KEY_INPUT=""
 SOURCE_DIR="$LOCAL_REPO"
 SKILLS_SRC="$SOURCE_DIR/skills"
 REFERENCES_SRC="$SOURCE_DIR/references"
-TEMPLATES_SRC="$SOURCE_DIR/claude"
+TEMPLATES_SRC="$SOURCE_DIR/configs/claude"
 KERNEL_SRC="$SOURCE_DIR/global/CLAUDE.md"
 DRY_RUN_SOURCE_DIR=""
 
@@ -217,7 +217,7 @@ set_source_dir() {
   SOURCE_DIR="$1"
   SKILLS_SRC="$SOURCE_DIR/skills"
   REFERENCES_SRC="$SOURCE_DIR/references"
-  TEMPLATES_SRC="$SOURCE_DIR/claude"
+  TEMPLATES_SRC="$SOURCE_DIR/configs/claude"
   KERNEL_SRC="$SOURCE_DIR/global/CLAUDE.md"
 }
 
@@ -441,7 +441,7 @@ PY
 }
 
 install_settings_config() {
-  merge_json_file "$TEMPLATES_SRC/settings.recommended.json" "$SETTINGS_DST" "settings" "settings"
+  merge_json_file "$TEMPLATES_SRC/settings.template.json" "$SETTINGS_DST" "settings" "settings"
 }
 
 install_mcp_config() {
@@ -846,7 +846,7 @@ PY
   local settings_path claude_json_path
   settings_path="$(manifest_path_value settings "$SETTINGS_DST")"
   claude_json_path="$(manifest_path_value claudeJson "$CLAUDE_JSON_DST")"
-  remove_merged_config "$settings_path" "$TEMPLATES_DST/settings.recommended.json" "settings.json" "settings" "settingsAction"
+  remove_merged_config "$settings_path" "$TEMPLATES_DST/settings.template.json" "settings.json" "settings" "settingsAction"
   remove_merged_config "$claude_json_path" "$TEMPLATES_DST/mcp.user.template.json" ".claude.json" "claudeJson" "mcpAction"
   run_cmd rm -rf "$METADATA_DIR"
   log "Uninstall complete. User-owned Claude Code files were preserved."

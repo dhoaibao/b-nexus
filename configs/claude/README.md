@@ -11,7 +11,7 @@ The first Claude-native release supports a personal-global install only:
 - Skill-local shared references: `~/.claude/skills/<skill-name>/references/b-agentic/*.md`
 - Suite metadata, backups, and source snapshots: `~/.claude/b-agentic/`
 - Shared reference snapshot: `~/.claude/b-agentic/references/*.md`
-- Recommended settings template: `~/.claude/b-agentic/templates/settings.recommended.json`
+- Recommended settings template: `~/.claude/b-agentic/templates/settings.template.json`
 - Global MCP template: `~/.claude/b-agentic/templates/mcp.user.template.json`
 - User-scope MCP config: `~/.claude.json`
 - Sensitive artifacts: `~/.claude/b-agentic/<skill>/<run-id>/` or `/tmp/claude-code/b-agentic/<skill>/<run-id>/`

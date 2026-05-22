@@ -35,9 +35,9 @@ The installer deploys this repo into Claude Code's personal config:
 - `skills/<name>/` -> `~/.claude/skills/<name>/`
 - `references/*.md` -> `~/.claude/b-agentic/references/`
 - `references/*.md` -> `~/.claude/skills/<name>/references/b-agentic/` for each skill
-- `claude/*.json` -> `~/.claude/b-agentic/templates/`
-- `claude/settings.recommended.json` -> merged into `~/.claude/settings.json`
-- `claude/mcp.user.template.json` -> merged into `~/.claude.json`
+- `configs/claude/*.json` -> `~/.claude/b-agentic/templates/`
+- `configs/claude/settings.template.json` -> merged into `~/.claude/settings.json`
+- `configs/claude/mcp.user.template.json` -> merged into `~/.claude.json`
 - install metadata and backups -> `~/.claude/b-agentic/`
 
 If an existing `~/.claude/CLAUDE.md` is preserved, the installer exits with `activationState: pending`. Review `~/.claude/b-agentic/CLAUDE.md`, then rerun with `--replace-memory` or merge the kernel manually.
@@ -106,7 +106,7 @@ All skills are model-invocable when their descriptions match the request. Skill 
 b-agentic/
 ├── CLAUDE.md              # Claude Code maintainer guidance for this source repo
 ├── global/CLAUDE.md       # Claude Code runtime kernel source
-├── claude/                # settings and MCP templates
+├── configs/claude/        # settings and MCP templates
 ├── references/            # shared runtime references copied into skill support dirs
 ├── skills/<name>/         # Claude skill instructions and optional reference.md files
 ├── install.sh             # Claude Code installer, updater, and uninstaller
@@ -121,6 +121,6 @@ b-agentic/
 - `global/CLAUDE.md` is the runtime kernel source.
 - `references/contract/` is the detailed runtime contract; referenced sections are required read gates when a skill needs their schemas, checklists, or protocols.
 - `references/performance-checklist.md` is a reusable cross-skill reference.
-- `claude/README.md` documents the Claude Code runtime layout and first-release non-goals.
+- `configs/claude/README.md` documents the Claude Code runtime layout and first-release non-goals.
 
 Run `scripts/validate-skills.sh` and `scripts/smoke-install.sh` before installing or committing suite changes.

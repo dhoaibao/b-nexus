@@ -163,7 +163,7 @@ kernel = kernel_path.read_text() if kernel_path.exists() else ''
 contract_index_path = root / 'references' / 'contract' / 'index.md'
 contract_index = contract_index_path.read_text() if contract_index_path.exists() else ''
 install_sh = (root / 'install.sh').read_text() if (root / 'install.sh').exists() else ''
-claude_readme = (root / 'claude' / 'README.md').read_text() if (root / 'claude' / 'README.md').exists() else ''
+claude_readme = (root / 'configs' / 'claude' / 'README.md').read_text() if (root / 'configs' / 'claude' / 'README.md').exists() else ''
 
 contract_version_match = re.search(r'This runtime contract version is `([0-9]{4}-[0-9]{2}-[0-9]{2})`', kernel)
 contract_version = contract_version_match.group(1) if contract_version_match else None
@@ -231,7 +231,7 @@ for required in ['$HOME/.claude', 'global/CLAUDE.md', 'skills', 'references/b-ag
 if '~/.config/opencode' in install_sh or 'opencode.json' in install_sh:
     errors.append('install.sh: contains stale OpenCode install target')
 
-user_mcp_template = root / 'claude' / 'mcp.user.template.json'
+user_mcp_template = root / 'configs' / 'claude' / 'mcp.user.template.json'
 if not user_mcp_template.exists():
     errors.append(f'{user_mcp_template}: missing global MCP user template')
 
@@ -300,7 +300,7 @@ for forbidden in ['--install-project-mcp', '--replace-project-mcp', '--mcp-profi
     if forbidden in readme:
         errors.append(f'README.md: should not document per-project/options installer path {forbidden!r}')
     if forbidden in claude_readme:
-        errors.append(f'claude/README.md: should not document per-project/options installer path {forbidden!r}')
+        errors.append(f'configs/claude/README.md: should not document per-project/options installer path {forbidden!r}')
 
 for forbidden in ['--install-project-mcp', '--replace-project-mcp', '--mcp-profile', '--with-playwright', '--with-gitnexus', 'PROJECT_MCP_DST', 'mcpProfile']:
     if forbidden in install_sh:
@@ -310,7 +310,7 @@ if 'One Command' not in readme or 'skillsSynced' not in readme:
     errors.append('README.md: missing one-command install/output documentation')
 
 if 'Global MCP Setup' not in claude_readme or '~/.claude.json' not in claude_readme:
-    errors.append('claude/README.md: missing global MCP setup documentation')
+    errors.append('configs/claude/README.md: missing global MCP setup documentation')
 
 if contract_version:
     for plan_path in sorted((root / '.b-agentic' / 'b-plan').glob('*.md')):

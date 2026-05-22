@@ -27,7 +27,7 @@ Guidelines for creating, editing, and maintaining the Claude Code native `b-agen
 - `skills/b-ship/SKILL.md` - commit, push, and open PR after READY FOR PR
 - `references/` - reusable checklists and the detailed runtime contract
 - `global/CLAUDE.md` - runtime kernel source
-- `claude/` - Claude Code settings and MCP templates
+- `configs/claude/` - Claude Code settings and MCP templates
 
 ## Claude Skill Frontmatter
 
@@ -127,7 +127,7 @@ Tool fallback rules are centralized in the kernel; skills do not restate them.
 
 Skills declare MCP usage by referencing bundles summarized in `global/CLAUDE.md` §4 and fully defined in `references/contract/` §4. Do not enumerate per-tool MCP lists inside skills. Native tools such as Glob/Grep/Read/Bash are not MCP bundles and may be listed separately when useful.
 
-MCP user-scope configuration lives in `claude/mcp.user.template.json`. The installer copies templates to `~/.claude/b-agentic/templates/` and merges the user-scope MCP set into `~/.claude.json` during the normal one-command install. The global MCP set contains Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus; runtime skills still use MCP lazily by evidence need. Keep MCP template changes documented in `claude/README.md` and `README.md`, and covered by `scripts/validate-skills.sh` plus `scripts/smoke-install.sh`.
+MCP user-scope configuration lives in `configs/claude/mcp.user.template.json`. The installer copies templates to `~/.claude/b-agentic/templates/` and merges the user-scope MCP set into `~/.claude.json` during the normal one-command install. The global MCP set contains Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus; runtime skills still use MCP lazily by evidence need. Keep MCP template changes documented in `configs/claude/README.md` and `README.md`, and covered by `scripts/validate-skills.sh` plus `scripts/smoke-install.sh`.
 
 Rules:
 - Never add a bundle just to increase coverage; every bundle must have a clear use case in the Steps section.
