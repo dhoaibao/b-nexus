@@ -42,7 +42,15 @@ Security, data-loss, or production-impacting issues found in touched code may be
 
 ### Iteration cap
 
-Use a **maximum of 3 fix/verify loops per step** before reporting remaining evidence and the blocker. This applies to `b-implement`, `b-debug`, `b-refactor`, and `b-test`. Skills do not restate the number.
+Use the class-aware cap before reporting remaining evidence and the blocker. Skills do not restate the numbers.
+
+| Class | Cap |
+|---|---|
+| Trivial (one file, no exports, behavior preserved) | 2 loops |
+| Normal (`b-implement`, `b-refactor`, `b-test`) | 3 loops |
+| Debug with confirmed root cause (`b-debug` after Step 3) | 5 loops |
+
+Hit the cap → emit `state: blocked`, `cause: iteration_cap`, remaining evidence, and a proposed new approach or explicit user decision before continuing.
 
 ### Transform rollback (shared across `b-implement`, `b-refactor`, `b-debug`)
 
@@ -74,6 +82,7 @@ A non-trivial run is "done" only when **all** are true:
 - Artifacts manifest written when more than one artifact exists (§8).
 - Outstanding follow-ups land on an existing report surface — the report's `Follow-up` / `Remaining gaps` section, the status block `notes` field, or the `blockers` field when they block the next skill — not silently dropped.
 - The tree is in a coherent state — no mid-transform leftovers (see Transform rollback).
+- When `b-debug` was active: all `b-debug-probe` markers removed and verified with `rg --hidden 'b-debug-probe' -- <touched-paths>` returning zero matches.
 
 ### Source-side output shaping
 
@@ -122,8 +131,8 @@ When the expected input is missing, do not silently fall back; ask once with a c
 - Changed-code review with untracked files → include them from current contents for current-worktree reviews, or state they are excluded when reviewing an explicit commit/range.
 - No approved plan → check if the request meets the small-direct-request threshold (§3); otherwise route to `/b-plan`.
 - No test framework in the repo → ask before adding one; never introduce a framework as a side effect.
-- Browser or DOM verification request → route to `/b-browser`; do not add jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent tooling as a side effect.
-- No MCP for the requested bundle → see the fallback ladder (§4) and label the run as `[degraded: <bundle> unavailable]`.
+- Browser or DOM verification request → route to `/b-browser`; do not add browser or DOM tooling as a side effect (see §10).
+- No MCP for the requested bundle → see the fallback ladder (§4) and label the run as `[degraded: <bundle> unavailable]`. When any `[degraded:]` label is emitted, the status block's `notes:` line is required and must name the unavailable bundle and the capability that was degraded or skipped.
 
 ### Generated artifact provenance
 

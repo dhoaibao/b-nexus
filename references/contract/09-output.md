@@ -35,7 +35,7 @@ next: <skill name or 'none'>
 blockers: <one-line list or 'none'>
 cause: <cause-class>   (required when state is 'blocked'; omit otherwise)
 confidence: high | medium | low — <reason>   (omit when high and evidence is direct)
-notes: <cost summary, pre-auth carve-outs, or other run-scoped notes>   (omit the line entirely when empty)
+notes: <cost summary, pre-auth carve-outs, or other run-scoped notes>   (required when any [degraded:] label was emitted; omit otherwise when empty)
 ```
 
 Required fields are `skill`, `state`, `artifacts`, `next`, `blockers`. Every other field is **omit-when-empty**: skip the whole line rather than emit a placeholder. The `confidence` line, when present, always sits immediately above `notes` so downstream skills can find it at a fixed offset.

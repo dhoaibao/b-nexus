@@ -49,7 +49,7 @@ Skills do not restate this. They reference §6.
 
 ### Repo-local artifact safety
 
-- Saved plans under `.b-agentic/b-plan/` are canonical source-of-truth files, not runtime artifacts; do not reroute them.
+- Saved plans under `.b-agentic/b-plan/` are the session-local approval cache and execution source of truth (see §2); they are intentionally gitignored by the root ignore guard. Do not reroute them.
 - Before any suite write under repo-local `.b-agentic/`, including saved plans, ensure the root ignore guard: create `.b-agentic/.gitignore` containing `*` when `.b-agentic/` or that file is missing; leave an existing `.b-agentic/.gitignore` unchanged.
 - Do not store auth/session state or other sensitive run artifacts under repo-local `.b-agentic/` unless the user explicitly opts into repo-local persistence. Use `~/.claude/b-agentic/...` or `/tmp/claude-code/b-agentic/...` instead by default.
 - Persisting reusable browser auth/session state requires explicit opt-in, even outside the worktree; otherwise use ephemeral/current-run state only.

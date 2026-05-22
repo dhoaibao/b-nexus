@@ -14,5 +14,5 @@ These are the recurring justifications agents use to bypass discipline. When tem
 | "I can leave the probe in until later." | Every temporary probe must be removed before reporting success. |
 | "I can't reproduce it, but a defensive patch is harmless." | Cannot-reproduce is a real evidence gap — follow the agent-cannot-reproduce protocol (§10). |
 | "I'll phrase the finding softly." | Severity should match actual ship risk, not reviewer comfort. |
-| "I'll just bump the iteration count one more time." | After 3 fix/verify loops on the same step, the answer is the report, not another attempt (§7). |
+| "I'll just bump the iteration count one more time." | After hitting the class-aware cap (§7 iteration cap table), the answer is the report, not another attempt. |
 | "I'll cite this from memory." | Citations must come from a fetched source in this session (§5). |

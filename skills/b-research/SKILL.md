@@ -27,6 +27,7 @@ Answer external-knowledge questions at the lightest reliable depth, with fetched
 - Planning/sequencing work -> use **b-plan**.
 - Changed-code review -> use **b-review**.
 - The repo itself can answer the question with one local lookup/read.
+- The active skill needs only ≤ 1 narrow inline lookup (one method sig, one config key) — handle inline; route here when ≥ 2 distinct questions or deep extraction needed. See `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/10-decisions.md` for the threshold.
 
 ## Tools required
 

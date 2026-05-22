@@ -2,9 +2,9 @@
 
 The authoritative active runtime kernel lives in `global/CLAUDE.md` in this source repo and installs as `~/.claude/CLAUDE.md` when the user permits activation. This detailed contract must not duplicate the kernel rule list; it expands the schemas, rubrics, tool bundles, and edge-case protocols that the kernel links to.
 
-### Reference gate
+### Reference checklist
 
-References to this contract and to other `references/b-agentic/*.md` files are mandatory gates when the referenced schema, rubric, protocol, checklist, or output shape affects the current task. Read the smallest named section or file before using it; do not reconstruct shared details from memory. This applies especially to saved-plan metadata, plan staleness, MCP bundle rules, approval asks, privacy gates, artifact manifests, status blocks, handoff envelopes, review/audit checklists, and performance guidance.
+References to this contract and to other `references/b-agentic/*.md` files are checklist hints — read the smallest named section or file before using it; do not reconstruct shared details from memory. Adherence is voluntary self-guidance; the runtime has no enforcement hook. This applies especially to saved-plan metadata, plan staleness, MCP bundle rules, approval asks, privacy gates, artifact manifests, status blocks, handoff envelopes, review/audit checklists, and performance guidance.
 
 ### Runtime gate taxonomy
 

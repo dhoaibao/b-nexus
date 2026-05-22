@@ -11,6 +11,8 @@ Use this order when instructions compete:
 
 After `/b-plan` approval, the approved plan becomes the execution source of truth for multi-step implementation.
 
+**Saved plans are a local approval cache.** Plans under `.b-agentic/b-plan/` are covered by the `.b-agentic/.gitignore` root guard (see §6) and are intentionally not tracked in version control. They are session-local artifacts — the execution source of truth for the current session, not a shared team record. The staleness gate still applies; use mtime or `approved_at` when `approved_head` is unavailable for drift detection.
+
 If multiple approved saved plans plausibly match the same request, do not choose by filename or slug similarity. Ask the user to pick the plan or approve superseding/merging them before editing.
 
 ### Durable plan metadata

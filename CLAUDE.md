@@ -23,7 +23,8 @@ Guidelines for creating, editing, and maintaining the Claude Code native `b-agen
 - `skills/b-test/SKILL.md` - test writing, coverage, and test-only failures
 - `skills/b-browser/SKILL.md` - browser/DOM/visual/e2e evidence
 - `skills/b-review/SKILL.md` - pre-PR changed-code review
-- `skills/b-audit/SKILL.md` - repository and suite-slice audits
+- `skills/b-audit/SKILL.md` - b-agentic suite self-audits (suite-only)
+- `skills/b-ship/SKILL.md` - commit, push, and open PR after READY FOR PR
 - `references/` - reusable checklists and the detailed runtime contract
 - `global/CLAUDE.md` - runtime kernel source
 - `claude/` - Claude Code settings and MCP templates

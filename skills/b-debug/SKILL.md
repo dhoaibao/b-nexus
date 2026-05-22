@@ -72,7 +72,7 @@ Do not bundle cleanup or redesign. If urgent containment was applied before root
 
 Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/07-execution.md` before choosing verification or applying skipped-check labels. Run the narrowest check that proves the symptom changed. For nondeterminism, run the stress repro long enough to support confidence. For perf, report before/after measurements.
 
-Remove all `b-debug-probe` markers and scan for untagged debug leftovers (`console.log`, `print`, breakpoints, fake clocks, profiler hooks). Re-run verification after cleanup. Mention restart/reload requirements when config or startup changed.
+Remove all `b-debug-probe` markers and scan for untagged debug leftovers (`console.log`, `print`, breakpoints, fake clocks, profiler hooks). Run `rg --hidden 'b-debug-probe' -- <touched-paths>` and verify zero matches before reporting success. Re-run verification after cleanup. Mention restart/reload requirements when config or startup changed.
 
 ## Output format
 

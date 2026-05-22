@@ -1,6 +1,6 @@
 # b-agentic — Agent Workflow Kernel Reference
 
-Reference guide for the 10-skill set that makes up `b-agentic`, an agent workflow kernel for Claude Code. For install and high-level repo overview, see [README.md](README.md). For maintainer guidance, see [CLAUDE.md](CLAUDE.md).
+Reference guide for the 11-skill set that makes up `b-agentic`, an agent workflow kernel for Claude Code. For install and high-level repo overview, see [README.md](README.md). For maintainer guidance, see [CLAUDE.md](CLAUDE.md).
 
 When this document cites `global/CLAUDE.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the active `CLAUDE.md`; detailed runtime behavior lives at `references/contract/` in this repo and at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/` inside installed skills. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
 
@@ -26,14 +26,14 @@ Coordinates a complete PR-readiness workflow by handing work to phase skills.
 - Requires `b-browser`-verified supplied/CI evidence, existing-tool evidence, or approved live-browser evidence before `READY FOR PR` when browser, DOM, visual, or e2e verification is relevant; otherwise the workflow can only be ready with accepted follow-ups.
 - Mints and carries a run-id for non-trivial workflows, and checkpoints phase state when the workflow pauses, enters a review-fix loop, or needs durable resume state.
 - Reads runtime contract gates before routing across phase skills, treating plans as approved, applying review-fix loops, or emitting non-trivial status output.
-- Emits a handoff envelope as audit trail and then invokes each phase skill via the Skill tool, parsing the returned status block and branching on `state` (`complete`, `blocked`, `needs-input`, `handed-off`) before continuing.
+- Emits a handoff envelope as audit trail and then invokes each phase skill via the Skill tool. Phase skills run in-context (shared model state, no isolation); their `[status]` blocks appear in the shared context. Branches on `state` (`complete`, `blocked`, `needs-input`, `handed-off`).
 - Uses `b-plan` (Clarification mode) when the target outcome is unclear, then `b-plan` for non-trivial sequencing or `b-implement` for small direct workflows.
 - Hands actual build work to `b-implement`, runtime failures to `b-debug`, behavior-preserving transforms to `b-refactor`, non-browser test work to `b-test`, and browser/DOM/visual/e2e evidence to `b-browser`.
 - Runs `b-review` against the current diff with the spec or approved plan as baseline, then routes findings back to the responsible phase skill.
 - Re-reviews after each coherent fix set until `READY FOR PR`, user-accepted `READY WITH FOLLOW-UPS`, or a blocker.
 
 **Output**
-- Labeled lines: `Goal`, `Phase`, `Verification`, `Verdict` (`READY FOR PR`, `READY WITH FOLLOW-UPS`, `BLOCKED`, or `IN PROGRESS`), `Blockers`, and `Next`.
+- Standard `[status]` block per §9 output schema. Workflow verdict (`READY FOR PR`, `READY WITH FOLLOW-UPS`, `BLOCKED`, or `IN PROGRESS`) appears in the `notes:` field. When closing with a ready verdict, includes `Next: /b-ship to commit and open the PR`.
 
 ---
 
@@ -167,14 +167,13 @@ Reviews diffs, ranges, or checkpoints.
 
 ### b-audit
 
-Audits named repository or suite surfaces outside diff-first review.
+Audits the b-agentic suite itself (suite-only). Not for general-codebase auditing; use `b-review` for any other repo.
 
 **Core behavior**
-- Locks a named surface from arguments or `--surface` and refuses to default to a whole-repository audit.
+- Scoped exclusively to the b-agentic suite: runtime contract consistency, skill layout alignment, installer, validator, tool boundaries, safety-gate drift, and documentation sync.
+- Locks a named surface from arguments or `--surface` and refuses to default to a whole-suite audit.
 - Reads runtime contract and `skills/b-audit/reference.md` gates before baseline taxonomy, surface checklist selection, severity/status output, or saved reports.
 - Establishes a sufficient baseline from arguments, `--baseline`, approved plan, checkpoint, clarification, or the shared baseline source taxonomy; otherwise labels the audit `baseline-missing`.
-- Chooses a surface-specific checklist: installer/update path, runtime contract, validator, route/tool boundary, dependency/lockfile, generated artifact, or security-sensitive rule.
-- For b-agentic suite audits, checks routing boundaries, Claude skill layout alignment, contract consistency, docs sync, validator coverage, artifact paths, and safety-gate drift.
 - Names sampled files/symbols, skipped surfaces, and residual risk so no-findings audits are not mistaken for exhaustive proof.
 - Runs only narrow checks that materially support the audit unless `--skip-checks` is present.
 - Reports findings first and emits AUDIT PASS, AUDIT PASS WITH FOLLOW-UPS, or NEEDS FIXES.
@@ -257,3 +256,26 @@ Handles concrete behavior-preserving transforms.
 
 **GitNexus use**
 - Optional only for broader blast-radius questions.
+
+---
+
+### b-ship
+
+Commit, push, and open a pull request after the suite reaches `READY FOR PR`.
+
+**Triggers**
+- User asks to commit, push, open a PR, or ship after a review verdict.
+- `b-orchestrate` closes with `READY FOR PR` and emits `Next: /b-ship`.
+
+**Core behavior**
+- Confirms the staged diff and branch with `git status --short` before any mutation.
+- Asks for confirmation before `git commit`, `git push`, and `gh pr create`.
+- Never force-pushes or amends published commits without explicit user instruction.
+- Checks for remote divergence before pushing; stops if the remote is ahead.
+- Uses `gh pr create` when `gh` is available; prints the push URL and manual instructions otherwise.
+- Stops after printing the PR URL; does not merge, deploy, or tag.
+- Reads `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before any git mutation.
+
+**Output**
+- Reports branch, staged files, commit, push result, and PR URL.
+- Labeled lines: `Branch`, `Staged files`, `Commit`, `Push`, `PR URL`.

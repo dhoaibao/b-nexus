@@ -53,7 +53,7 @@ Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/10-decisions.md` before 
 - **Coverage review:** rank missing tests by user impact, changed behavior, risk boundary, and edge-case value; add only the requested/highest-value gaps.
 - **Flaky test:** read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/10-decisions.md` before applying flake handling, rewriting, or skipping.
 
-Choose test type by the behavior boundary: pure logic gets unit tests, and cross-module contracts get integration or contract tests if the repo already has them. Browser, DOM-rendered, visual, and e2e behavior belongs to **b-browser**; stop rather than adding browser or DOM tooling.
+Choose test type by the behavior boundary: pure logic gets unit tests, and cross-module contracts get integration or contract tests if the repo already has them.
 
 If product behavior is uncertain, hand off to **b-debug**.
 

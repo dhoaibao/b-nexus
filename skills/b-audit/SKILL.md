@@ -1,10 +1,11 @@
 ---
 name: b-audit
 description: >
-  Repository and suite-slice audits for reviewer-style audits of named
-  repository areas, runtime contracts, installers, validators, tool boundaries,
-  or skill-suite surfaces. Unlike b-review, b-audit is not diff/range-first and
-  reports sampled coverage plus residual risk.
+  b-agentic suite self-audit only. Reviewer-style audits of the b-agentic
+  runtime contract, skill layout, installer, validator, tool boundaries, or
+  safety-gate drift. Unlike b-review, b-audit is not diff/range-first and
+  reports sampled coverage plus residual risk. For any other codebase, use
+  b-review.
 argument-hint: "[--surface=<area>] [--baseline=<path|url>] [--skip-checks]"
 ---
 
@@ -12,20 +13,19 @@ argument-hint: "[--surface=<area>] [--baseline=<path|url>] [--skip-checks]"
 
 $ARGUMENTS
 
-Audit a named repository surface for production-readiness risk. Findings first; sampled coverage must be explicit.
+Audit the b-agentic suite for production-readiness risk. Findings first; sampled coverage must be explicit. For any codebase other than b-agentic, use **b-review** instead — see `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/10-decisions.md` for the tiebreaker.
 
 Flags: `--baseline=<path|url>`, `--surface=<area>`, `--skip-checks`, `--self`, `--external`.
 
 ## When to use
 
-- The user explicitly requests a repository, maintainer, or suite-slice audit.
-- The target is a named surface such as installer/update path, runtime contract, validator, tool boundary, dependency/lockfile, generated artifact, or security-sensitive rule.
-- The goal is to find systemic correctness, safety, operability, documentation drift, or coverage risk outside a specific diff/range review.
-- A b-agentic suite audit needs routing boundaries, Claude skill layout alignment, contract consistency, docs sync, validator coverage, artifact paths, or safety-gate drift checked.
+- Auditing the b-agentic suite itself: routing boundaries, skill layout alignment, runtime contract consistency, docs sync, validator coverage, artifact paths, installer behavior, or safety-gate drift.
+- A named suite surface needs systemic correctness, operability, or coverage checked outside a specific diff/range review.
 
 ## When NOT to use
 
-- The user wants a pre-PR/pre-commit changed-code review -> use **b-review**.
+- The target is not the b-agentic suite -> use **b-review** for all other codebase review tasks.
+- The user wants a pre-PR/pre-commit changed-code review of this suite -> use **b-review**.
 - Something is broken and needs root-cause tracing -> use **b-debug**.
 - The task is writing or fixing tests -> use **b-test**.
 - The task is external lookup -> use **b-research**.

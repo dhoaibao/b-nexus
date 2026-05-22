@@ -14,7 +14,9 @@ argument-hint: "[workflow-goal]"
 
 $ARGUMENTS
 
-Coordinate a complete PR-readiness workflow across the phase skills. `b-orchestrate` owns phase selection, checkpoint manifests, handoff envelopes, and final synthesis only; the phase owner does the actual plan, implementation, test, debug, refactor, research, or review work. Invoke each phase skill via the Skill tool and resume from its returned status block.
+Coordinate a complete PR-readiness workflow across the phase skills. `b-orchestrate` owns phase selection, checkpoint manifests, handoff envelopes, and final synthesis only; the phase owner does the actual plan, implementation, test, debug, refactor, research, or review work.
+
+Phase skills run in-context via the Skill tool — they share the same conversation context and model state; there is no subprocess isolation. Each phase skill writes its `[status]` block into the shared context, which `b-orchestrate` reads directly. The audit trail is the chain of handoff envelopes and status blocks the workflow produces.
 
 If `$ARGUMENTS` is present, treat it as the workflow goal plus any explicit constraints such as skipped tests, required verification, or a known plan path.
 
@@ -50,7 +52,9 @@ For non-trivial workflows, read `${CLAUDE_SKILL_DIR}/references/b-agentic/contra
 
 Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/01-routing.md` and `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before routing across phase skills. Keep exactly one phase owner active at a time; every phase transition is a stop condition plus handoff, not parallel execution.
 
-For each phase transition, emit the handoff envelope in chat as audit trail, then invoke the next phase skill via the Skill tool with the workflow goal, source of truth, and any prior phase output. Parse the returned status block. Branch on its `state`: `complete` -> continue to the next phase; `blocked` -> surface the blocker and stop; `needs-input` -> relay the question to the user, resume on answer; `handed-off` -> follow the envelope's `next-skill`. If the returned state is absent or ambiguous, ask the user once instead of simulating the phase inside `b-orchestrate`.
+For each phase transition, emit the handoff envelope in chat as audit trail, then invoke the next phase skill via the Skill tool with the workflow goal, source of truth, and any prior phase output. The invoked skill writes its `[status]` block into the shared context; read the `state` field from that block. Branch on `state`: `complete` → continue to the next phase; `blocked` → surface the blocker and stop; `needs-input` → relay the question to the user, resume on answer; `handed-off` → follow the envelope's `next-skill`. If the `state` field is absent or ambiguous, ask the user once instead of simulating the phase inside `b-orchestrate`.
+
+If the user signals stop, cancel, or abort at any point, emit a final `[status]` block with `state: needs-input`, `cause: user_blocked`, list outstanding artifacts and their paths, and include a one-line resume hint (e.g., `resume: /b-orchestrate <goal> -- continue from <phase>`). Do not delete artifacts on abandonment.
 
 ### Step 2 - Route the plan phase
 
@@ -89,16 +93,15 @@ Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/07-execution.md` before 
 
 Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before reporting non-trivial workflow status or handing off unresolved work. Report the final review verdict, verification run, skipped checks, blockers, and remaining follow-ups. Do not claim **READY FOR PR** when the review had no baseline, required verification was skipped, or browser/DOM/e2e evidence remains relevant but absent.
 
+When closing with `READY FOR PR` or `READY WITH FOLLOW-UPS`, include a one-line next-action: `Next: /b-ship to commit and open the PR`.
+
+**Terminal cleanup (M11).** When closing a non-trivial workflow, emit a final `[status]` block with the overall verdict in `notes:`, then write a manifest under `.b-agentic/b-orchestrate/<run-id>/manifest.json` listing all phase artifacts, run-ids, and any cumulative cost or degraded-bundle notes. Only report `state: complete` when every phase's own status block also reported `complete`. If `[degraded:]` labels were emitted during the workflow, the `notes:` line is required and must include the affected bundles.
+
 ## Output format
 
-```text
-Goal: <workflow-goal>
-Phase: <current-phase or "closed">
-Verification: <result or "n/a">
-Verdict: <READY FOR PR | READY WITH FOLLOW-UPS | BLOCKED | IN PROGRESS>
-Blockers: <list or "none">
-Next: <next-phase invocation or "stop">
-```
+Non-trivial workflow runs close with the standard `[status]` block per `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md`.
+
+Use `notes:` for the workflow verdict (`READY FOR PR`, `READY WITH FOLLOW-UPS`, `BLOCKED`, or `IN PROGRESS`) and any skipped-check summary.
 
 
 ## Rules

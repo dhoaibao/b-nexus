@@ -1,6 +1,6 @@
 ## 1. Routing
 
-Match the user's intent to one active skill before acting. If a request spans phases, sequence `Clarify -> Decide -> Build -> Validate`.
+Match the user's intent to one active skill before acting. If a request spans phases, sequence `Decide -> Build -> Validate`.
 
 | Intent | Skill |
 |---|---|
@@ -13,7 +13,7 @@ Match the user's intent to one active skill before acting. If a request spans ph
 | Unit/integration tests, coverage, failing tests | `/b-test` |
 | Browser/DOM/visual/e2e verification | `/b-browser` |
 | Pre-PR changed-code review | `/b-review` |
-| Repository or suite-slice audit | `/b-audit` |
+| b-agentic suite self-audit (suite-only) | `/b-audit` |
 
 ### Trigger precedence (when intents overlap)
 
@@ -23,8 +23,9 @@ Match the user's intent to one active skill before acting. If a request spans ph
 - Unclear user goal, end state, or acceptance criteria stays in `b-plan` (Clarification mode).
 - Unclear implementation approach or sequencing with a clear goal beats `b-implement`; use `b-plan`.
 - `b-research` is for genuine external-knowledge blockers, not for questions the codebase or repo docs can answer locally.
-- Browser, DOM-rendered, visual, and e2e verification routes to `b-browser`; `b-test` remains non-browser-only, and no skill may add jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent tooling as a side effect.
-- Explicit repository or suite-slice audits use `b-audit`; changed-code diff/range reviews stay in `b-review`.
+- Browser, DOM-rendered, visual, and e2e verification routes to `b-browser`; `b-test` remains non-browser-only. No skill may add browser or DOM tooling as a side effect; see §10 for the boundary table and tool list.
+- `b-audit` is for b-agentic suite self-audits only; use `b-review` for all other codebase review tasks, including surface-wide checks. See §10 for the tiebreaker and inline Context7 threshold.
+- `b-research` is invoked for ≥ 2 distinct doc questions or any deep extraction; ≤ 1 narrow inline lookup is acceptable within the active skill. See §10.
 
 ### One active skill
 

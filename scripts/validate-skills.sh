@@ -38,8 +38,8 @@ required_sections = [
     '## Rules',
 ]
 
-if len(skill_paths) != 10:
-    errors.append(f'skills/: expected 10 SKILL.md files, found {len(skill_paths)}')
+if len(skill_paths) != 11:
+    errors.append(f'skills/: expected 11 SKILL.md files, found {len(skill_paths)}')
 
 if (root / 'commands').exists() and any((root / 'commands').glob('*.md')):
     errors.append('commands/: Claude-native runtime should not ship command wrappers; skills create /b-* commands')
@@ -173,16 +173,18 @@ if (root / 'AGENTS.md').exists():
     errors.append('AGENTS.md: stale root maintainer guide should be renamed to CLAUDE.md')
 if '<!-- b-agentic-managed -->' not in kernel:
     errors.append('global/CLAUDE.md: missing b-agentic managed marker')
-for marker in ['Runtime gate checklist:', 'CLAUDE.md', 'Detailed routing', 'runtime contract §9']:
+for marker in ['Reference checklist:', 'Runtime gate checklist:', 'CLAUDE.md', 'Detailed routing', 'runtime contract §9']:
     if marker not in kernel:
         errors.append(f'global/CLAUDE.md: missing kernel marker {marker!r}')
+if 'Reference gate:' in kernel:
+    errors.append("global/CLAUDE.md: stale 'Reference gate:' terminology; use 'Reference checklist:'")
 
 for doc_path, doc_text in [('README.md', readme), ('REFERENCE.md', reference)]:
     if not doc_text:
         errors.append(f'{doc_path}: missing or empty')
         continue
-    if '10-skill' not in doc_text and '10 skills' not in doc_text:
-        errors.append(f'{doc_path}: missing explicit 10-skill claim')
+    if '11-skill' not in doc_text and '11 skills' not in doc_text:
+        errors.append(f'{doc_path}: missing explicit 11-skill claim')
     for name in skill_names:
         if name not in doc_text:
             errors.append(f'{doc_path}: missing skill name {name}')

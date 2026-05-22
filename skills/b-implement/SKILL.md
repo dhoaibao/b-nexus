@@ -52,19 +52,21 @@ For saved plans, validate before executing:
 3. **Staleness check:** Run `git diff --name-only <approved_head>..HEAD -- <touch_points>` and `git diff --name-only <approved_head> -- <touch_points>` when `approved_head` exists. If any touched file has drift, stop with `cause: conflict` and report the stale plan.
 4. **Blocked-by check:** If the plan has a `blocked_by` array, verify every listed plan reports `status: complete`. If any blocker is not complete, stop with `cause: conflict` and report the blocking plan slug and status.
 
+For **small direct requests** (no saved plan), verify all four §3 criteria before executing: (1) ≤ 3 files touched, (2) no exported/public contract change, (3) no sensitive path (auth, security, billing, migration), (4) no remaining design decision — behavior is obvious. If any criterion fails, stop with `cause: conflict` and route to **b-plan**.
+
 If scope fails the small-direct threshold and no approved plan exists, hand off to **b-plan**. If the goal itself is ambiguous, hand off to **b-plan** (Clarification mode).
+
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` once as a preflight before any editing begins — it covers safety gates, command risk classes, worktree isolation decisions, and patch discipline for all subsequent steps.
 
 ### Step 2 - Check worktree and choose execution surface
 
 Run `git status --short`. Preserve unrelated changes, patch around unrelated edits in touched files, and stop if user changes directly conflict.
 
-For non-trivial work, read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before deciding whether the current checkout is safe or whether isolation would materially reduce risk.
-
 ### Step 3 - Implement the smallest coherent step
 
 Before editing, state the current step in one line: source of truth, files or symbols expected to change, behavior that must not change, planned verification, and whether approval or a review checkpoint is required.
 
-Use Serena for symbol-aware edits. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before applying manual prose/config/glue patches.
+Use Serena for symbol-aware edits.
 
 Stay within approved scope. Stop for new product decisions, stale/wrong plans, or unplanned broad transforms. Tiny local mechanical edits required to complete the approved step may stay here; broad or primary mechanical transforms go to **b-refactor**.
 
@@ -93,4 +95,4 @@ Plan source -> Step progress -> Changes -> Verification -> Blockers/Decisions ->
 - Do not add opportunistic refactors, compatibility code, or side cleanup.
 - Stop for new decisions instead of guessing.
 - A small direct request still needs real verification.
-- Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before manual edits under the global patch discipline.
+- Safety gates and patch discipline: read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` as the Step 1 preflight (not at each later step).

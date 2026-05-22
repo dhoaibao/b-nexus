@@ -1,6 +1,6 @@
 # b-agentic
 
-**A 10-skill agent workflow kernel for Claude Code.**
+**An 11-skill agent workflow kernel for Claude Code.**
 
 `b-agentic` turns rough developer intent into disciplined loops: clarify, plan, build, validate, debug, review, and audit. It is optimized around scoped execution, repo evidence, MCP tools, verification, and clean handoffs.
 
@@ -48,7 +48,7 @@ Plain install syncs the runtime, merges recommended settings, and installs all M
 
 ```text
 b-agentic Claude Code install complete
-skillsSynced: 10 -> ~/.claude/skills
+skillsSynced: 11 -> ~/.claude/skills
 kernel: write|replace|preserve -> ~/.claude/CLAUDE.md
 settings: write|merge -> ~/.claude/settings.json
 mcp: write|merge -> ~/.claude.json
@@ -80,7 +80,10 @@ The first Claude-native release supports personal-global install only. Project-l
 | `/b-test` | Validate | Write or fix unit, integration, and contract tests |
 | `/b-browser` | Validate | Collect browser, visual, screenshot, live UI, or e2e evidence |
 | `/b-review` | Validate | Review changed code for blockers, regressions, security, and coverage |
-| `/b-audit` | Validate | Audit named repo or suite surfaces for systemic risk |
+| `/b-audit` | Validate | Audit the b-agentic suite for systemic risk (suite-only) |
+| `/b-ship` | Ship | Commit, push, and open a PR after READY FOR PR |
+
+The suite stops at `READY FOR PR`; commit, push, and PR creation are user-initiated actions via `/b-ship`.
 
 Typical flow:
 
@@ -91,7 +94,8 @@ Typical flow:
 /b-research [question]  # external docs, API facts, comparisons, or recent information
 /b-debug [symptom]      # runtime bugs, errors, broken behavior, slow paths
 /b-refactor [target]    # mechanical behavior-preserving transforms
-/b-audit [surface]      # repository, maintainer, or suite-slice audit
+/b-audit [surface]      # b-agentic suite self-audit only
+/b-ship                 # commit, push, and open PR after READY FOR PR
 ```
 
 All skills are model-invocable when their descriptions match the request. Skill descriptions are the primary routing signal; Claude Code loads the skill whose trigger conditions best fit the user's intent.
