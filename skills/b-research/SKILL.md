@@ -93,3 +93,4 @@ Research (deep): answer, key findings, limitations, sources, confidence.
 - Cited URLs must come from fetched or user-provided sources in this session.
 - Include `as of <date>` for recency-sensitive, pricing, security, licensing, compatibility, and migration answers.
 - Do not infer document substance from filenames, metadata, or snippets when a rich local document could not be extracted.
+- Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before closing a non-trivial research run with a status block or saved report.

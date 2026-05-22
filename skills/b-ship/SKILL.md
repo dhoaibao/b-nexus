@@ -102,3 +102,4 @@ Branch -> Staged files -> Commit -> Push -> PR URL
 - Stop after printing the PR URL. Do not continue to merge, deploy, or tag.
 - If any step fails, surface the error and stop; do not silently retry.
 - Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` at Step 1 before any git mutation.
+- Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before closing a non-trivial run with a status block.

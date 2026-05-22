@@ -87,7 +87,7 @@ Invoke `/b-review` via the Skill tool against the current diff with the spec or 
 - Concrete behavior-preserving transform, including simplify -> `/b-refactor`.
 - New product decision or broad redesign -> `/b-plan` (Clarification mode).
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/07-execution.md` before applying the review-fix loop or stopping on repeated failures. Re-invoke `/b-review` after each coherent fix set until it returns **READY FOR PR**, returns **READY WITH FOLLOW-UPS** accepted by the user, or reports a blocker.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/07-execution.md` before applying the review-fix loop or stopping on repeated failures. Re-invoke `/b-review` after each coherent fix set. Stop when the review returns **READY FOR PR**, returns **READY WITH FOLLOW-UPS** accepted by the user, reports a blocker, or after **3 review-fix iterations** — whichever comes first. If the cap is reached without readiness, surface the remaining findings as accepted follow-ups or hand off to **b-plan** for redesign.
 
 ### Step 6 - Close the workflow
 
@@ -95,7 +95,7 @@ Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before rep
 
 When closing with `READY FOR PR` or `READY WITH FOLLOW-UPS`, include a one-line next-action: `Next: /b-ship to commit and open the PR`.
 
-**Terminal cleanup (M11).** When closing a non-trivial workflow, emit a final `[status]` block with the overall verdict in `notes:`, then write a manifest under `.b-agentic/b-orchestrate/<run-id>/manifest.json` listing all phase artifacts, run-ids, and any cumulative cost or degraded-bundle notes. Only report `state: complete` when every phase's own status block also reported `complete`. If `[degraded:]` labels were emitted during the workflow, the `notes:` line is required and must include the affected bundles.
+**Terminal cleanup.** When closing a non-trivial workflow, emit a final `[status]` block with the overall verdict in `notes:`, then write a manifest under `.b-agentic/b-orchestrate/<run-id>/manifest.json` listing all phase artifacts, run-ids, and any cumulative cost or degraded-bundle notes. Only report `state: complete` when every phase's own status block also reported `complete`. If `[degraded:]` labels were emitted during the workflow, the `notes:` line is required and must include the affected bundles.
 
 ## Output format
 

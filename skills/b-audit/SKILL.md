@@ -46,7 +46,7 @@ Flags: `--baseline=<path|url>`, `--surface=<area>`, `--skip-checks`, `--self`, `
 
 Lock the requested surface from arguments or `--surface`. If the surface is absent or too broad, ask for the smallest clarification that names the target area. Do not default to a whole-repository audit.
 
-State mode: self-audit or external audit. Use `--self` or `--external` when explicitly passed; otherwise infer from context, `--baseline`, approved plan, checkpoint handoff, or short clarification. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/05-evidence.md` before applying the baseline source taxonomy. Without a sufficient baseline, label the run `baseline-missing` and do not claim requirements coverage.
+State mode: self-audit or external audit. Use `--self` or `--external` when explicitly passed; otherwise infer from context, `--baseline`, approved plan, checkpoint handoff, or short clarification. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/10-decisions.md` before applying the self/external audit distinction. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/05-evidence.md` before applying the baseline source taxonomy. Without a sufficient baseline, label the run `baseline-missing` and do not claim requirements coverage.
 
 ### Step 2 - Pick the checklist
 
