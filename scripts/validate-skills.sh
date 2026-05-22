@@ -144,6 +144,16 @@ for path in skill_paths:
     if skill_reference.exists() and 'reference.md' not in text:
         errors.append(f'{path}: existing reference.md is not discoverable from SKILL.md')
 
+routing_path = root / 'references' / 'contract' / '01-routing.md'
+if not routing_path.exists():
+    errors.append('references/contract/01-routing.md: missing contract routing source')
+else:
+    routing_text = routing_path.read_text()
+    referenced_skills = set(re.findall(r'`/(b-[a-z][a-z0-9-]*)`', routing_text))
+    skill_dirs = set(skill_names)
+    for name in sorted(referenced_skills - skill_dirs):
+        errors.append(f'references/contract/01-routing.md: references /{name} but no skills/{name}/ directory exists')
+
 readme = (root / 'README.md').read_text() if (root / 'README.md').exists() else ''
 reference = (root / 'REFERENCE.md').read_text() if (root / 'REFERENCE.md').exists() else ''
 maintainer_path = root / 'CLAUDE.md'

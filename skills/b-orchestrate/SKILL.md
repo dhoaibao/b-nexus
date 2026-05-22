@@ -1,11 +1,12 @@
 ---
 name: b-orchestrate
 description: >
-  End-to-end PR readiness orchestration for workflows spanning spec, plan,
-  implementation, optional tests, review, and review-fix loops until ready for
-  PR. Coordinates phase skills and stops at approval, blocker, or readiness.
-  Unlike b-implement, b-orchestrate owns sequencing across multiple skills
-  rather than changing code itself.
+  End-to-end PR readiness orchestration for workflows spanning plan,
+  implementation, optional tests, review, and review-fix loops until ready
+  for PR. Invokes phase skills via the Skill tool, parses their status
+  blocks, and stops at approval, blocker, or readiness. Unlike b-implement,
+  b-orchestrate owns sequencing across multiple skills rather than changing
+  code itself.
 argument-hint: "[workflow-goal]"
 ---
 
@@ -13,14 +14,14 @@ argument-hint: "[workflow-goal]"
 
 $ARGUMENTS
 
-Coordinate a complete PR-readiness workflow across the phase skills. `b-orchestrate` owns phase selection, checkpoint manifests, handoff envelopes, and final synthesis only; the phase owner does the actual spec, plan, implementation, test, debug, refactor, research, or review work. Phase transitions are user-initiated `/b-*` commands, not programmatic invocations.
+Coordinate a complete PR-readiness workflow across the phase skills. `b-orchestrate` owns phase selection, checkpoint manifests, handoff envelopes, and final synthesis only; the phase owner does the actual plan, implementation, test, debug, refactor, research, or review work. Invoke each phase skill via the Skill tool and resume from its returned status block.
 
 If `$ARGUMENTS` is present, treat it as the workflow goal plus any explicit constraints such as skipped tests, required verification, or a known plan path.
 
 ## When to use
 
 - The user asks for one end-to-end workflow from unclear request through PR readiness.
-- The work needs spec, plan, build, optional tests, review, and review-fix sequencing.
+- The work needs plan, build, optional tests, review, and review-fix sequencing.
 - The user wants review findings fixed and re-reviewed until ready for PR or blocked.
 
 ## When NOT to use
@@ -49,35 +50,31 @@ For non-trivial workflows, read `${CLAUDE_SKILL_DIR}/references/b-agentic/contra
 
 Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/01-routing.md` and `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before routing across phase skills. Keep exactly one phase owner active at a time; every phase transition is a stop condition plus handoff, not parallel execution.
 
-For each phase transition, emit the handoff envelope in chat and instruct the user to run the next `/b-*` command. Wait for the user to invoke that skill and provide its output, status block, or next handoff before continuing. Validate the returned state against the workflow goal: continue only from `complete` or an explicit next-skill handoff, stop on `blocked` or `needs-input`, and ask once if the returned state is absent or ambiguous instead of simulating the phase inside `b-orchestrate`.
+For each phase transition, emit the handoff envelope in chat as audit trail, then invoke the next phase skill via the Skill tool with the workflow goal, source of truth, and any prior phase output. Parse the returned status block. Branch on its `state`: `complete` -> continue to the next phase; `blocked` -> surface the blocker and stop; `needs-input` -> relay the question to the user, resume on answer; `handed-off` -> follow the envelope's `next-skill`. If the returned state is absent or ambiguous, ask the user once instead of simulating the phase inside `b-orchestrate`.
 
-### Step 2 - Route the spec phase
+### Step 2 - Route the plan phase
 
-If the goal, constraints, acceptance criteria, non-goals, or intended behavior are unclear, emit a handoff envelope and instruct the user to run `/b-plan` (Clarification mode); resume only after the spec output is concrete enough to plan. If the request is already clear, skip this phase; do not author a substitute spec inside `b-orchestrate`.
+If the goal, constraints, acceptance criteria, non-goals, or intended behavior are unclear, emit a handoff envelope and invoke `/b-plan` (Clarification mode) via the Skill tool; resume only after the returned spec is concrete enough to plan. If external feasibility blocks the spec, invoke `/b-research` via the Skill tool and resume only after the returned evidence is sufficient or the blocker is reported.
 
-If external feasibility blocks the spec, instruct the user to run `/b-research` and resume only after the evidence is sufficient or the blocker is reported.
+For non-trivial work, sequencing, risk, public contracts, multi-file edits, or any workflow that needs durable coordination, invoke `/b-plan` via the Skill tool. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/03-definitions.md` before applying the small-direct threshold. For a small direct workflow, invoke `/b-implement` via the Skill tool with the current source of truth, expected scope, and verification need; do not write an execution outline inside `b-orchestrate`.
 
-### Step 3 - Route the plan or direct-build phase
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/02-source-of-truth.md` before treating a saved or chat plan as approved. Do not invoke `/b-implement` from an unapproved non-trivial plan unless the user explicitly delegated that exact approval after seeing the plan.
 
-Instruct the user to run `/b-plan` for non-trivial work, sequencing, risk, public contracts, multi-file edits, or any workflow that needs durable coordination. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/03-definitions.md` before applying the small-direct threshold. For a small direct workflow, instruct the user to run `/b-implement` with the current source of truth, expected scope, and verification need; do not write an execution outline inside `b-orchestrate`.
+### Step 3 - Route implementation and verification
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/02-source-of-truth.md` before treating a saved or chat plan as approved. Do not implement from an unapproved non-trivial plan unless the user explicitly delegated that exact approval after seeing the plan.
+Invoke `/b-implement` via the Skill tool for approved build steps. If its returned status block reports a runtime root-cause problem, invoke `/b-debug`. If the needed change is a concrete behavior-preserving rename, extract, move, inline, simplify, or delete, invoke `/b-refactor`.
 
-### Step 4 - Route implementation and verification
+After each build phase, require the phase skill's verification result before continuing. If verification fails because the plan is wrong, invoke `/b-plan` instead of widening implementation scope silently.
 
-Instruct the user to run `/b-implement` for approved build steps. If a step becomes a runtime root-cause problem, route that phase to `/b-debug`. If the needed change is a concrete behavior-preserving rename, extract, move, inline, simplify, or delete, route that phase to `/b-refactor`.
+### Step 4 - Route test coverage work
 
-After each build phase, require the phase skill's verification result before continuing. If verification fails because the plan is wrong, return to **b-plan** instead of widening implementation scope silently.
+Invoke `/b-test` via the Skill tool when changed behavior needs non-browser unit, integration, or contract coverage, when the user requested tests, or when review confidence depends on tests. Invoke `/b-browser` via the Skill tool when browser, DOM-rendered, visual, screenshot, browser-session, live UI, or e2e evidence is required. Skip this phase when the change is docs-only or tests are explicitly skipped; record any accepted browser follow-up instead of treating it as covered.
 
-### Step 5 - Route test coverage work
+If `/b-test` returns a likely product behavior failure, invoke `/b-debug` before changing assertions, snapshots, or fixtures.
 
-Instruct the user to run `/b-test` when changed behavior needs non-browser unit, integration, or contract coverage, when the user requested tests, or when review confidence depends on tests. Instruct the user to run `/b-browser` when browser, DOM-rendered, visual, screenshot, browser-session, live UI, or e2e evidence is required. Skip this phase when the change is docs-only or tests are explicitly skipped; record any accepted browser follow-up instead of treating it as covered.
+### Step 5 - Route review and fix findings
 
-If **b-test** finds likely product behavior failure, route to `/b-debug` before changing assertions, snapshots, or fixtures.
-
-### Step 6 - Route review and fix findings
-
-Instruct the user to run `/b-review` against the current diff with the spec or approved plan as baseline. Findings decide the next phase:
+Invoke `/b-review` via the Skill tool against the current diff with the spec or approved plan as baseline. Its findings decide the next invocation:
 
 - Implementation gap -> `/b-implement`.
 - Runtime behavior failure -> `/b-debug`.
@@ -86,25 +83,30 @@ Instruct the user to run `/b-review` against the current diff with the spec or a
 - Concrete behavior-preserving transform, including simplify -> `/b-refactor`.
 - New product decision or broad redesign -> `/b-plan` (Clarification mode).
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/07-execution.md` before applying the review-fix loop or stopping on repeated failures. Re-review after each coherent fix set until **b-review** returns **READY FOR PR**, returns **READY WITH FOLLOW-UPS** accepted by the user, or reports a blocker.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/07-execution.md` before applying the review-fix loop or stopping on repeated failures. Re-invoke `/b-review` after each coherent fix set until it returns **READY FOR PR**, returns **READY WITH FOLLOW-UPS** accepted by the user, or reports a blocker.
 
-### Step 7 - Close the workflow
+### Step 6 - Close the workflow
 
 Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before reporting non-trivial workflow status or handing off unresolved work. Report the final review verdict, verification run, skipped checks, blockers, and remaining follow-ups. Do not claim **READY FOR PR** when the review had no baseline, required verification was skipped, or browser/DOM/e2e evidence remains relevant but absent.
 
 ## Output format
 
 ```text
-Workflow goal -> Checkpoint manifest -> Phase state -> Changes/verification -> Review verdict -> Blockers/follow-ups -> Next
+Goal: <workflow-goal>
+Phase: <current-phase or "closed">
+Verification: <result or "n/a">
+Verdict: <READY FOR PR | READY WITH FOLLOW-UPS | BLOCKED | IN PROGRESS>
+Blockers: <list or "none">
+Next: <next-phase invocation or "stop">
 ```
 
 
 ## Rules
 
 - Orchestrate phases; do not bypass phase-skill rules or required read gates.
-- Do not spec, plan, implement, test, debug, refactor, research, or review inside `b-orchestrate`; route that work to the owning phase skill and resume from its output.
+- Do not plan, implement, test, debug, refactor, research, or review inside `b-orchestrate`; invoke the owning phase skill via the Skill tool and resume from its returned status block.
 - Do not auto-approve a plan the user has not seen.
 - Keep review fixes scoped to findings or approved follow-up decisions.
 - Do not add browser, DOM-rendered, visual, or e2e test tooling as part of the optional test phase.
 - Do not treat browser, DOM, visual, or e2e checks as covered without **b-browser**-verified supplied/CI evidence, existing-tool evidence, approved live-browser evidence, or an accepted follow-up.
-- Phase transitions require the user to type the next `/b-*` command; do not simulate phase work inside `b-orchestrate`.
+- Emit the handoff envelope as audit trail before each Skill-tool invocation; on `blocked` or `needs-input` returns, surface to the user instead of simulating phase work.

@@ -32,7 +32,7 @@ Operate browser, DOM-rendered, visual, and e2e verification using the lightest s
 - Native tools - inspect manifests, scripts, CI, existing artifacts, logs, and user-supplied evidence.
 - `bash` - run approved existing browser/DOM/visual/e2e commands when the repo already provides them.
 - `playwright-browser-operator` *(optional, for live-browser navigation, snapshots, screenshots, console/network, and browser-state evidence)*
-- `firecrawl-extraction` *(optional, for known remote pages where extraction can answer the browser evidence question without live control)*
+- `firecrawl-extraction` *(optional, for static remote page content only — when the evidence question is rendered text or markup at a known URL and no DOM state, interaction, screenshot, console, network, or session evidence is required; never a substitute for Playwright)*
 - `serena-symbol-toolkit` *(optional, for mapping a browser failure to source ownership before handing off)*
 
 
@@ -51,7 +51,7 @@ Choose the first path that can answer the browser evidence question safely:
 - External evidence supplied by the user or CI, with command, environment, timestamp, and result.
 - Existing repo scripts or documented commands, discovered from manifests, CI config, repo docs, or user instructions.
 - `playwright-browser-operator` live-browser actions when existing evidence/scripts are absent, insufficient, or not targeted enough.
-- `firecrawl-extraction` for known remote pages when extraction is enough and live browser control is unnecessary.
+- `firecrawl-extraction` **only** when the evidence question is static remote page content at a known URL and no DOM state, interaction, screenshot, console, network, or session evidence is required. Not interchangeable with Playwright when any of those are needed.
 - If the repo lacks browser/DOM/visual/e2e tooling and no existing path above can answer the question, hand off to **b-plan** with the browser evidence gap. Tooling may be added only after explicit `/b-plan` approval and dependency-write approval.
 - Accepted follow-up or skipped check when evidence is unavailable and the user accepts the gap.
 
@@ -71,7 +71,7 @@ For existing repo commands, execute the narrowest command that matches the reque
 
 For `playwright-browser-operator`, use ordinary browser actions first: navigate, inspect accessibility snapshots, click, type, fill, capture screenshots, and inspect console or network evidence. Prefer ephemeral browser state. Do not use unsafe arbitrary-code execution unless the user explicitly approves it for a trusted target and ordinary actions cannot answer the question.
 
-For Firecrawl, keep extraction bounded to the known URL and target question. Do not use Firecrawl deep interaction unless the user approves it per the runtime contract.
+For Firecrawl, use extraction only when the request is static remote page content and live browser control would not change the answer; do not substitute Firecrawl for Playwright when the evidence question requires DOM state, interaction, screenshots, console/network, or session evidence. Keep extraction bounded to the known URL and target question. Do not use Firecrawl deep interaction unless the user approves it per the runtime contract.
 
 ### Step 5 - Classify failures and cleanup
 

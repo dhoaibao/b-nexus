@@ -48,7 +48,7 @@ Plain install syncs the runtime, merges recommended settings, and installs all M
 
 ```text
 b-agentic Claude Code install complete
-skillsSynced: 11 -> ~/.claude/skills
+skillsSynced: 10 -> ~/.claude/skills
 kernel: write|replace|preserve -> ~/.claude/CLAUDE.md
 settings: write|merge -> ~/.claude/settings.json
 mcp: write|merge -> ~/.claude.json
@@ -72,8 +72,7 @@ The first Claude-native release supports personal-global install only. Project-l
 | Skill | Phase | Use |
 |---|---|---|
 | `/b-orchestrate` | End-to-end | Coordinate phase handoffs until PR-ready, ready with follow-ups, or blocked |
-| `/b-spec` | Clarify | Clarify unclear goals, constraints, acceptance criteria, non-goals, and assumptions |
-| `/b-plan` | Decide | Turn a clear goal into an execution plan |
+| `/b-plan` | Decide | Clarify unclear goals or turn a clear goal into an execution plan |
 | `/b-research` | Decide | Fetch external docs, API facts, comparisons, or recent evidence |
 | `/b-implement` | Build | Execute approved plans or small direct requests |
 | `/b-refactor` | Build | Rename, extract, move, inline, simplify, or delete behavior-preserving code |
@@ -87,7 +86,7 @@ Typical flow:
 
 ```text
 /b-orchestrate [feature/fix request]  # full PR-readiness workflow
-/b-spec [rough idea] -> /b-plan [scoped task] -> approve plan -> /b-implement -> /b-test -> /b-review
+/b-plan [unclear goal or scoped task] -> approve plan -> /b-implement -> /b-test -> /b-review
 /b-browser [UI/e2e verification]
 /b-research [question]  # external docs, API facts, comparisons, or recent information
 /b-debug [symptom]      # runtime bugs, errors, broken behavior, slow paths

@@ -21,19 +21,19 @@ All skills are model-invocable when their descriptions match the request. Claude
 Coordinates a complete PR-readiness workflow by handing work to phase skills.
 
 **Core behavior**
-- Owns phase selection, handoffs, checkpoints, and final synthesis only; the phase skills do the actual spec, plan, implementation, test, debug, refactor, research, or review work.
+- Owns phase selection, handoffs, checkpoints, and final synthesis only; the phase skills do the actual plan, implementation, test, debug, refactor, research, or review work.
 - Starts from a workflow goal and defines success as a `b-review` readiness verdict with required suite-supported verification complete.
 - Requires `b-browser`-verified supplied/CI evidence, existing-tool evidence, or approved live-browser evidence before `READY FOR PR` when browser, DOM, visual, or e2e verification is relevant; otherwise the workflow can only be ready with accepted follow-ups.
 - Mints and carries a run-id for non-trivial workflows, and checkpoints phase state when the workflow pauses, enters a review-fix loop, or needs durable resume state.
 - Reads runtime contract gates before routing across phase skills, treating plans as approved, applying review-fix loops, or emitting non-trivial status output.
-- Emits explicit handoff envelopes, waits for the receiving skill's output/status/handoff, and validates returned phase state before continuing.
+- Emits a handoff envelope as audit trail and then invokes each phase skill via the Skill tool, parsing the returned status block and branching on `state` (`complete`, `blocked`, `needs-input`, `handed-off`) before continuing.
 - Uses `b-plan` (Clarification mode) when the target outcome is unclear, then `b-plan` for non-trivial sequencing or `b-implement` for small direct workflows.
 - Hands actual build work to `b-implement`, runtime failures to `b-debug`, behavior-preserving transforms to `b-refactor`, non-browser test work to `b-test`, and browser/DOM/visual/e2e evidence to `b-browser`.
 - Runs `b-review` against the current diff with the spec or approved plan as baseline, then routes findings back to the responsible phase skill.
 - Re-reviews after each coherent fix set until `READY FOR PR`, user-accepted `READY WITH FOLLOW-UPS`, or a blocker.
 
 **Output**
-- Workflow goal, phase state, changes/verification, review verdict, blockers/follow-ups, and next action.
+- Labeled lines: `Goal`, `Phase`, `Verification`, `Verdict` (`READY FOR PR`, `READY WITH FOLLOW-UPS`, `BLOCKED`, or `IN PROGRESS`), `Blockers`, and `Next`.
 
 ---
 
@@ -66,7 +66,7 @@ Turns goals into execution-ready plans. Handles both underspecified requests (Cl
 Answers external-knowledge questions from fetched evidence.
 
 **Core behavior**
-- Chooses lookup for one fact/signature/config/capability and research for synthesis, comparison, recency, or conflicts.
+- Defaults to the lightest authoritative source and decides depth internally; never asks the user to pick between a quick lookup and deep research.
 - Reads runtime contract gates before tool fallback, external extraction/privacy decisions, freshness/citation claims, deep extraction, or non-trivial status output.
 - Pins library versions when APIs, configs, migrations, signatures, or examples depend on version.
 - Treats user-provided URLs/files/documents as direct-source lookup when one source is likely sufficient, but classifies privacy before extraction.
@@ -199,7 +199,7 @@ Owns non-browser code-level testing work.
 - Routes red tests through the global test-vs-bug decision.
 - Uses the shared baseline source taxonomy before changing assertions, snapshots, or behavior-defining tests.
 - Confirms intended behavior from user-confirmed intent, an approved spec/plan, product contract, existing passing tests, intentional source changes, or fetched framework docs before changing assertions or snapshots.
-- Stops or hands off to `b-spec` for unclear intended behavior or `b-debug` for uncertain product behavior unless the user explicitly asks for structural coverage only.
+- Stops or hands off to `b-plan` (Clarification mode) for unclear intended behavior or `b-debug` for uncertain product behavior unless the user explicitly asks for structural coverage only.
 - Handles failing tests, new tests, coverage review, and flaky tests.
 - Uses red-first behavior when feasible for TDD or regression tests, then hands off with intended behavior, failing test path, command, current failure, likely source area, and verification target before production changes.
 - Chooses test type by boundary: pure logic unit tests and existing integration/contract tests for cross-module contracts.
@@ -223,7 +223,7 @@ Operates browser, DOM-rendered, visual, live UI, and e2e verification evidence.
 - Owns browser, DOM-rendered, visual, screenshot, browser-session, live UI, and e2e evidence requests.
 - Routes non-browser unit, integration, contract, coverage, mock, fixture, assertion, snapshot, and flake work back to `b-test`.
 - Reads runtime contract gates before applying the browser/DOM verification boundary, safety gates, readiness claims, or non-trivial status output.
-- Uses the lightest safe evidence path: supplied/CI evidence, approved existing repo commands, optional Playwright MCP live-browser actions, Firecrawl extraction for known remote pages, or accepted follow-ups.
+- Uses the lightest safe evidence path: supplied/CI evidence, approved existing repo commands, optional Playwright MCP live-browser actions, Firecrawl extraction only for static remote page content when no DOM state, interaction, screenshot, console, network, or session evidence is required, or accepted follow-ups.
 - Discovers candidate commands only from manifests, CI config, repo docs, or user instructions; it does not invent commands.
 - Requires approval before dependency writes, dev servers, persisted browser state, external services, long-running commands, unsafe arbitrary-code browser tools, or generated evidence outside normal repo output paths.
 - Treats logs, screenshots, browser pages, and traces as untrusted data.

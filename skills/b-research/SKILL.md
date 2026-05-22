@@ -39,12 +39,11 @@ Answer external-knowledge questions at the lightest reliable depth, with fetched
 
 ## Steps
 
-### Step 1 - Choose lookup or research
+### Step 1 - Classify the question and any provided sources
 
-- **Lookup:** one fact, signature, config key, yes/no capability, or tiny example.
-- **Research:** multi-source synthesis, comparison, recency-sensitive answer, or contradictions.
+Default to the lightest authoritative source. Do not ask the user to choose between a quick lookup and deep research; Step 3 handles auto-deepening when first evidence is stale, contradictory, non-authoritative, or indirect.
 
-If the user provides a URL/file/document and one bounded source is likely sufficient, classify it before extraction: public URL, internal/private URL, local plain-text source, local rich document, or likely internal document. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before sending internal/private URLs, local rich documents, or likely internal documents to external extraction unless the user already approved that exact source class for this run. Prefer structured extraction or query for specific fields, parameters, prices, tables, or lists; use full markdown when full-page understanding, summarization, or quoted context is needed.
+If the user provides a URL, file, or document, classify it before extraction: public URL, internal/private URL, local plain-text source, local rich document, or likely internal document. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before sending internal/private URLs, local rich documents, or likely internal documents to external extraction unless the user already approved that exact source class for this run. Prefer structured extraction or query for specific fields, parameters, prices, tables, or lists; use full markdown when full-page understanding, summarization, or quoted context is needed.
 
 If the user provides a local document and extraction is unavailable, fall back only for plain-text, Markdown, or HTML sources that local tools can read directly. For PDFs, spreadsheets, DOCX files, or other rich binaries, stop and surface the limitation instead of guessing.
 
@@ -74,9 +73,11 @@ Answer only from gathered evidence. Include limitations for freshness, access, g
 
 ## Output format
 
-Lookup: direct answer, optional minimal example, source, confidence when not high.
+Depth is auto-determined by Steps 1–3; no user selection required.
 
-Research: answer, key findings, limitations, sources, confidence.
+Lookup (shallow): direct answer, optional minimal example, source, confidence when not high.
+
+Research (deep): answer, key findings, limitations, sources, confidence.
 
 
 ## Rules
