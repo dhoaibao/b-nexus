@@ -1,6 +1,6 @@
 ## 0. Relationship To Runtime Kernel
 
-The authoritative active runtime kernel lives in `global/CLAUDE.md` in this source repo and installs as `~/.claude/CLAUDE.md` when the user permits activation. This detailed contract must not duplicate the kernel rule list; it expands the schemas, rubrics, tool bundles, and edge-case protocols that the kernel links to.
+The authoritative active runtime kernel lives in `runtimes/claude-code/kernel.md` in this source repo and installs as `~/.claude/CLAUDE.md` when the user permits activation. This detailed contract must not duplicate the kernel rule list; it expands the schemas, rubrics, tool bundles, and edge-case protocols that the kernel links to.
 
 ### Reference checklist
 

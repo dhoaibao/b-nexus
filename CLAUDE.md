@@ -7,9 +7,9 @@ Guidelines for creating, editing, and maintaining the Claude Code native `b-agen
 - This file is the Claude Code maintainer guidance for the source repository.
 - Claude Code is the reference runtime. Do not preserve OpenCode behavior as a product requirement unless a new plan explicitly asks for migration compatibility.
 - Keep root docs targeted: `README.md` is the brief repo overview, root `CLAUDE.md` is maintainer guidance for this repo, and `REFERENCE.md` is the reference guide for each skill.
-- Runtime behavior lives in `global/CLAUDE.md` (kernel installed as `~/.claude/CLAUDE.md`), `references/contract/` (detailed contract), and `skills/*/SKILL.md` (Claude skills).
+- Runtime behavior lives in `runtimes/claude-code/kernel.md` (kernel installed as `~/.claude/CLAUDE.md`), `references/contract/` (detailed contract), and `skills/*/SKILL.md` (Claude skills).
 - `install.sh` deploys runtime files to `~/.claude/`, installs each skill under `~/.claude/skills/<name>/`, copies shared references into each skill as supporting files, and replaces `~/.claude/CLAUDE.md` only when missing or approved.
-- When authoring runtime-facing skill prose, references to `CLAUDE.md` mean the active runtime kernel installed from `global/CLAUDE.md`, not this source-repo maintainer guide. Long-form schemas, rubrics, and edge-case protocols live in `references/contract/`; when a skill depends on one of them, phrase the instruction as a required read gate using the installed skill support path `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/<section-file>.md`.
+- When authoring runtime-facing skill prose, references to `CLAUDE.md` mean the active runtime kernel installed from `runtimes/claude-code/kernel.md`, not this source-repo maintainer guide. Long-form schemas, rubrics, and edge-case protocols live in `references/contract/`; when a skill depends on one of them, phrase the instruction as a required read gate using the installed skill support path `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/<section-file>.md`.
 - Runtime conformance depends on explicit read gates plus the runtime gate checklist, not passive reminders. Keep those gates local to the step that uses the shared schema, checklist, or protocol.
 
 ## Quick Links
@@ -26,8 +26,8 @@ Guidelines for creating, editing, and maintaining the Claude Code native `b-agen
 - `skills/b-audit/SKILL.md` - b-agentic suite self-audits (suite-only)
 - `skills/b-ship/SKILL.md` - commit, push, and open PR after READY FOR PR
 - `references/` - reusable checklists and the detailed runtime contract
-- `global/CLAUDE.md` - runtime kernel source
-- `configs/claude/` - Claude Code settings and MCP templates
+- `runtimes/claude-code/kernel.md` - runtime kernel source
+- `runtimes/claude-code/configs/` - Claude Code settings and MCP templates
 
 ## Claude Skill Frontmatter
 
@@ -125,15 +125,15 @@ Tool fallback rules are centralized in the kernel; skills do not restate them.
 
 ## MCP Selection Criteria
 
-Skills declare MCP usage by referencing bundles summarized in `global/CLAUDE.md` §4 and fully defined in `references/contract/` §4. Do not enumerate per-tool MCP lists inside skills. Native tools such as Glob/Grep/Read/Bash are not MCP bundles and may be listed separately when useful.
+Skills declare MCP usage by referencing bundles summarized in `runtimes/claude-code/kernel.md` §4 and fully defined in `references/contract/` §4. Do not enumerate per-tool MCP lists inside skills. Native tools such as Glob/Grep/Read/Bash are not MCP bundles and may be listed separately when useful.
 
-MCP user-scope configuration lives in `configs/claude/mcp.user.template.json`. The installer copies templates to `~/.claude/b-agentic/templates/` and merges the user-scope MCP set into `~/.claude.json` during the normal one-command install. The global MCP set contains Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus; runtime skills still use MCP lazily by evidence need. Keep MCP template changes documented in `configs/claude/README.md` and `README.md`, and covered by `scripts/validate-skills.sh` plus `scripts/smoke-install.sh`.
+MCP user-scope configuration lives in `runtimes/claude-code/configs/mcp.user.template.json`. The installer copies templates to `~/.claude/b-agentic/templates/` and merges the user-scope MCP set into `~/.claude.json` during the normal one-command install. The global MCP set contains Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus; runtime skills still use MCP lazily by evidence need. Keep MCP template changes documented in `runtimes/claude-code/configs/README.md` and `README.md`, and covered by `scripts/validate-skills.sh` plus `scripts/smoke-install.sh`.
 
 Rules:
 - Never add a bundle just to increase coverage; every bundle must have a clear use case in the Steps section.
 - Reference the bundle name. The bundle definition owns session-init steps, fallback behavior, cost/approval caveats, and language-coverage caveats.
 - Label each bundle in "Tools required" with its role when it is conditional.
-- Tool fallback rules are centralized in the kernel (see `global/CLAUDE.md` §4); skills do not restate graceful degradation lines.
+- Tool fallback rules are centralized in the kernel (see `runtimes/claude-code/kernel.md` §4); skills do not restate graceful degradation lines.
 - Prefer the lightest capable tool. Do not force MCP-first behavior for exact strings, manifests, prose, small file reads, or other cases where native tools are cheaper and equally reliable.
 - Do not list unsafe tool variants in skill workflows; approval is required per invocation.
 - Do not commit API keys or secret-looking placeholders in MCP templates. Use Claude Code environment expansion such as `${CONTEXT7_API_KEY:-}`, `${BRAVE_API_KEY}`, and `${FIRECRAWL_API_KEY}` in templates; installer prompts may write user-provided keys only to user-scope `~/.claude.json`.
@@ -155,7 +155,7 @@ All skills live in `skills/<name>/SKILL.md`. When changing skill files:
 | Delete skill | Delete `skills/<name>/SKILL.md`, optional supporting files, and the directory if empty |
 
 Runtime contract sync:
-- When always-on runtime behavior changes, update `global/CLAUDE.md`.
+- When always-on runtime behavior changes, update `runtimes/claude-code/kernel.md`.
 - When detailed schemas/rubrics/protocols change, update `references/contract/`.
 - Keep related repo docs aligned in the same commit.
 
@@ -187,4 +187,4 @@ Before merging any skill file change, verify:
 8. Token hygiene is preserved.
 9. No duplicated global concepts from `CLAUDE.md` or `references/contract/`.
 10. Reference gates are explicit at the point of use.
-11. Runtime enforcement is preserved through `global/CLAUDE.md`, skill read gates, validator checks, and install smoke tests.
+11. Runtime enforcement is preserved through `runtimes/claude-code/kernel.md`, skill read gates, validator checks, and install smoke tests.

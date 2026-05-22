@@ -35,8 +35,8 @@ FIRECRAWL_API_KEY_INPUT=""
 SOURCE_DIR="$LOCAL_REPO"
 SKILLS_SRC="$SOURCE_DIR/skills"
 REFERENCES_SRC="$SOURCE_DIR/references"
-TEMPLATES_SRC="$SOURCE_DIR/configs/claude"
-KERNEL_SRC="$SOURCE_DIR/global/CLAUDE.md"
+TEMPLATES_SRC="$SOURCE_DIR/runtimes/claude-code/configs"
+KERNEL_SRC="$SOURCE_DIR/runtimes/claude-code/kernel.md"
 DRY_RUN_SOURCE_DIR=""
 
 log() { printf '%s\n' "$*"; }
@@ -217,8 +217,8 @@ set_source_dir() {
   SOURCE_DIR="$1"
   SKILLS_SRC="$SOURCE_DIR/skills"
   REFERENCES_SRC="$SOURCE_DIR/references"
-  TEMPLATES_SRC="$SOURCE_DIR/configs/claude"
-  KERNEL_SRC="$SOURCE_DIR/global/CLAUDE.md"
+  TEMPLATES_SRC="$SOURCE_DIR/runtimes/claude-code/configs"
+  KERNEL_SRC="$SOURCE_DIR/runtimes/claude-code/kernel.md"
 }
 
 sync_source() {

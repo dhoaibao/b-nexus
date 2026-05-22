@@ -2,9 +2,9 @@
 
 Reference guide for the 11-skill set that makes up `b-agentic`, an agent workflow kernel for Claude Code. For install and high-level repo overview, see [README.md](README.md). For maintainer guidance, see [CLAUDE.md](CLAUDE.md).
 
-When this document cites `global/CLAUDE.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the active `CLAUDE.md`; detailed runtime behavior lives at `references/contract/` in this repo and at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/` inside installed skills. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
+When this document cites `runtimes/claude-code/kernel.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the active `CLAUDE.md`; detailed runtime behavior lives at `references/contract/` in this repo and at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/` inside installed skills. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
 
-Runtime enforcement is intentionally mechanical: `global/CLAUDE.md` owns the runtime gate checklist, each skill step uses explicit read gates for shared schemas/protocols/checklists, Claude skills expose `/b-*` slash commands, and `scripts/validate-skills.sh` rejects passive pointers that would rely on memory.
+Runtime enforcement is intentionally mechanical: `runtimes/claude-code/kernel.md` owns the runtime gate checklist, each skill step uses explicit read gates for shared schemas/protocols/checklists, Claude skills expose `/b-*` slash commands, and `scripts/validate-skills.sh` rejects passive pointers that would rely on memory.
 
 MCP setup is part of the normal one-command install. The installer merges Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus into Claude Code's user-scope `~/.claude.json`, while runtime skills still choose MCP lazily by evidence need rather than by installed config.
 
@@ -45,7 +45,7 @@ Turns goals into execution-ready plans. Handles both underspecified requests (Cl
 - Defaults to quick mode for low-risk, chat-sized scoped work and uses full mode only for durable, multi-session, dependency-heavy, or risky coordination.
 - Reads runtime contract and `skills/b-plan/reference.md` gates before saved-plan metadata, artifact paths, templates, staleness, or status output.
 - Avoids promoting routine multi-step work to a saved plan solely because it has several obvious substeps.
-- Saves full plans under `.b-agentic/b-plan/<plan-file-slug>.md` with durable frontmatter and `contract_version` from `global/CLAUDE.md`; the filename stays English while frontmatter `slug` remains the canonical task slug.
+- Saves full plans under `.b-agentic/b-plan/<plan-file-slug>.md` with durable frontmatter and `contract_version` from `runtimes/claude-code/kernel.md`; the filename stays English while frontmatter `slug` remains the canonical task slug.
 - Promotes quick plans to saved plans when risk, breadth, or coordination grows.
 - Uses repo evidence only when it materially improves sequencing or touch-point accuracy.
 - Records assumptions separately from confirmed decisions unless the user confirms them.

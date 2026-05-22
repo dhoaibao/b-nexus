@@ -31,13 +31,13 @@ curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh 
 ```
 
 The installer deploys this repo into Claude Code's personal config:
-- `global/CLAUDE.md` -> `~/.claude/CLAUDE.md` when missing or approved
+- `runtimes/claude-code/kernel.md` -> `~/.claude/CLAUDE.md` when missing or approved
 - `skills/<name>/` -> `~/.claude/skills/<name>/`
 - `references/*.md` -> `~/.claude/b-agentic/references/`
 - `references/*.md` -> `~/.claude/skills/<name>/references/b-agentic/` for each skill
-- `configs/claude/*.json` -> `~/.claude/b-agentic/templates/`
-- `configs/claude/settings.template.json` -> merged into `~/.claude/settings.json`
-- `configs/claude/mcp.user.template.json` -> merged into `~/.claude.json`
+- `runtimes/claude-code/configs/*.json` -> `~/.claude/b-agentic/templates/`
+- `runtimes/claude-code/configs/settings.template.json` -> merged into `~/.claude/settings.json`
+- `runtimes/claude-code/configs/mcp.user.template.json` -> merged into `~/.claude.json`
 - install metadata and backups -> `~/.claude/b-agentic/`
 
 If an existing `~/.claude/CLAUDE.md` is preserved, the installer exits with `activationState: pending`. Review `~/.claude/b-agentic/CLAUDE.md`, then rerun with `--replace-memory` or merge the kernel manually.
@@ -105,8 +105,7 @@ All skills are model-invocable when their descriptions match the request. Skill 
 ```text
 b-agentic/
 ├── CLAUDE.md              # Claude Code maintainer guidance for this source repo
-├── global/CLAUDE.md       # Claude Code runtime kernel source
-├── configs/claude/        # settings and MCP templates
+├── runtimes/claude-code/          # Claude Code runtime adapter (kernel + configs)
 ├── references/            # shared runtime references copied into skill support dirs
 ├── skills/<name>/         # Claude skill instructions and optional reference.md files
 ├── install.sh             # Claude Code installer, updater, and uninstaller
@@ -118,9 +117,9 @@ b-agentic/
 - `README.md` is the brief repo overview.
 - `CLAUDE.md` is the Claude Code maintainer guide for editing this source repo.
 - `REFERENCE.md` is the skill-by-skill reference guide.
-- `global/CLAUDE.md` is the runtime kernel source.
+- `runtimes/claude-code/kernel.md` is the runtime kernel source.
 - `references/contract/` is the detailed runtime contract; referenced sections are required read gates when a skill needs their schemas, checklists, or protocols.
 - `references/performance-checklist.md` is a reusable cross-skill reference.
-- `configs/claude/README.md` documents the Claude Code runtime layout and first-release non-goals.
+- `runtimes/claude-code/configs/README.md` documents the Claude Code runtime layout and first-release non-goals.
 
 Run `scripts/validate-skills.sh` and `scripts/smoke-install.sh` before installing or committing suite changes.
