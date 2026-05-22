@@ -28,14 +28,13 @@
       "Bash(git push --force *)"
     ]
   },
-  "_hooks_opt_in": "To enable the SessionStart checklist nudge, copy the 'hooks' block below into your ~/.claude.json or project .claude/settings.json. Remove this _hooks_opt_in key when doing so.",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "printf '\\033[2mb-agentic checklist: read the cited contract section before edit/external/mutate.\\033[0m\\n'"
+            "command": "echo 'b-agentic checklist: read the cited contract section before edit/external/mutate.'"
           }
         ]
       }
