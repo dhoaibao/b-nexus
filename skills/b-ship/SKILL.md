@@ -34,9 +34,18 @@ Flags: `--draft` (open as draft PR), `--title=<title>` (skip interactive prompt)
 
 ## Steps
 
-### Step 1 - Confirm the diff and branch
+### Step 1 - Confirm the diff, review status, and branch
 
 Run `git status --short` and `git diff --staged`. Report changed files, branch, and any untracked staged items. If the tree is dirty with unstaged changes that were not expected, stop and ask whether to stage them.
+
+Check for evidence of prior review: a `b-review` status block with `READY FOR PR` or `READY WITH FOLLOW-UPS`, a reviewed plan, or an explicit user override in the current session. If no review evidence exists, stop and ask the user to confirm:
+
+```text
+No prior review evidence found. b-ship expects review before commit.
+[approval] Proceed without review
+Effect: commits and opens a PR without a b-review verdict.
+Proceed? (y/n)
+```
 
 Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before any commit or push action.
 

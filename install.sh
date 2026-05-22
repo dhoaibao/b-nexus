@@ -78,6 +78,16 @@ run_cmd() {
   "$@"
 }
 
+ensure_repo_gitignore_guard() {
+  # Only act when in a git repo and the guard is missing
+  [ -d .git ] || [ -f .git ] || return 0
+  if [ -f .b-agentic/.gitignore ]; then
+    return 0
+  fi
+  run_cmd mkdir -p .b-agentic
+  printf '*' | run_cmd tee .b-agentic/.gitignore >/dev/null
+}
+
 can_prompt_api_keys() {
   ! dry_run_enabled || return 1
   case "$PROMPT_API_KEYS_VALUE" in
@@ -827,7 +837,7 @@ for name in data.get('skills', []):
 PY
 )
   else
-    for name in b-orchestrate b-spec b-plan b-research b-implement b-refactor b-debug b-test b-browser b-review b-audit; do
+    for name in b-orchestrate b-plan b-research b-implement b-refactor b-debug b-test b-browser b-review b-audit b-ship; do
       run_cmd rm -rf "$SKILLS_DST/$name"
     done
   fi
@@ -896,6 +906,7 @@ main() {
   write_manifest "$memory_action" "$activation_state" "$memory_backup" "$settings_action" "$settings_state" "$settings_backup" "$mcp_action" "$mcp_state" "$mcp_backup" "${installed_skills[@]}"
 
   print_install_report "$activation_state" "${#installed_skills[@]}" "$memory_action" "$memory_backup" "$settings_action" "$settings_backup" "$mcp_action" "$mcp_backup"
+  ensure_repo_gitignore_guard
   if [ "$activation_state" = "pending" ]; then
     log "Existing $KERNEL_DST was preserved. Review $KERNEL_SNAPSHOT_DST and rerun with --replace-memory to activate the kernel."
     return 2

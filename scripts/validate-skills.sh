@@ -165,6 +165,9 @@ contract_index = contract_index_path.read_text() if contract_index_path.exists()
 install_sh = (root / 'install.sh').read_text() if (root / 'install.sh').exists() else ''
 claude_readme = (root / 'claude' / 'README.md').read_text() if (root / 'claude' / 'README.md').exists() else ''
 
+contract_version_match = re.search(r'This runtime contract version is `([0-9]{4}-[0-9]{2}-[0-9]{2})`', kernel)
+contract_version = contract_version_match.group(1) if contract_version_match else None
+
 if not kernel_path.exists():
     errors.append('global/CLAUDE.md: missing Claude Code kernel source')
 if (root / 'global' / 'AGENTS.md').exists():
@@ -308,6 +311,17 @@ if 'One Command' not in readme or 'skillsSynced' not in readme:
 
 if 'Global MCP Setup' not in claude_readme or '~/.claude.json' not in claude_readme:
     errors.append('claude/README.md: missing global MCP setup documentation')
+
+if contract_version:
+    for plan_path in sorted((root / '.b-agentic' / 'b-plan').glob('*.md')):
+        plan_text = plan_path.read_text()
+        plan_version_match = re.search(r'^contract_version:\s*(\S+)', plan_text, re.MULTILINE)
+        if plan_version_match:
+            plan_version = plan_version_match.group(1)
+            if plan_version != contract_version:
+                errors.append(f'{plan_path}: contract_version {plan_version!r} does not match kernel contract version {contract_version!r}')
+else:
+    errors.append('global/CLAUDE.md: unable to extract contract version')
 
 if errors:
     for error in errors:
