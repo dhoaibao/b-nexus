@@ -40,7 +40,6 @@ description: >
   Code load or list this skill? Include the ALWAYS trigger condition and one
   sentence distinguishing this from similar skills.]
 argument-hint: "[optional arguments]"
-disable-model-invocation: true
 ---
 ```
 
@@ -51,7 +50,6 @@ Required fields:
 Supported optional fields used by this repo:
 - `argument-hint` - concise autocomplete help for user-invocable skills.
 - `when_to_use` - only when the description needs extra matching context.
-- `disable-model-invocation` - set to `true` for mutating or coordinating skills that should be manual-only.
 - `user-invocable` - use only when a skill is background knowledge and should be hidden from the slash menu.
 - `context` and `agent` - use only for approved forked-subagent skills.
 - `paths` - use only when a skill should activate for specific file globs.
@@ -94,7 +92,6 @@ description: >
   [<=80 words, intent + disambiguation. Do not include long trigger keyword
   lists; those live in CLAUDE.md and maintainer docs.]
 argument-hint: "[input]"
-disable-model-invocation: true
 ---
 
 # b-example

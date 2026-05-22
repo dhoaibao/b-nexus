@@ -7,7 +7,6 @@ description: >
   b-debug owns runtime behavior failures, not test-mechanic issues such as
   wrong assertions, mocks, or fixtures.
 argument-hint: "[symptom-or-error]"
-disable-model-invocation: true
 ---
 
 # b-debug

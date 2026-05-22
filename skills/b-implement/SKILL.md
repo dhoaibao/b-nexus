@@ -7,7 +7,6 @@ description: >
   next small step, verifies it, and stops for new decisions. Unlike b-plan,
   b-implement changes code.
 argument-hint: "[plan-path-or-task]"
-disable-model-invocation: true
 ---
 
 # b-implement

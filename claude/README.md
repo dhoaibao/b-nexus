@@ -21,7 +21,7 @@ Project-local `.claude/` install, plugin packaging, hooks, and dynamic context i
 
 ## Invocation policy
 
-Claude Code exposes each skill directory as `/b-*`. Mutating or coordinating skills are manual-only through `disable-model-invocation: true`. Read-only discovery and review skills may remain model-invocable when their descriptions are tight and do not grant tools.
+Claude Code exposes each skill directory as `/b-*`. All skills are model-invocable when their descriptions match the request. Skill descriptions are the primary routing signal.
 
 ## Safety policy
 

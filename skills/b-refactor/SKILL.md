@@ -7,7 +7,6 @@ description: >
   b-plan first. Unlike b-plan, which decides what to build, b-refactor owns
   mechanical edits.
 argument-hint: "[refactor-target]"
-disable-model-invocation: true
 ---
 
 # b-refactor

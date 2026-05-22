@@ -95,7 +95,7 @@ Typical flow:
 /b-audit [surface]      # repository, maintainer, or suite-slice audit
 ```
 
-Mutating or coordinating skills are manual-only in Claude Code with `disable-model-invocation: true`: `b-orchestrate`, `b-plan`, `b-implement`, `b-refactor`, `b-debug`, `b-test`, and `b-browser`. Read-only clarification, research, review, and audit skills may be model-invocable when their descriptions match the request.
+All skills are model-invocable when their descriptions match the request. Skill descriptions are the primary routing signal; Claude Code loads the skill whose trigger conditions best fit the user's intent.
 
 ## Repository Map
 

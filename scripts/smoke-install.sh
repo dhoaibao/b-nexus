@@ -159,7 +159,6 @@ main() {
   assert_equal_files "$sandbox_fresh/home/.claude/CLAUDE.md" "$sandbox_fresh/home/.claude/b-agentic/CLAUDE.md"
   assert_contains "$sandbox_fresh/home/.claude/b-agentic/install.json" '"runtime": "claude-code"'
   assert_contains "$sandbox_fresh/home/.claude/b-agentic/install.json" '"activationState": "active"'
-  assert_contains "$sandbox_fresh/home/.claude/skills/b-implement/SKILL.md" 'disable-model-invocation: true'
   assert_file "$sandbox_fresh/home/.claude/settings.json"
   assert_file "$sandbox_fresh/home/.claude.json"
   assert_json_value "$sandbox_fresh/home/.claude.json" "set(data['mcpServers']) == {'serena', 'context7', 'brave-search', 'firecrawl', 'playwright', 'gitnexus'}"

@@ -6,7 +6,6 @@ description: >
   checks. Unlike b-test, b-browser owns browser/DOM readiness evidence, not
   non-browser unit, integration, or contract tests.
 argument-hint: "[browser-or-e2e-request]"
-disable-model-invocation: true
 ---
 
 # b-browser

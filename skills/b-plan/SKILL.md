@@ -6,7 +6,6 @@ description: >
   approach, and writes ordered steps. Unlike b-implement, b-plan does not
   change code.
 argument-hint: "[task]"
-disable-model-invocation: true
 ---
 
 # b-plan

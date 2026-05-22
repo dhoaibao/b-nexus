@@ -7,7 +7,6 @@ description: >
   Unlike b-implement, b-orchestrate owns sequencing across multiple skills
   rather than changing code itself.
 argument-hint: "[workflow-goal]"
-disable-model-invocation: true
 ---
 
 # b-orchestrate

@@ -10,7 +10,7 @@ MCP setup is part of the normal one-command install. The installer merges Serena
 
 Browser, DOM-rendered, visual, and e2e verification belongs to `b-browser`, not `b-test`. The suite does not add jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent browser/DOM tooling as a project dependency side effect. For UI/browser-relevant work, readiness claims require `b-browser`-verified supplied/CI evidence, existing-tool evidence, approved live-browser evidence, or an accepted follow-up.
 
-Mutating or coordinating Claude Code skills are manual-only in the first migrated release: `b-orchestrate`, `b-plan`, `b-implement`, `b-refactor`, `b-debug`, `b-test`, and `b-browser` use `disable-model-invocation: true`. `b-research`, `b-review`, and `b-audit` may be model-invocable because they are discovery or read-only review surfaces. `b-plan` includes Clarification mode for underspecified requests.
+All skills are model-invocable when their descriptions match the request. Claude Code routes to the skill whose trigger conditions best fit the user's intent. `b-plan` includes Clarification mode for underspecified requests.
 
 ---
 

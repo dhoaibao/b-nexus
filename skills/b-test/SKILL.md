@@ -8,7 +8,6 @@ description: >
   issues, and coverage gaps. Browser, DOM, visual, and e2e verification belongs
   to b-browser.
 argument-hint: "[test-task-or-failure]"
-disable-model-invocation: true
 ---
 
 # b-test

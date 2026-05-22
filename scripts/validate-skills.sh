@@ -15,22 +15,12 @@ errors = []
 
 skill_paths = sorted(root.glob('skills/*/SKILL.md'))
 skill_names = [path.parent.name for path in skill_paths]
-expected_manual_only = {
-    'b-orchestrate',
-    'b-plan',
-    'b-implement',
-    'b-refactor',
-    'b-debug',
-    'b-test',
-    'b-browser',
-}
 allowed_frontmatter = {
     'name',
     'description',
     'when_to_use',
     'argument-hint',
     'arguments',
-    'disable-model-invocation',
     'user-invocable',
     'model',
     'effort',
@@ -95,12 +85,6 @@ for path in skill_paths:
         word_count = len(desc.split())
         if word_count > 80:
             errors.append(f'{path}: description has {word_count} words, expected <=80')
-
-    has_disable = bool(re.search(r'^disable-model-invocation:\s*true\s*$', frontmatter, re.MULTILINE))
-    if name in expected_manual_only and not has_disable:
-        errors.append(f'{path}: mutating/coordinating skill must be manual-only with disable-model-invocation: true')
-    if name not in expected_manual_only and has_disable:
-        errors.append(f'{path}: read-only/clarification skill should not be manual-only without documented reason')
 
     if 'allowed-tools:' in frontmatter:
         errors.append(f'{path}: allowed-tools grants permissions and requires explicit maintainer review before use')
