@@ -39,7 +39,6 @@ Flags: `--skip-tests`, `--baseline=<path|url>`, `--range=<ref>..<ref>`, `--self`
 - `context7-docs` *(optional, for suspicious third-party API usage)*
 - `brave-search` + `firecrawl-extraction` *(optional, for focused public CVE, advisory, or release-drift lookup)*
 
-If required tools are unavailable, read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with git diff, native tools, and focused reads.
 
 ## Steps
 
@@ -55,7 +54,7 @@ Fast path is allowed only for a single non-sensitive area with no public contrac
 
 ### Step 3 - Establish baseline and inspect risk
 
-Use arguments, `--baseline`, approved plan, checkpoint handoff, or short clarification to identify intended behavior. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §5 before applying the baseline source taxonomy. Without a sufficient baseline, run a `baseline-missing` diff-only risk review and do not claim requirements coverage.
+Use arguments, `--baseline`, approved plan, checkpoint handoff, or short clarification to identify intended behavior. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/05-evidence.md` before applying the baseline source taxonomy. Without a sufficient baseline, run a `baseline-missing` diff-only risk review and do not claim requirements coverage.
 
 Inspect highest-risk changed symbols and boundaries first. Name sampled files/symbols, skipped changed surfaces, and residual risk so a no-findings review is not mistaken for exhaustive proof.
 
@@ -69,7 +68,7 @@ Use diagnostics or narrow commands only when review confidence depends on runtim
 
 ### Step 5 - Report verdict
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §3 and §9 before reporting severity-ordered findings, checked-and-clean caps, saved reports, or status output. If no findings, say so and name residual risk or skipped checks.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/03-definitions.md` and `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before reporting severity-ordered findings, checked-and-clean caps, saved reports, or status output. If no findings, say so and name residual risk or skipped checks.
 
 Verdicts: **READY FOR PR**, **READY WITH FOLLOW-UPS**, or **NEEDS FIXES**. Do not use **READY FOR PR** when the review has no baseline, required verification was skipped, or browser/DOM/e2e evidence remains relevant but absent; **b-browser**-verified supplied/CI evidence, existing-tool evidence, or approved live-browser evidence can satisfy that browser evidence requirement.
 
@@ -81,7 +80,6 @@ If external knowledge is required, resolve one narrow docs lookup inline or hand
 Scope/Mode/Path/Baseline -> Findings -> Checked and clean -> Coverage/Tests/Observability -> Verdict
 ```
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §9 before closing a non-trivial review with a status block.
 
 ## Rules
 

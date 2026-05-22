@@ -268,10 +268,10 @@ sync_references_into_skill() {
   local support_dir="$skill_dir/references/b-agentic"
   ensure_dir "$support_dir"
   if dry_run_enabled; then
-    printf '[dry-run] cp %s/*.md %s/\n' "$REFERENCES_SRC" "$support_dir" >&2
+    printf '[dry-run] cp -r %s/* %s/\n' "$REFERENCES_SRC" "$support_dir" >&2
     return 0
   fi
-  cp "$REFERENCES_SRC"/*.md "$support_dir"/
+  cp -r "$REFERENCES_SRC"/* "$support_dir"/
 }
 
 install_skills() {

@@ -1,6 +1,6 @@
 # b-agentic
 
-**An 11-skill agent workflow kernel for Claude Code.**
+**A 10-skill agent workflow kernel for Claude Code.**
 
 `b-agentic` turns rough developer intent into disciplined loops: clarify, plan, build, validate, debug, review, and audit. It is optimized around scoped execution, repo evidence, MCP tools, verification, and clean handoffs.
 
@@ -116,7 +116,7 @@ b-agentic/
 - `CLAUDE.md` is the Claude Code maintainer guide for editing this source repo.
 - `REFERENCE.md` is the skill-by-skill reference guide.
 - `global/CLAUDE.md` is the runtime kernel source.
-- `references/runtime-contract.md` is the detailed runtime contract; referenced sections are required read gates when a skill needs their schemas, checklists, or protocols.
+- `references/contract/` is the detailed runtime contract; referenced sections are required read gates when a skill needs their schemas, checklists, or protocols.
 - `references/performance-checklist.md` is a reusable cross-skill reference.
 - `claude/README.md` documents the Claude Code runtime layout and first-release non-goals.
 

@@ -23,10 +23,9 @@ Operate browser, DOM-rendered, visual, and e2e verification using the lightest s
 
 ## When NOT to use
 
-- The task is non-browser unit, integration, contract, coverage, mock, fixture, assertion, snapshot, or flake work -> use **b-test**. See `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §10 for the boundary table with concrete examples.
+- The task is non-browser unit, integration, contract, coverage, mock, fixture, assertion, snapshot, or flake work -> use **b-test**. See `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/10-decisions.md` for the boundary table with concrete examples.
 - The task is UI/UX critique, accessibility design review, or visual design feedback without a runnable verification request -> use the appropriate review skill outside this suite when available.
 - The task is implementing UI behavior or fixing app code -> use **b-implement** or **b-debug**.
-- The task requires adding a new browser test framework, dependency, or strategy -> use **b-plan** first.
 - The task is only changed-code review with browser evidence already supplied -> use **b-review** and cite the evidence.
 
 ## Tools required
@@ -37,7 +36,6 @@ Operate browser, DOM-rendered, visual, and e2e verification using the lightest s
 - `firecrawl-extraction` *(optional, for known remote pages where extraction can answer the browser evidence question without live control)*
 - `serena-symbol-toolkit` *(optional, for mapping a browser failure to source ownership before handing off)*
 
-If required tools are unavailable, read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with supplied evidence, existing repo scripts, known-URL extraction, or an explicit follow-up; live-browser verification is partial without `playwright-browser-operator`.
 
 ## Steps
 
@@ -45,7 +43,7 @@ If required tools are unavailable, read `${CLAUDE_SKILL_DIR}/references/b-agenti
 
 Identify whether the request is a direct browser/DOM/visual/e2e run, live UI exploration, review of supplied evidence, or a readiness gap from another phase. If the check is actually non-browser unit, integration, contract, or coverage work, hand off to **b-test**.
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §10 before applying the browser and DOM verification boundary or making readiness claims.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/10-decisions.md` before applying the browser and DOM verification boundary or making readiness claims.
 
 ### Step 2 - Choose the evidence ladder
 
@@ -55,13 +53,14 @@ Choose the first path that can answer the browser evidence question safely:
 - Existing repo scripts or documented commands, discovered from manifests, CI config, repo docs, or user instructions.
 - `playwright-browser-operator` live-browser actions when existing evidence/scripts are absent, insufficient, or not targeted enough.
 - `firecrawl-extraction` for known remote pages when extraction is enough and live browser control is unnecessary.
-- Accepted follow-up or skipped check when evidence is unavailable.
+- If the repo lacks browser/DOM/visual/e2e tooling and no existing path above can answer the question, hand off to **b-plan** with the browser evidence gap. Tooling may be added only after explicit `/b-plan` approval and dependency-write approval.
+- Accepted follow-up or skipped check when evidence is unavailable and the user accepts the gap.
 
-Do not invent verification commands. Do not create a browser test strategy or add browser dependencies here; hand off to **b-plan** for that.
+Do not invent verification commands.
 
 ### Step 3 - Apply safety gates before running tools
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §6 before running browser, DOM, visual, or e2e tooling, using `playwright-browser-operator`, starting dev servers, using persisted browser/session state, writing screenshots/videos/traces, installing dependencies, or mutating shared environments.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before running browser, DOM, visual, or e2e tooling, using `playwright-browser-operator`, starting dev servers, using persisted browser/session state, writing screenshots/videos/traces, installing dependencies, or mutating shared environments.
 
 Ask for approval before dependency writes, dev servers, persisted browser state, external services, long-running commands, generated evidence outside normal repo output paths, or unsafe arbitrary-code browser tools.
 
@@ -87,7 +86,7 @@ Clean up or report generated screenshots, videos, traces, logs, browser state, t
 
 State whether browser/DOM/visual/e2e evidence is verified, missing, failed, or accepted as a follow-up. Do not claim **READY FOR PR** when relevant browser evidence is absent or failed.
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §9 before closing a non-trivial browser verification run with a status block or handoff.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before closing a non-trivial browser verification run with a status block or handoff.
 
 ## Output format
 
@@ -102,4 +101,4 @@ Request -> Evidence path -> Browser result -> Artifacts/cleanup -> Readiness imp
 - Do not treat missing browser/DOM/visual/e2e evidence as covered by non-browser tests.
 - Do not store real browser auth/session state under a tracked worktree path.
 - Keep generated screenshots, videos, traces, and logs only when they are required evidence; otherwise clean up or report what remains.
-- Route unclear product behavior to **b-debug** and new test strategy or dependency choices to **b-plan**.
+- Route unclear product behavior to **b-debug** and new test strategy or dependency choices to **b-plan** with explicit approval.

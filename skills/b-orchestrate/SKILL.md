@@ -35,11 +35,10 @@ If `$ARGUMENTS` is present, treat it as the workflow goal plus any explicit cons
 ## Tools required
 
 - Native tools - inspect status, diffs, docs, and verification commands.
-- Phase skills - **b-spec**, **b-plan**, **b-implement**, **b-test**, **b-browser**, **b-review**, plus **b-debug**, **b-refactor**, and **b-research** when a phase routes there. These skills receive the actual work; `b-orchestrate` only coordinates transitions by emitting handoff envelopes and checkpoint manifests.
+- Phase skills - **b-plan**, **b-implement**, **b-test**, **b-browser**, **b-review**, plus **b-debug**, **b-refactor**, and **b-research** when a phase routes there. These skills receive the actual work; `b-orchestrate` only coordinates transitions by emitting handoff envelopes and checkpoint manifests.
 - `serena-symbol-toolkit` *(optional, through the active phase skill when symbol work matters)*
 - `gitnexus-radar` *(optional, through the active phase skill for graph-shaped risk)*
 
-If required tools are unavailable, read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible when native evidence and phase-skill handoffs can still prove progress; stop rather than simulating a phase whose required evidence is unavailable.
 
 ## Steps
 
@@ -47,23 +46,23 @@ If required tools are unavailable, read `${CLAUDE_SKILL_DIR}/references/b-agenti
 
 Run `git status --short`, name the source of truth, and define success as a **b-review** verdict of **READY FOR PR** with required verification complete for suite-supported scope. If UI/browser-relevant work needs browser, DOM, visual, or e2e evidence, require **b-browser**-verified evidence from supplied/CI evidence, existing repo tooling, or approved live-browser operation before **READY FOR PR**; if the user explicitly accepts skipped checks or follow-ups, success may be **READY WITH FOLLOW-UPS** instead.
 
-For non-trivial workflows, read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §8, mint a run-id, and write a checkpoint manifest under `.b-agentic/b-orchestrate/<run-id>/manifest.json` when the workflow pauses or needs durable resume state.
+For non-trivial workflows, read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/08-artifacts.md`, mint a run-id, and write a checkpoint manifest under `.b-agentic/b-orchestrate/<run-id>/manifest.json` when the workflow pauses or needs durable resume state.
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §1 and §9 before routing across phase skills. Keep exactly one phase owner active at a time; every phase transition is a stop condition plus handoff, not parallel execution.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/01-routing.md` and `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before routing across phase skills. Keep exactly one phase owner active at a time; every phase transition is a stop condition plus handoff, not parallel execution.
 
 For each phase transition, emit the handoff envelope in chat and instruct the user to run the next `/b-*` command. Wait for the user to invoke that skill and provide its output, status block, or next handoff before continuing. Validate the returned state against the workflow goal: continue only from `complete` or an explicit next-skill handoff, stop on `blocked` or `needs-input`, and ask once if the returned state is absent or ambiguous instead of simulating the phase inside `b-orchestrate`.
 
 ### Step 2 - Route the spec phase
 
-If the goal, constraints, acceptance criteria, non-goals, or intended behavior are unclear, emit a handoff envelope and instruct the user to run `/b-spec`; resume only after the spec output is concrete enough to plan. If the request is already clear, skip this phase; do not author a substitute spec inside `b-orchestrate`.
+If the goal, constraints, acceptance criteria, non-goals, or intended behavior are unclear, emit a handoff envelope and instruct the user to run `/b-plan` (Clarification mode); resume only after the spec output is concrete enough to plan. If the request is already clear, skip this phase; do not author a substitute spec inside `b-orchestrate`.
 
 If external feasibility blocks the spec, instruct the user to run `/b-research` and resume only after the evidence is sufficient or the blocker is reported.
 
 ### Step 3 - Route the plan or direct-build phase
 
-Instruct the user to run `/b-plan` for non-trivial work, sequencing, risk, public contracts, multi-file edits, or any workflow that needs durable coordination. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §3 before applying the small-direct threshold. For a small direct workflow, instruct the user to run `/b-implement` with the current source of truth, expected scope, and verification need; do not write an execution outline inside `b-orchestrate`.
+Instruct the user to run `/b-plan` for non-trivial work, sequencing, risk, public contracts, multi-file edits, or any workflow that needs durable coordination. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/03-definitions.md` before applying the small-direct threshold. For a small direct workflow, instruct the user to run `/b-implement` with the current source of truth, expected scope, and verification need; do not write an execution outline inside `b-orchestrate`.
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §2 before treating a saved or chat plan as approved. Do not implement from an unapproved non-trivial plan unless the user explicitly delegated that exact approval after seeing the plan.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/02-source-of-truth.md` before treating a saved or chat plan as approved. Do not implement from an unapproved non-trivial plan unless the user explicitly delegated that exact approval after seeing the plan.
 
 ### Step 4 - Route implementation and verification
 
@@ -86,13 +85,13 @@ Instruct the user to run `/b-review` against the current diff with the spec or a
 - Test-only gap or harness failure -> `/b-test`.
 - Browser/DOM/visual/e2e evidence gap -> `/b-browser`.
 - Concrete behavior-preserving transform, including simplify -> `/b-refactor`.
-- New product decision or broad redesign -> `/b-spec` or `/b-plan`.
+- New product decision or broad redesign -> `/b-plan` (Clarification mode).
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §7 before applying the review-fix loop or stopping on repeated failures. Re-review after each coherent fix set until **b-review** returns **READY FOR PR**, returns **READY WITH FOLLOW-UPS** accepted by the user, or reports a blocker.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/07-execution.md` before applying the review-fix loop or stopping on repeated failures. Re-review after each coherent fix set until **b-review** returns **READY FOR PR**, returns **READY WITH FOLLOW-UPS** accepted by the user, or reports a blocker.
 
 ### Step 7 - Close the workflow
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §9 before reporting non-trivial workflow status or handing off unresolved work. Report the final review verdict, verification run, skipped checks, blockers, and remaining follow-ups. Do not claim **READY FOR PR** when the review had no baseline, required verification was skipped, or browser/DOM/e2e evidence remains relevant but absent.
+Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/09-output.md` before reporting non-trivial workflow status or handing off unresolved work. Report the final review verdict, verification run, skipped checks, blockers, and remaining follow-ups. Do not claim **READY FOR PR** when the review had no baseline, required verification was skipped, or browser/DOM/e2e evidence remains relevant but absent.
 
 ## Output format
 
@@ -100,7 +99,6 @@ Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §9 before r
 Workflow goal -> Checkpoint manifest -> Phase state -> Changes/verification -> Review verdict -> Blockers/follow-ups -> Next
 ```
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §9 before closing a non-trivial orchestration with status or handoff schemas.
 
 ## Rules
 

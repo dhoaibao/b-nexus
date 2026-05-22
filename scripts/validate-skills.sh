@@ -32,7 +32,6 @@ allowed_frontmatter = {
     'arguments',
     'disable-model-invocation',
     'user-invocable',
-    'allowed-tools',
     'model',
     'effort',
     'context',
@@ -49,8 +48,8 @@ required_sections = [
     '## Rules',
 ]
 
-if len(skill_paths) != 11:
-    errors.append(f'skills/: expected 11 SKILL.md files, found {len(skill_paths)}')
+if len(skill_paths) != 10:
+    errors.append(f'skills/: expected 10 SKILL.md files, found {len(skill_paths)}')
 
 if (root / 'commands').exists() and any((root / 'commands').glob('*.md')):
     errors.append('commands/: Claude-native runtime should not ship command wrappers; skills create /b-* commands')
@@ -110,18 +109,12 @@ for path in skill_paths:
         if section not in body:
             errors.append(f'{path}: missing required section {section!r}')
 
-    if 'status block' not in text and 'status or handoff' not in text:
-        errors.append(f'{path}: missing status block reference')
-
-    handoff_indicators = ['hand off to', 'handoff', 'hands off to']
-    if any(h in text.lower() for h in handoff_indicators):
-        has_handoff_ref = (
-            '[handoff]' in text
-            or 'handoff envelope' in text
-            or '§9' in text
-        )
-        if not has_handoff_ref:
-            errors.append(f'{path}: mentions handoff but missing [handoff] block, handoff envelope, or §9 reference')
+    # Status block and handoff rules are centralized in global/CLAUDE.md §9.
+    # Skills that emit handoff envelopes (not just route to another skill) must
+    # reference the output contract schema.
+    if 'handoff envelope' in text.lower() or '[handoff]' in text:
+        if 'contract/09-output' not in text:
+            errors.append(f'{path}: emits handoff envelope but missing contract/09-output reference')
 
     if '## Output format' in body:
         output_fmt_start = body.index('## Output format')
@@ -146,8 +139,9 @@ for path in skill_paths:
         if needle in text:
             errors.append(f'{path}: stale OpenCode/runtime pattern {needle!r}')
 
-    if 'references/b-agentic/runtime-contract.md' in text and '${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md' not in text:
-        errors.append(f'{path}: runtime contract read gates must use ${{CLAUDE_SKILL_DIR}} support path')
+    # Check contract/ references use the correct support path
+    if 'references/b-agentic/contract/' in text and '${CLAUDE_SKILL_DIR}/references/b-agentic/contract/' not in text:
+        errors.append(f'{path}: contract read gates must use ${{CLAUDE_SKILL_DIR}} support path')
 
     if 'performance-checklist.md' in text and '${CLAUDE_SKILL_DIR}/references/b-agentic/performance-checklist.md' not in text:
         errors.append(f'{path}: performance checklist read gates must use ${{CLAUDE_SKILL_DIR}} support path')
@@ -158,8 +152,9 @@ for path in skill_paths:
     if re.search(r'Read §\d+', text):
         errors.append(f'{path}: read gates must name the reference file, not only a section number')
 
-    if 'Graceful degradation:' in text and '${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §4' not in text:
-        errors.append(f'{path}: tool fallback must explicitly read runtime contract §4 from skill support files')
+    # Graceful degradation rules are centralized in the kernel; skills should not restate them.
+    if 'Graceful degradation:' in text:
+        errors.append(f'{path}: graceful degradation rules are centralized in the kernel; skills must not restate them')
 
     skill_reference = path.parent / 'reference.md'
     if skill_reference.exists() and 'reference.md' not in text:
@@ -171,8 +166,8 @@ maintainer_path = root / 'CLAUDE.md'
 maintainer = maintainer_path.read_text() if maintainer_path.exists() else ''
 kernel_path = root / 'global' / 'CLAUDE.md'
 kernel = kernel_path.read_text() if kernel_path.exists() else ''
-runtime_contract_path = root / 'references' / 'runtime-contract.md'
-runtime_contract = runtime_contract_path.read_text() if runtime_contract_path.exists() else ''
+contract_index_path = root / 'references' / 'contract' / 'index.md'
+contract_index = contract_index_path.read_text() if contract_index_path.exists() else ''
 install_sh = (root / 'install.sh').read_text() if (root / 'install.sh').exists() else ''
 claude_readme = (root / 'claude' / 'README.md').read_text() if (root / 'claude' / 'README.md').exists() else ''
 
@@ -192,8 +187,8 @@ for doc_path, doc_text in [('README.md', readme), ('REFERENCE.md', reference)]:
     if not doc_text:
         errors.append(f'{doc_path}: missing or empty')
         continue
-    if '11-skill' not in doc_text and '11 skills' not in doc_text:
-        errors.append(f'{doc_path}: missing explicit 11-skill claim')
+    if '10-skill' not in doc_text and '10 skills' not in doc_text:
+        errors.append(f'{doc_path}: missing explicit 10-skill claim')
     for name in skill_names:
         if name not in doc_text:
             errors.append(f'{doc_path}: missing skill name {name}')
@@ -217,17 +212,15 @@ for needle in ['compatibility: opencode', 'global/AGENTS.md', 'commands/<name>.m
 
 for required in [
     'The active runtime kernel lives in `CLAUDE.md`',
-    '${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md',
+    '${CLAUDE_SKILL_DIR}/references/b-agentic/contract/',
     '~/.claude/b-agentic',
     '/tmp/claude-code/b-agentic',
-    '### Skill-exit status block',
-    '### Handoff envelope',
 ]:
-    if required not in runtime_contract:
-        errors.append(f'references/runtime-contract.md: missing Claude-native marker {required!r}')
+    if required not in contract_index:
+        errors.append(f'references/contract/index.md: missing Claude-native marker {required!r}')
 
-if 'global/AGENTS.md' in runtime_contract or '~/.config/opencode' in runtime_contract or '/tmp/opencode' in runtime_contract:
-    errors.append('references/runtime-contract.md: contains stale active OpenCode path')
+if 'global/AGENTS.md' in contract_index or '~/.config/opencode' in contract_index or '/tmp/opencode' in contract_index:
+    errors.append('references/contract/index.md: contains stale active OpenCode path')
 
 for required in ['settingsAction', 'mcpAction', 'CLAUDE_JSON_DST', 'skillsSynced']:
     if required not in install_sh:

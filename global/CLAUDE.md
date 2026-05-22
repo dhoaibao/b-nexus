@@ -2,13 +2,13 @@
 
 # b-agentic - Agent Workflow Kernel for Claude Code
 
-> Active always-on runtime rules for routing Claude Code skills, choosing tools, preserving safety, grounding evidence, verifying work, and handing off cleanly. Detailed schemas, rubrics, MCP bundles, and edge-case protocols live in `~/.claude/b-agentic/references/runtime-contract.md` after install and in `references/runtime-contract.md` in this source repo.
+> Active always-on runtime rules for routing Claude Code skills, choosing tools, preserving safety, grounding evidence, verifying work, and handing off cleanly. Detailed schemas, rubrics, MCP bundles, and edge-case protocols live in `~/.claude/b-agentic/references/contract/` after install and in `references/contract/` in this source repo.
 
 ## 0. Runtime Kernel
 
 Use these rules before any skill-specific instruction. If context pressure is high, preserve this kernel first.
 
-Reference gate: when a kernel rule, skill step, output format, or handoff says to use a schema, rubric, protocol, checklist, or reference section from a b-agentic runtime contract, read the named section or file before applying that rule. Installed Claude skills should reference their bundled supporting file at `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md`.
+Reference gate: when a kernel rule, skill step, output format, or handoff says to use a schema, rubric, protocol, checklist, or reference section from a b-agentic runtime contract, read the named section file before applying that rule. Installed Claude skills should reference their bundled supporting files at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/*.md`.
 
 Runtime gate checklist: for non-trivial work, make the gate explicit at the point of use. Before acting, confirm the active skill and source of truth; before editing or external/mutating actions, confirm approval, staleness, worktree, and safety gates; before reporting done or switching skills, confirm verification and read runtime contract §9 when a status block or handoff is required.
 
@@ -30,12 +30,11 @@ This runtime contract version is `2026-05-16`. New saved plans and multi-artifac
 
 ## 1. Routing
 
-Match the user's intent to one active skill. If a request spans phases, sequence `Clarify -> Decide -> Build -> Validate`.
+Match the user's intent to one active skill. If a request spans phases, sequence `Decide -> Build -> Validate`.
 
 | Intent | Skill |
 |---|---|
 | End-to-end PR readiness workflow across phases | `/b-orchestrate` |
-| Clarify what to build, lock goals/constraints | `/b-spec` |
 | Decide how to build, decompose work | `/b-plan` |
 | External docs, API facts, comparisons | `/b-research` |
 | Execute approved or clearly scoped work | `/b-implement` |
@@ -51,7 +50,7 @@ Match the user's intent to one active skill. If a request spans phases, sequence
 - Explicit end-to-end PR-readiness workflows use `b-orchestrate` to coordinate phase-skill handoffs; single-phase asks stay with the phase owner.
 - A failing test that likely exposes a real product bug beats `b-test`; use `b-debug`.
 - A named behavior-preserving rename/extract/move/inline/simplify/delete beats `b-implement`; use `b-refactor`.
-- Unclear user goal, end state, or acceptance criteria beats `b-plan`; use `b-spec`.
+- Unclear user goal, end state, or acceptance criteria stays in `b-plan` (Clarification mode).
 - Unclear implementation approach or sequencing with a clear goal beats `b-implement`; use `b-plan`.
 - `b-research` is for genuine external-knowledge blockers, not questions the codebase or repo docs can answer locally.
 - Browser, DOM-rendered, visual, and e2e verification uses `b-browser`; `b-test` remains non-browser-only, and no skill may add jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent project tooling as a side effect.
@@ -89,6 +88,8 @@ Detailed rubrics and confidence signal: runtime contract §3.
 ## 4. Tool Priority
 
 Use the lightest reliable tool. Native Glob/Grep/Read/Bash stay first for exact strings, manifests, prose, config, and commands. Treat MCP bundles as lazy capabilities, not default context sources; activate them only when they close the next evidence gap. Native tools are not MCP bundles; skill files may name them separately when they are part of the workflow.
+
+**Tool fallback (shared across all skills):** If required MCP bundles are unavailable, read `contract/04-tool-model.md` before applying fallbacks. Graceful degradation rules and the fallback ladder live there; skills do not restate them.
 
 | Task shape | First choice | Then narrow with |
 |---|---|---|
@@ -131,7 +132,9 @@ Detailed slug algorithm, paths, manifest schema, retention, and run-id continuit
 
 ## 9. Output And Handoffs
 
-Lead with findings, decisions, or the next action. Non-trivial runs use the shared `[status]` and `[handoff]` schemas from runtime contract §9. Save reports only when the user asks, a durable handoff/checkpoint needs one, output is too large for chat, or artifacts require a manifest.
+Lead with findings, decisions, or the next action. Non-trivial runs use the shared `[status]` and `[handoff]` schemas from `contract/09-output.md`. Save reports only when the user asks, a durable handoff/checkpoint needs one, output is too large for chat, or artifacts require a manifest.
+
+**Status block (shared across all skills):** Every non-trivial skill run must close with a status block using the schema in `contract/09-output.md`. Skills do not restate this rule.
 
 For reviews, findings come first and are severity ordered. BLOCKER findings are never elided.
 

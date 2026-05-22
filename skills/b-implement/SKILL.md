@@ -26,7 +26,7 @@ If `$ARGUMENTS` is present, treat it as a plan path, plan slug, approved chat pl
 
 ## When NOT to use
 
-- Scope is unclear -> use **b-spec** or **b-plan**.
+- Scope is unclear -> use **b-plan** (Clarification mode).
 - The primary job is a named mechanical transform -> use **b-refactor**.
 - The task is only tests -> use **b-test**.
 - A runtime root cause is unknown -> use **b-debug**.
@@ -39,7 +39,6 @@ If `$ARGUMENTS` is present, treat it as a plan path, plan slug, approved chat pl
 - `gitnexus-radar` *(optional, for shared route/tool/exported-boundary changes)*
 - `context7-docs` *(optional, for one narrow API uncertainty)*
 
-If required tools are unavailable, read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §4 before applying fallbacks. Graceful degradation: possible with native tools; broad symbol work is riskier without Serena.
 
 ## Steps
 
@@ -47,31 +46,34 @@ If required tools are unavailable, read `${CLAUDE_SKILL_DIR}/references/b-agenti
 
 Resolve scope in this order: saved plan path, plan slug, explicitly approved chat plan, then small direct request.
 
-For saved plans, read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §2 before validating approval state, applying the plan staleness gate, or updating durable metadata for a draft plan.
+For saved plans, validate before executing:
 
-If the saved plan has a `blocked_by` array, verify that every listed plan reports `status: complete`. If any blocker is not complete, stop with `cause: conflict` and report the blocking plan slug and status.
+1. **Frontmatter check:** `status` is `approved` or `in-progress`; `touch_points` lists at least one path; every unchecked step has `Done when` verification. If validation fails, stop with `cause: conflict` and report the failing check.
+2. **Approval check:** The plan has explicit user approval (current-chat or durable frontmatter `approved_at`). If unapproved, stop with `cause: user_blocked` and request approval.
+3. **Staleness check:** Run `git diff --name-only <approved_head>..HEAD -- <touch_points>` and `git diff --name-only <approved_head> -- <touch_points>` when `approved_head` exists. If any touched file has drift, stop with `cause: conflict` and report the stale plan.
+4. **Blocked-by check:** If the plan has a `blocked_by` array, verify every listed plan reports `status: complete`. If any blocker is not complete, stop with `cause: conflict` and report the blocking plan slug and status.
 
-If scope fails the small-direct threshold and no approved plan exists, hand off to **b-plan**. If the goal itself is ambiguous, hand off to **b-spec**.
+If scope fails the small-direct threshold and no approved plan exists, hand off to **b-plan**. If the goal itself is ambiguous, hand off to **b-plan** (Clarification mode).
 
 ### Step 2 - Check worktree and choose execution surface
 
 Run `git status --short`. Preserve unrelated changes, patch around unrelated edits in touched files, and stop if user changes directly conflict.
 
-For non-trivial work, read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §6 before deciding whether the current checkout is safe or whether isolation would materially reduce risk.
+For non-trivial work, read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before deciding whether the current checkout is safe or whether isolation would materially reduce risk.
 
 ### Step 3 - Implement the smallest coherent step
 
 Before editing, state the current step in one line: source of truth, files or symbols expected to change, behavior that must not change, planned verification, and whether approval or a review checkpoint is required.
 
-Use Serena for symbol-aware edits. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §6 before applying manual prose/config/glue patches.
+Use Serena for symbol-aware edits. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before applying manual prose/config/glue patches.
 
 Stay within approved scope. Stop for new product decisions, stale/wrong plans, or unplanned broad transforms. Tiny local mechanical edits required to complete the approved step may stay here; broad or primary mechanical transforms go to **b-refactor**.
 
 ### Step 4 - Verify before continuing
 
-Run the plan's check when available. Otherwise read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §7 before choosing verification from the ladder. Prefer touched-file diagnostics when supported, then the narrowest relevant command.
+Run the plan's check when available. Otherwise read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/07-execution.md` before choosing verification from the ladder. Prefer touched-file diagnostics when supported, then the narrowest relevant command.
 
-Classify failures: implementation mistake, stale local context, test harness issue, runtime uncertainty, unresolved API behavior, or external outage. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §7 before applying iteration cap, cascading-failure, transform rollback, or skipped-check labels. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §10 before high-risk completion claims.
+Classify failures: implementation mistake, stale local context, test harness issue, runtime uncertainty, unresolved API behavior, or external outage. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/07-execution.md` before applying iteration cap, cascading-failure, transform rollback, or skipped-check labels. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/10-decisions.md` before high-risk completion claims.
 
 ### Step 5 - Record progress and close
 
@@ -85,7 +87,6 @@ At completion, inspect the diff, run final relevant verification, report cleanup
 Plan source -> Step progress -> Changes -> Verification -> Blockers/Decisions -> Next
 ```
 
-Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §9 before closing non-trivial runs with status or handoff schemas.
 
 ## Rules
 
@@ -93,4 +94,4 @@ Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §9 before c
 - Do not add opportunistic refactors, compatibility code, or side cleanup.
 - Stop for new decisions instead of guessing.
 - A small direct request still needs real verification.
-- Read `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` §6 before manual edits under the global patch discipline.
+- Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` before manual edits under the global patch discipline.

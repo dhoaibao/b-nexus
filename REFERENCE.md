@@ -1,8 +1,8 @@
 # b-agentic — Agent Workflow Kernel Reference
 
-Reference guide for the 11-skill set that makes up `b-agentic`, an agent workflow kernel for Claude Code. For install and high-level repo overview, see [README.md](README.md). For maintainer guidance, see [CLAUDE.md](CLAUDE.md).
+Reference guide for the 10-skill set that makes up `b-agentic`, an agent workflow kernel for Claude Code. For install and high-level repo overview, see [README.md](README.md). For maintainer guidance, see [CLAUDE.md](CLAUDE.md).
 
-When this document cites `global/CLAUDE.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the active `CLAUDE.md`; detailed runtime behavior lives at `references/runtime-contract.md` in this repo and at `${CLAUDE_SKILL_DIR}/references/b-agentic/runtime-contract.md` inside installed skills. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
+When this document cites `global/CLAUDE.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the active `CLAUDE.md`; detailed runtime behavior lives at `references/contract/` in this repo and at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/` inside installed skills. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
 
 Runtime enforcement is intentionally mechanical: `global/CLAUDE.md` owns the runtime gate checklist, each skill step uses explicit read gates for shared schemas/protocols/checklists, Claude skills expose `/b-*` slash commands, and `scripts/validate-skills.sh` rejects passive pointers that would rely on memory.
 
@@ -10,7 +10,7 @@ MCP setup is part of the normal one-command install. The installer merges Serena
 
 Browser, DOM-rendered, visual, and e2e verification belongs to `b-browser`, not `b-test`. The suite does not add jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent browser/DOM tooling as a project dependency side effect. For UI/browser-relevant work, readiness claims require `b-browser`-verified supplied/CI evidence, existing-tool evidence, approved live-browser evidence, or an accepted follow-up.
 
-Mutating or coordinating Claude Code skills are manual-only in the first migrated release: `b-orchestrate`, `b-plan`, `b-implement`, `b-refactor`, `b-debug`, `b-test`, and `b-browser` use `disable-model-invocation: true`. `b-spec`, `b-research`, `b-review`, and `b-audit` may be model-invocable because they are clarification, discovery, or read-only review surfaces.
+Mutating or coordinating Claude Code skills are manual-only in the first migrated release: `b-orchestrate`, `b-plan`, `b-implement`, `b-refactor`, `b-debug`, `b-test`, and `b-browser` use `disable-model-invocation: true`. `b-research`, `b-review`, and `b-audit` may be model-invocable because they are discovery or read-only review surfaces. `b-plan` includes Clarification mode for underspecified requests.
 
 ---
 
@@ -27,7 +27,7 @@ Coordinates a complete PR-readiness workflow by handing work to phase skills.
 - Mints and carries a run-id for non-trivial workflows, and checkpoints phase state when the workflow pauses, enters a review-fix loop, or needs durable resume state.
 - Reads runtime contract gates before routing across phase skills, treating plans as approved, applying review-fix loops, or emitting non-trivial status output.
 - Emits explicit handoff envelopes, waits for the receiving skill's output/status/handoff, and validates returned phase state before continuing.
-- Uses `b-spec` only when the target outcome is unclear, then `b-plan` for non-trivial sequencing or `b-implement` for small direct workflows.
+- Uses `b-plan` (Clarification mode) when the target outcome is unclear, then `b-plan` for non-trivial sequencing or `b-implement` for small direct workflows.
 - Hands actual build work to `b-implement`, runtime failures to `b-debug`, behavior-preserving transforms to `b-refactor`, non-browser test work to `b-test`, and browser/DOM/visual/e2e evidence to `b-browser`.
 - Runs `b-review` against the current diff with the spec or approved plan as baseline, then routes findings back to the responsible phase skill.
 - Re-reviews after each coherent fix set until `READY FOR PR`, user-accepted `READY WITH FOLLOW-UPS`, or a blocker.
@@ -37,24 +37,9 @@ Coordinates a complete PR-readiness workflow by handing work to phase skills.
 
 ---
 
-### b-spec
-
-Clarifies rough or underspecified asks before planning.
-
-**Core behavior**
-- Stays active only while the target outcome is underdetermined.
-- Reads runtime contract gates before applying clarification budgets, handoff envelopes, or non-trivial status output.
-- Locks goal, constraints, acceptance criteria, non-goals, and assumptions with the smallest useful question loop.
-- Uses repo evidence and optional `CONTEXT.md` / `CONTEXT-MAP.md` terminology before asking the user what the repo already answers.
-- Enforces the global clarification budget; after two unresolved rounds, offers concrete interpretations with named assumptions.
-- Outputs a compact chat spec and hands off to `b-implement`, `b-plan`, or `b-research`.
-
-**Output**
-- Goal, constraints, acceptance criteria, non-goals, assumptions, and next skill.
-
 ### b-plan
 
-Turns a clear goal into an execution-ready plan without implementing.
+Turns goals into execution-ready plans. Handles both underspecified requests (Clarification mode) and clear goals (plan directly). Does not implement.
 
 **Core behavior**
 - Defaults to quick mode for low-risk, chat-sized scoped work and uses full mode only for durable, multi-session, dependency-heavy, or risky coordination.
@@ -189,7 +174,7 @@ Audits named repository or suite surfaces outside diff-first review.
 - Reads runtime contract and `skills/b-audit/reference.md` gates before baseline taxonomy, surface checklist selection, severity/status output, or saved reports.
 - Establishes a sufficient baseline from arguments, `--baseline`, approved plan, checkpoint, clarification, or the shared baseline source taxonomy; otherwise labels the audit `baseline-missing`.
 - Chooses a surface-specific checklist: installer/update path, runtime contract, validator, route/tool boundary, dependency/lockfile, generated artifact, or security-sensitive rule.
-- For b-agentic suite audits, checks routing boundaries, Claude skill layout alignment, runtime-contract consistency, docs sync, validator coverage, artifact paths, and safety-gate drift.
+- For b-agentic suite audits, checks routing boundaries, Claude skill layout alignment, contract consistency, docs sync, validator coverage, artifact paths, and safety-gate drift.
 - Names sampled files/symbols, skipped surfaces, and residual risk so no-findings audits are not mistaken for exhaustive proof.
 - Runs only narrow checks that materially support the audit unless `--skip-checks` is present.
 - Reports findings first and emits AUDIT PASS, AUDIT PASS WITH FOLLOW-UPS, or NEEDS FIXES.
