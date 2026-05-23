@@ -1,12 +1,14 @@
 ---
 name: b-plan
 description: >
-  Turn goals into execution-ready plans. Handles both underspecified requests
-  (clarify first) and clear goals (plan directly). Decomposes work, chooses an
-  approach, and writes ordered steps. Unlike b-implement, b-plan does not
-  change code.
+  Turn goals into execution-ready plans. Handles both underspecified
+  requests (clarify first) and clear goals (plan directly). Decomposes
+  work, chooses an approach, and writes ordered steps. Unlike b-implement,
+  b-plan does not change code.
 argument-hint: "[task]"
 ---
+
+<!-- Generated from skills/registry.yaml and skills/b-plan/prompt.md. Edit those sources, not this file. -->
 
 # b-plan
 

@@ -2,6 +2,9 @@
 
 Match the user's intent to one active skill before acting. If a request spans phases, sequence `Decide -> Build -> Validate`.
 
+The intent and trigger tables below are generated from `skills/registry.yaml`; keep the surrounding precedence rules hand-authored.
+
+<!-- generated:routing-intents:start -->
 | Intent | Skill |
 |---|---|
 | End-to-end PR readiness workflow across phases | `/b-orchestrate` |
@@ -14,6 +17,7 @@ Match the user's intent to one active skill before acting. If a request spans ph
 | Browser/DOM/visual/e2e verification | `/b-browser` |
 | Pre-PR changed-code review | `/b-review` |
 | b-agentic suite self-audit (suite-only) | `/b-audit` |
+<!-- generated:routing-intents:end -->
 
 ### Trigger precedence (when intents overlap)
 
@@ -46,6 +50,7 @@ Ask at most **2 clarification rounds** unless a real decision gate still blocks 
 
 The phrases below are routing aids only; do not duplicate them inside individual skill descriptions.
 
+<!-- generated:routing-triggers:start -->
 | Skill | Triggers |
 |---|---|
 | `/b-orchestrate` | orchestrate, workflow, end-to-end, ready for PR, full cycle |
@@ -58,8 +63,8 @@ The phrases below are routing aids only; do not duplicate them inside individual
 | `/b-browser` | browser, DOM, e2e, visual, screenshot, Playwright, Cypress, jsdom |
 | `/b-review` | review, PR, lint, pre-PR, "what would a reviewer" |
 | `/b-audit` | audit, repo audit, suite audit, maintainer audit |
+<!-- generated:routing-triggers:end -->
 
 Ignore legacy or alternate skill trees that do not match the installed runtime contract unless the user explicitly asks to inspect or edit them.
 
 ---
-

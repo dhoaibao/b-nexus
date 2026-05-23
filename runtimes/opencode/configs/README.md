@@ -51,4 +51,6 @@ MCP safety rules:
 
 ## Validator scope
 
-`scripts/validate-skills.sh` discovers and runs `runtimes/<name>/scripts/validate.sh` for each adapter. Shared checks should fail on runtime-specific wording drift in shared skills and shared contract files, while the OpenCode adapter validator checks only adapter-owned invariants and this documented bridge constraint.
+`scripts/validate-skills.sh` is the stable wrapper over `tooling/validate/run.sh`, which discovers and runs `runtimes/<name>/scripts/validate.sh` for each registered adapter. Shared checks should fail on runtime-specific wording drift in shared skills and shared contract files, while the OpenCode adapter validator checks only adapter-owned invariants and this documented bridge constraint.
+
+`scripts/smoke-install.sh` is the stable wrapper over `tests/smoke/install.sh`. The OpenCode adapter contributes its install coverage through `runtimes/opencode/tests/smoke.sh`.

@@ -2,13 +2,15 @@
 name: b-test
 description: >
   Test-driven development, test debugging, and test coverage evaluation.
-  Use for writing tests, fixing failing tests, evaluating coverage, or working
-  TDD-style. Unlike b-debug, which traces runtime bugs, b-test owns non-browser
-  test-specific failures: wrong assertions, missing mocks, fixture or setup
-  issues, and coverage gaps. Browser, DOM, visual, and e2e verification belongs
-  to b-browser.
+  Use for writing tests, fixing failing tests, evaluating coverage, or
+  working TDD-style. Unlike b-debug, which traces runtime bugs, b-test
+  owns non-browser test-specific failures: wrong assertions, missing
+  mocks, fixture or setup issues, and coverage gaps. Browser, DOM, visual,
+  and e2e verification belongs to b-browser.
 argument-hint: "[test-task-or-failure]"
 ---
+
+<!-- Generated from skills/registry.yaml and skills/b-test/prompt.md. Edit those sources, not this file. -->
 
 # b-test
 

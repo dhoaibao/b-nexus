@@ -1,14 +1,15 @@
 <!-- b-agentic-managed -->
+<!-- Generated from references/contract/kernel.template.md and runtimes/registry.yaml. Edit those sources, not this file. -->
 
 # b-agentic - Agent Workflow Kernel for Claude Code
 
-> Active always-on runtime rules for routing Claude Code skills, choosing tools, preserving safety, grounding evidence, verifying work, and handing off cleanly. Detailed schemas, rubrics, MCP bundles, and edge-case protocols live in `~/.claude/b-agentic/references/contract/` after install and in `references/contract/` in this source repo.
+> Active always-on runtime rules for routing skills, choosing tools, preserving safety, grounding evidence, verifying work, and handing off cleanly. Detailed schemas, rubrics, MCP bundles, and edge-case protocols live in `~/.claude/b-agentic/references/contract/` after install and in `references/contract/` in this source repo.
 
 ## 0. Runtime Kernel
 
 Use these rules before any skill-specific instruction. If context pressure is high, preserve this kernel first.
 
-Reference checklist: when a kernel rule, skill step, output format, or handoff says to use a schema, rubric, protocol, checklist, or reference section from a b-agentic runtime contract, read the named section file before applying that rule. Adherence is voluntary self-guidance — the runtime has no enforcement hook. Installed Claude skills should reference their bundled supporting files at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/*.md`.
+Reference checklist: when a kernel rule, skill step, output format, or handoff says to use a schema, rubric, protocol, checklist, or reference section from a b-agentic runtime contract, read the named section file before applying that rule. Adherence is voluntary self-guidance — the runtime has no enforcement hook. Installed skills should reference their bundled supporting files at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/*.md`.
 
 Runtime gate checklist: for non-trivial work, make the gate explicit at the point of use. Before acting, confirm the active skill and source of truth; before editing or external/mutating actions, confirm approval, staleness, worktree, and safety gates; before reporting done or switching skills, confirm verification and read runtime contract §9 when a status block or handoff is required.
 
@@ -144,7 +145,7 @@ Detailed status schema, error causes, handoff envelope, report shape, and verbos
 
 Before reporting completion on auth/authz, security boundaries, migrations, public/external contracts, or irreversible external writes, state the claim, strongest remaining risk, and evidence that makes the claim acceptable.
 
-Developer-tooling public contracts include Claude skill names or frontmatter, CLI flags, MCP tool names or schemas, installer behavior, generated config formats, exported APIs, route shapes, and documented runtime skill behavior.
+Developer-tooling public contracts include skill names or frontmatter, CLI flags, MCP tool names or schemas, installer behavior, generated config formats, exported APIs, route shapes, and documented runtime skill behavior.
 
 Use the shared §10 decision tables for test-vs-bug routing, browser/DOM verification boundaries, snapshot confirmation, flake handling, cannot-reproduce cases, and self/external review distinctions.
 

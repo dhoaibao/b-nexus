@@ -62,6 +62,13 @@ curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh 
 
 If an existing kernel file is preserved, the installer exits with `activationState: pending`. Review the managed snapshot, then rerun with `--replace-memory` or merge the kernel manually.
 
+Internally, `install.sh` now stays as the bootstrap entrypoint only: it syncs the source repo, then sources `tooling/install/common.sh` for shared install and uninstall behavior and the selected `runtimes/<name>/scripts/install.sh` driver for runtime-owned paths, wrapper handling, manifest shape, and report wording.
+
+The top-level verification entrypoints are stable wrappers now:
+
+- `scripts/validate-skills.sh` delegates to `tooling/validate/run.sh`, which runs shared checks plus each registered runtime's `runtimes/<name>/scripts/validate.sh`.
+- `scripts/smoke-install.sh` delegates to `tests/smoke/install.sh`, which sources each registered runtime's `runtimes/<name>/tests/smoke.sh` lane.
+
 ## One Command
 
 For Claude Code, plain install syncs the runtime, merges recommended settings, and installs all MCP servers at Claude Code user scope:
@@ -104,6 +111,9 @@ The first Claude-native release supports personal-global install only. Project-l
 
 ## Skills
 
+The table below is generated from `skills/registry.yaml`.
+
+<!-- generated:skills-table:start -->
 | Skill | Phase | Use |
 |---|---|---|
 | `/b-orchestrate` | End-to-end | Coordinate phase handoffs until PR-ready, ready with follow-ups, or blocked |
@@ -117,6 +127,7 @@ The first Claude-native release supports personal-global install only. Project-l
 | `/b-review` | Validate | Review changed code for blockers, regressions, security, and coverage |
 | `/b-audit` | Validate | Audit the b-agentic suite for systemic risk (suite-only) |
 | `/b-ship` | Ship | Commit, push, and open a PR after READY FOR PR |
+<!-- generated:skills-table:end -->
 
 The suite stops at `READY FOR PR`; commit, push, and PR creation are user-initiated actions via `/b-ship`.
 
@@ -140,26 +151,42 @@ All skills are model-invocable when their descriptions match the request. Skill 
 ```text
 b-agentic/
 ├── CLAUDE.md              # Maintainer guidance for this source repo
+├── skills/
+│   ├── registry.yaml      # Canonical skill metadata and rendered SKILL.md frontmatter
+│   └── <name>/            # prompt.md source, generated SKILL.md, and optional support files
 ├── runtimes/              # Runtime adapter directories
+│   ├── registry.yaml      # Canonical runtime metadata for adapter generation and validation
 │   ├── claude-code/       # Claude Code adapter
-│   │   ├── kernel.md      # Always-on runtime rules (installs as ~/.claude/CLAUDE.md)
+│   │   ├── kernel.md      # Generated Claude kernel output (installs as ~/.claude/CLAUDE.md)
 │   │   ├── configs/       # Settings and MCP config templates
-│   │   └── scripts/       # Claude-specific install and validate scripts
-│   └── opencode/          # OpenCode adapter
-│       ├── kernel.md      # Always-on runtime rules (installs as ~/.config/opencode/AGENTS.md)
-│       ├── configs/       # Runtime layout documentation
-│       └── scripts/       # OpenCode-specific install and validate scripts
-├── references/            # shared runtime-neutral references copied into skill support dirs
-├── skills/<name>/         # Skill instructions and optional reference.md files
-├── install.sh             # Shared installer entrypoint; delegates to runtime scripts
-└── scripts/               # Shared validation and smoke-test helpers
+│   │   ├── scripts/       # Claude-specific install and validate scripts
+│   │   └── tests/         # Claude-specific smoke lane
+│   ├── opencode/          # OpenCode adapter
+│   │   ├── kernel.md      # Generated OpenCode kernel output (installs as ~/.config/opencode/AGENTS.md)
+│   │   ├── configs/       # Runtime layout documentation
+│   │   ├── scripts/       # OpenCode-specific install and validate scripts
+│   │   └── tests/         # OpenCode-specific smoke lane
+│   └── runtime-template/  # Scaffold for adding a new runtime adapter
+├── references/            # shared runtime-neutral references and kernel template sources
+├── tooling/generate/      # Renderers for kernels, SKILL.md outputs, wrappers, and doc tables
+├── tooling/install/       # Shared installer core reused by runtime drivers
+├── tooling/validate/      # Shared validation runner and runtime-neutral checks
+├── tests/smoke/           # Shared smoke harness reused by runtime lanes
+├── install.sh             # Bootstrap installer entrypoint; syncs source then dispatches to shared core + runtime driver
+└── scripts/               # Stable wrapper entrypoints for validation and smoke flows
 ```
 
 ## Docs
 
 - `README.md` is the brief repo overview, install guide, and source-layout map.
-- `skills/*/SKILL.md` files are the authoritative skill behavior and routing source.
-- `runtimes/*/kernel.md` files are the authoritative runtime-kernel source.
+- `skills/registry.yaml` plus `skills/*/prompt.md` are the canonical skill authoring sources.
+- `runtimes/registry.yaml` plus `references/contract/kernel.template.md` are the canonical runtime-kernel authoring sources.
+- `skills/*/SKILL.md` and `runtimes/*/kernel.md` are committed generated delivery assets.
+- `tooling/generate/registry_sync.py` renders kernels, `SKILL.md` outputs, wrappers, and generated doc blocks before validation or install changes.
+- `tooling/validate/run.sh` plus `tooling/validate/shared.py` are the shared validation harness behind `scripts/validate-skills.sh`.
+- `tests/smoke/install.sh` plus `tests/smoke/lib.sh` are the shared smoke harness behind `scripts/smoke-install.sh`.
+- `runtimes/<name>/tests/smoke.sh` is the adapter-owned smoke lane for each registered runtime.
+- `runtimes/runtime-template/` is the adapter scaffold for adding a future runtime without rewriting root wrappers.
 - `references/contract/` is the detailed runtime contract; referenced sections are required read gates when a skill needs their schemas, checklists, or protocols.
 - `skills/*/reference.md` files are optional skill-local support material, not a root mirror doc.
 - `CLAUDE.md` is the Claude Code maintainer guide for editing this source repo.

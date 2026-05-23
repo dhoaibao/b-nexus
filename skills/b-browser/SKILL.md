@@ -1,12 +1,14 @@
 ---
 name: b-browser
 description: >
-  Browser automation and evidence operator for Playwright, Cypress, Puppeteer,
-  WebDriver, visual, screenshot, browser-session, live UI, and e2e checks.
-  Unlike b-test, b-browser owns browser/DOM readiness evidence, not non-browser
-  unit, integration, or contract tests.
+  Browser automation and evidence operator for Playwright, Cypress,
+  Puppeteer, WebDriver, visual, screenshot, browser-session, live UI, and
+  e2e checks. Unlike b-test, b-browser owns browser/DOM readiness
+  evidence, not non-browser unit, integration, or contract tests.
 argument-hint: "[browser-or-e2e-request]"
 ---
+
+<!-- Generated from skills/registry.yaml and skills/b-browser/prompt.md. Edit those sources, not this file. -->
 
 # b-browser
 

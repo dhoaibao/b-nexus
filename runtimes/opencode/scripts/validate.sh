@@ -6,6 +6,7 @@ cd "$ROOT_DIR"
 
 python3 - <<'PY'
 from pathlib import Path
+import json
 import re
 import sys
 
@@ -14,19 +15,28 @@ errors = []
 
 
 def command_exposed_skill_names():
+    registry_path = root / 'skills' / 'registry.yaml'
+    try:
+        registry = json.loads(registry_path.read_text())
+    except Exception as exc:
+        errors.append(f'{registry_path}: invalid JSON-compatible YAML registry: {exc}')
+        return set()
+
     names = set()
-    for path in root.glob('skills/*/SKILL.md'):
-        text = path.read_text()
-        frontmatter = ''
-        if text.startswith('---\n'):
-            parts = text.split('---', 2)
-            if len(parts) >= 3:
-                frontmatter = parts[1]
-
-        if re.search(r'^user-invocable:\s*false\s*$', frontmatter, re.MULTILINE):
+    for skill in registry.get('skills', []):
+        if not isinstance(skill, dict):
+            errors.append('skills/registry.yaml: skill entries must be objects')
             continue
-
-        names.add(path.parent.name)
+        command = skill.get('command', {})
+        if not isinstance(command, dict):
+            errors.append(f"skills/registry.yaml: missing command object for {skill.get('name')!r}")
+            continue
+        if command.get('exposed') is True:
+            alias = command.get('alias')
+            if not isinstance(alias, str) or not alias:
+                errors.append(f"skills/registry.yaml: invalid command alias for {skill.get('name')!r}")
+                continue
+            names.add(alias)
     return names
 
 
@@ -39,6 +49,19 @@ contract_index = (root / 'references' / 'contract' / 'index.md').read_text() if 
 maintainer = (root / 'CLAUDE.md').read_text() if (root / 'CLAUDE.md').exists() else ''
 opencode_install = (root / 'runtimes' / 'opencode' / 'scripts' / 'install.sh').read_text() if (root / 'runtimes' / 'opencode' / 'scripts' / 'install.sh').exists() else ''
 commands_dir = root / 'runtimes' / 'opencode' / 'commands'
+runtime_registry_path = root / 'runtimes' / 'registry.yaml'
+
+try:
+    runtime_registry = json.loads(runtime_registry_path.read_text())
+except Exception as exc:
+    runtime_registry = {}
+    errors.append(f'{runtime_registry_path}: invalid JSON-compatible YAML registry: {exc}')
+
+opencode_runtime = None
+for runtime in runtime_registry.get('runtimes', []):
+    if isinstance(runtime, dict) and runtime.get('name') == 'opencode':
+        opencode_runtime = runtime
+        break
 
 if not kernel_path.exists():
     errors.append('runtimes/opencode/kernel.md: missing')
@@ -52,6 +75,15 @@ if 'Reference gate:' in kernel:
 
 if 'OpenCode' not in maintainer:
     errors.append('CLAUDE.md: must mention OpenCode as a supported runtime')
+
+if not isinstance(opencode_runtime, dict):
+    errors.append('runtimes/registry.yaml: missing opencode runtime entry')
+else:
+    command_wrappers = opencode_runtime.get('command_wrappers')
+    if not isinstance(command_wrappers, dict) or command_wrappers.get('supported') is not True:
+        errors.append('runtimes/registry.yaml: opencode must declare supported command wrappers')
+    elif command_wrappers.get('source_dir') != 'runtimes/opencode/commands':
+        errors.append('runtimes/registry.yaml: opencode command wrapper source_dir must be runtimes/opencode/commands')
 
 for required in [
     '~/.config/opencode/b-agentic',

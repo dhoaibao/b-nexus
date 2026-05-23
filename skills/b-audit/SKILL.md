@@ -2,12 +2,14 @@
 name: b-audit
 description: >
   b-agentic suite self-audit only. Reviewer-style audits of the b-agentic
-  runtime contract, skill layout, installer, validator, tool boundaries, or
-  safety-gate drift. Unlike b-review, b-audit is not diff/range-first and
-  reports sampled coverage plus residual risk. For any other codebase, use
-  b-review.
+  runtime contract, skill layout, installer, validator, tool boundaries,
+  or safety-gate drift. Unlike b-review, b-audit is not diff/range-first
+  and reports sampled coverage plus residual risk. For any other codebase,
+  use b-review.
 argument-hint: "[--surface=<area>] [--baseline=<path|url>] [--skip-checks]"
 ---
+
+<!-- Generated from skills/registry.yaml and skills/b-audit/prompt.md. Edit those sources, not this file. -->
 
 # b-audit
 

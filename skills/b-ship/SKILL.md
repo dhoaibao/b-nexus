@@ -1,12 +1,15 @@
 ---
 name: b-ship
 description: >
-  Commit, push, and open a pull request after the suite reaches READY FOR PR.
-  Invoked by the user or b-orchestrate when a reviewed diff is ready to ship.
-  Safety-gates each git action (commit, push, PR creation); never force-pushes.
-  Stops after the PR URL is printed; post-PR automation is out of scope.
+  Commit, push, and open a pull request after the suite reaches READY FOR
+  PR. Invoked by the user or b-orchestrate when a reviewed diff is ready
+  to ship. Safety-gates each git action (commit, push, PR creation); never
+  force-pushes. Stops after the PR URL is printed; post-PR automation is
+  out of scope.
 argument-hint: "[--draft] [--title=<title>] [--base=<branch>]"
 ---
+
+<!-- Generated from skills/registry.yaml and skills/b-ship/prompt.md. Edit those sources, not this file. -->
 
 # b-ship
 

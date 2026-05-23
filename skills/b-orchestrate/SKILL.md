@@ -4,11 +4,13 @@ description: >
   End-to-end PR readiness orchestration for workflows spanning plan,
   implementation, optional tests, review, and review-fix loops until ready
   for PR. Invokes phase skills via the Skill tool, parses their status
-  blocks, and stops at approval, blocker, or readiness. Unlike b-implement,
-  b-orchestrate owns sequencing across multiple skills rather than changing
-  code itself.
+  blocks, and stops at approval, blocker, or readiness. Unlike
+  b-implement, b-orchestrate owns sequencing across multiple skills rather
+  than changing code itself.
 argument-hint: "[workflow-goal]"
 ---
+
+<!-- Generated from skills/registry.yaml and skills/b-orchestrate/prompt.md. Edit those sources, not this file. -->
 
 # b-orchestrate
 

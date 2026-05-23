@@ -4,6 +4,8 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   exit 1
 fi
 
+readonly RUNTIME_UNINSTALL_LABEL="OpenCode personal config"
+readonly RUNTIME_PRESERVE_LABEL="OpenCode"
 readonly OPENCODE_DIR="${B_AGENTIC_OPENCODE_DIR:-$HOME/.config/opencode}"
 readonly METADATA_DIR="$OPENCODE_DIR/b-agentic"
 readonly BACKUPS_DIR="$METADATA_DIR/backups"
@@ -17,140 +19,27 @@ readonly REFERENCES_DST="$METADATA_DIR/references"
 readonly TEMPLATES_DST="$METADATA_DIR/templates"
 readonly MANIFEST_DST="$METADATA_DIR/install.json"
 readonly OPENCODE_JSON_DST="${B_AGENTIC_OPENCODE_JSON:-$HOME/.config/opencode/opencode.json}"
+readonly MCP_CONFIG_DST="$OPENCODE_JSON_DST"
+readonly MCP_ROOT_KEY="mcp"
+readonly MCP_PLACEHOLDER_STYLE="opencode"
+readonly MCP_CONTEXT7_SECTION="headers"
+readonly MCP_BRAVE_SECTION="environment"
+readonly MCP_FIRECRAWL_SECTION="environment"
+readonly MCP_BACKUP_KEY="opencodeJson"
 
 CONTEXT7_API_KEY_INPUT=""
 BRAVE_API_KEY_INPUT=""
 FIRECRAWL_API_KEY_INPUT=""
 
-mcp_secret_configured() {
-  local server="$1" section="$2" key="$3"
-  [ -f "$OPENCODE_JSON_DST" ] || return 1
-  python3 - "$OPENCODE_JSON_DST" "$server" "$section" "$key" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-server, section, key = sys.argv[2:5]
-try:
-    data = json.loads(path.read_text())
-except Exception:
-    sys.exit(1)
-
-value = (
-    data.get('mcp', {})
-    .get(server, {})
-    .get(section, {})
-    .get(key)
-)
-if isinstance(value, str) and value and not value.startswith('{env:'):
-    sys.exit(0)
-sys.exit(1)
-PY
-}
-
-prompt_secret() {
-  local label="$1" value=""
-  printf '%s (leave blank to skip): ' "$label" > /dev/tty
-  IFS= read -r -s value < /dev/tty || value=""
-  printf '\n' > /dev/tty
-  printf '%s' "$value"
-}
-
-collect_api_keys() {
-  can_prompt_api_keys || return 0
-
-  printf '\nOptional MCP API keys. Values are written to %s and never to tracked templates.\n' "$OPENCODE_JSON_DST" > /dev/tty
-  if ! mcp_secret_configured context7 headers CONTEXT7_API_KEY; then
-    CONTEXT7_API_KEY_INPUT="$(prompt_secret 'Context7 API key')"
-  fi
-  if ! mcp_secret_configured brave-search environment BRAVE_API_KEY; then
-    BRAVE_API_KEY_INPUT="$(prompt_secret 'Brave Search API key')"
-  fi
-  if ! mcp_secret_configured firecrawl environment FIRECRAWL_API_KEY; then
-    FIRECRAWL_API_KEY_INPUT="$(prompt_secret 'Firecrawl API key')"
-  fi
-}
-
-apply_prompted_mcp_keys() {
-  local action="$1" current_backup="$2"
-  if [ -z "$CONTEXT7_API_KEY_INPUT" ] && [ -z "$BRAVE_API_KEY_INPUT" ] && [ -z "$FIRECRAWL_API_KEY_INPUT" ]; then
-    printf 'none'
-    return 0
-  fi
-  if dry_run_enabled; then
-    printf 'none'
-    return 0
-  fi
-
-  local tmp rc
-  tmp="$(mktemp "${TMPDIR:-/tmp}/b-agentic-mcp-keys.XXXXXX")"
-  chmod 600 "$tmp"
-  if env \
-    OPENCODE_JSON_DST="$OPENCODE_JSON_DST" \
-    JSON_TMP="$tmp" \
-    CONTEXT7_API_KEY_INPUT="$CONTEXT7_API_KEY_INPUT" \
-    BRAVE_API_KEY_INPUT="$BRAVE_API_KEY_INPUT" \
-    FIRECRAWL_API_KEY_INPUT="$FIRECRAWL_API_KEY_INPUT" \
-    python3 - <<'PY'
-import json
-import os
-from pathlib import Path
-
-path = Path(os.environ['OPENCODE_JSON_DST'])
-tmp = Path(os.environ['JSON_TMP'])
-data = json.loads(path.read_text())
-servers = data.setdefault('mcp', {})
-
-updates = {
-    ('context7', 'headers', 'CONTEXT7_API_KEY'): os.environ.get('CONTEXT7_API_KEY_INPUT', ''),
-    ('brave-search', 'environment', 'BRAVE_API_KEY'): os.environ.get('BRAVE_API_KEY_INPUT', ''),
-    ('firecrawl', 'environment', 'FIRECRAWL_API_KEY'): os.environ.get('FIRECRAWL_API_KEY_INPUT', ''),
-}
-
-for (server_name, section_name, key_name), value in updates.items():
-    if not value:
-        continue
-    server = servers.setdefault(server_name, {})
-    section = server.setdefault(section_name, {})
-    section[key_name] = value
-
-if json.loads(path.read_text()) == data:
-    raise SystemExit(2)
-tmp.write_text(json.dumps(data, indent=2, sort_keys=True) + '\n')
-PY
-  then
-    rc=0
-  else
-    rc=$?
-  fi
-
-  if [ "$rc" -eq 2 ]; then
-    rm -f "$tmp"
-    printf 'none'
-    return 0
-  fi
-  if [ "$rc" -ne 0 ]; then
-    rm -f "$tmp"
-    die "failed to write prompted MCP API keys: $OPENCODE_JSON_DST"
-  fi
-
-  local backup="$current_backup"
-  if [ "$action" != "write" ] && [ "$backup" = "none" ]; then
-    backup="$(backup_file "$OPENCODE_JSON_DST")"
-  fi
-  run_cmd mv "$tmp" "$OPENCODE_JSON_DST"
-  printf '%s' "${backup:-none}"
-}
-
-install_mcp_config() {
-  merge_json_file "$TEMPLATES_SRC/mcp.user.template.json" "$OPENCODE_JSON_DST" "mcp" "opencodeJson"
+runtime_warn_missing_cli() {
+  command -v opencode >/dev/null 2>&1 || warn "opencode CLI not found; files will still be installed for OpenCode to discover later."
 }
 
 command_names() {
   python3 - "$COMMANDS_SRC" <<'PY'
 from pathlib import Path
 import sys
+
 root = Path(sys.argv[1])
 for path in sorted(root.glob('*.md')):
     print(path.stem)
@@ -206,26 +95,21 @@ install_commands() {
   rm -rf "$next_snapshot"
 }
 
-print_install_report() {
-  local activation_state="$1" skill_count="$2" command_count="$3" memory_action="$4" memory_backup="$5" mcp_action="$6" mcp_backup="$7"
-
-  log ""
-  log "b-agentic OpenCode install complete"
-  log "skillsSynced: $skill_count -> $SKILLS_DST"
-  log "commandsSynced: $command_count -> $COMMANDS_DST"
-  log "kernel: $memory_action -> $KERNEL_DST"
-  log "mcp: $mcp_action -> $OPENCODE_JSON_DST"
-  log "references: sync -> $REFERENCES_DST"
-  log "templates: sync -> $TEMPLATES_DST"
-  log "manifest: write -> $MANIFEST_DST"
-  log "backups:"
-  log "  kernel: $memory_backup"
-  log "  mcp: $mcp_backup"
-  log "activationState: $activation_state"
+runtime_install_extra_assets() {
+  [ -d "$COMMANDS_SRC" ] || die "missing command source directory: $COMMANDS_SRC"
+  install_commands INSTALL_COMMAND_NAMES
 }
 
-write_manifest() {
-  local memory_action="$1" activation_state="$2" memory_backup="$3" mcp_action="$4" mcp_state="$5" mcp_backup="$6" skills="$7" commands="$8"
+runtime_install_configs() {
+  local mcp_result
+  mcp_result="$(install_mcp_config)"
+  read_install_triplet "$mcp_result" "skip" "none" "none" \
+    INSTALL_MCP_ACTION INSTALL_MCP_STATE INSTALL_MCP_BACKUP
+}
+
+runtime_write_manifest() {
+  local skills_string="${INSTALL_SKILL_NAMES[*]}"
+  local commands_string="${INSTALL_COMMAND_NAMES[*]}"
 
   if dry_run_enabled; then
     printf '[dry-run] write manifest %s\n' "$MANIFEST_DST" >&2
@@ -237,12 +121,12 @@ write_manifest() {
     MANIFEST_DST="$MANIFEST_DST" \
     TIMESTAMP="$TIMESTAMP" \
     RUNTIME="$RUNTIME" \
-    MEMORY_ACTION="$memory_action" \
-    ACTIVATION_STATE="$activation_state" \
-    MEMORY_BACKUP="$memory_backup" \
-    MCP_ACTION="$mcp_action" \
-    MCP_STATE="$mcp_state" \
-    MCP_BACKUP="$mcp_backup" \
+    MEMORY_ACTION="$INSTALL_MEMORY_ACTION" \
+    ACTIVATION_STATE="$INSTALL_ACTIVATION_STATE" \
+    MEMORY_BACKUP="$INSTALL_MEMORY_BACKUP" \
+    MCP_ACTION="$INSTALL_MCP_ACTION" \
+    MCP_STATE="$INSTALL_MCP_STATE" \
+    MCP_BACKUP="$INSTALL_MCP_BACKUP" \
     OPENCODE_DIR="$OPENCODE_DIR" \
     OPENCODE_JSON_DST="$OPENCODE_JSON_DST" \
     SKILLS_DST="$SKILLS_DST" \
@@ -250,8 +134,8 @@ write_manifest() {
     REFERENCES_DST="$REFERENCES_DST" \
     TEMPLATES_DST="$TEMPLATES_DST" \
     KERNEL_DST="$KERNEL_DST" \
-    SKILLS="$skills" \
-    COMMANDS="$commands" \
+    SKILLS="$skills_string" \
+    COMMANDS="$commands_string" \
     python3 - <<'PY'
 import json
 import os
@@ -287,54 +171,32 @@ Path(os.environ['MANIFEST_DST']).write_text(json.dumps(manifest, indent=2, sort_
 PY
 }
 
-manifest_command_names() {
-  if [ ! -f "$MANIFEST_DST" ]; then
-    command_names
-    return 0
-  fi
-
-  python3 - "$MANIFEST_DST" <<'PY'
-import json
-import sys
-from pathlib import Path
-path = Path(sys.argv[1])
-try:
-    data = json.loads(path.read_text())
-except Exception:
-    data = {}
-for name in data.get('commands', []):
-    print(name)
-PY
+runtime_print_install_report() {
+  log ""
+  log "b-agentic OpenCode install complete"
+  log "skillsSynced: ${#INSTALL_SKILL_NAMES[@]} -> $SKILLS_DST"
+  log "commandsSynced: ${#INSTALL_COMMAND_NAMES[@]} -> $COMMANDS_DST"
+  log "kernel: $INSTALL_MEMORY_ACTION -> $KERNEL_DST"
+  log "mcp: $INSTALL_MCP_ACTION -> $OPENCODE_JSON_DST"
+  log "references: sync -> $REFERENCES_DST"
+  log "templates: sync -> $TEMPLATES_DST"
+  log "manifest: write -> $MANIFEST_DST"
+  log "backups:"
+  log "  kernel: $INSTALL_MEMORY_BACKUP"
+  log "  mcp: $INSTALL_MCP_BACKUP"
+  log "activationState: $INSTALL_ACTIVATION_STATE"
 }
 
-runtime_uninstall() {
-  require_bin python3
-  log "Uninstalling b-agentic from OpenCode personal config"
+manifest_command_names() {
+  if manifest_array_values commands; then
+    return 0
+  fi
+  command_names
+}
+
+runtime_uninstall_extra_assets() {
   local name commands_path command_snapshot
   commands_path="$(manifest_path_value commands "$COMMANDS_DST")"
-  if [ -f "$MANIFEST_DST" ]; then
-    while IFS= read -r name; do
-      [ -n "$name" ] || continue
-      run_cmd rm -rf "$SKILLS_DST/$name"
-    done < <(python3 - "$MANIFEST_DST" <<'PY'
-import json
-import sys
-from pathlib import Path
-path = Path(sys.argv[1])
-try:
-    data = json.loads(path.read_text())
-except Exception:
-    data = {}
-for name in data.get('skills', []):
-    print(name)
-PY
-)
-  else
-    for name in b-orchestrate b-plan b-research b-implement b-refactor b-debug b-test b-browser b-review b-audit b-ship; do
-      run_cmd rm -rf "$SKILLS_DST/$name"
-    done
-  fi
-
   while IFS= read -r name; do
     [ -n "$name" ] || continue
     command_snapshot="$COMMANDS_SNAPSHOT_DST/$name.md"
@@ -351,58 +213,18 @@ PY
       warn "preserving modified OpenCode command wrapper: $commands_path/$name.md"
     fi
   done < <(manifest_command_names)
+}
 
-  remove_managed_kernel
+runtime_uninstall_configs() {
   local opencode_json_path
   opencode_json_path="$(manifest_path_value opencodeJson "$OPENCODE_JSON_DST")"
   remove_merged_config "$opencode_json_path" "$TEMPLATES_DST/mcp.user.template.json" "opencode.json" "opencodeJson" "mcpAction"
-  run_cmd rm -rf "$METADATA_DIR"
-  log "Uninstall complete. User-owned OpenCode files were preserved."
 }
 
 runtime_main() {
-  command -v opencode >/dev/null 2>&1 || warn "opencode CLI not found; files will still be installed for OpenCode to discover later."
-  [ -d "$COMMANDS_SRC" ] || die "missing command source directory: $COMMANDS_SRC"
+  runtime_install_common
+}
 
-  local skill command
-  local installed_skills=()
-  local installed_commands=()
-  while IFS= read -r skill; do
-    [ -n "$skill" ] || continue
-    installed_skills+=("$skill")
-  done < <(skill_names)
-  install_skills
-  install_commands installed_commands
-
-  install_references_and_templates
-
-  local kernel_result memory_action activation_state memory_backup
-  local -a kernel_lines
-  kernel_result="$(install_kernel)"
-  readarray -t kernel_lines <<< "$kernel_result"
-  memory_action="${kernel_lines[0]:-preserve}"
-  activation_state="${kernel_lines[1]:-pending}"
-  memory_backup="${kernel_lines[2]:-none}"
-
-  local mcp_result mcp_action mcp_state mcp_backup
-  local -a mcp_lines
-  mcp_result="$(install_mcp_config)"
-  readarray -t mcp_lines <<< "$mcp_result"
-  mcp_action="${mcp_lines[0]:-skip}"
-  mcp_state="${mcp_lines[1]:-none}"
-  mcp_backup="${mcp_lines[2]:-none}"
-  collect_api_keys
-  prompted_mcp_backup="$(apply_prompted_mcp_keys "$mcp_action" "$mcp_backup")"
-  if [ "$prompted_mcp_backup" != "none" ]; then
-    mcp_backup="$prompted_mcp_backup"
-  fi
-
-  write_manifest "$memory_action" "$activation_state" "$memory_backup" "$mcp_action" "$mcp_state" "$mcp_backup" "${installed_skills[*]}" "${installed_commands[*]}"
-
-  print_install_report "$activation_state" "${#installed_skills[@]}" "${#installed_commands[@]}" "$memory_action" "$memory_backup" "$mcp_action" "$mcp_backup"
-  ensure_repo_gitignore_guard
-  if [ "$activation_state" = "pending" ]; then
-    log "Existing $KERNEL_DST was preserved. Review $KERNEL_SNAPSHOT_DST and rerun with --replace-memory to activate the kernel."
-    return 2
-  fi
+runtime_uninstall() {
+  runtime_uninstall_common
 }

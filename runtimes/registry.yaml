@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "format": "json-subset-of-yaml",
+  "runtimes": [
+    {
+      "name": "claude-code",
+      "display_name": "Claude Code",
+      "reference_runtime": true,
+      "kernel_source": "runtimes/claude-code/kernel.md",
+      "memory_file": "CLAUDE.md",
+      "memory_install_path": "~/.claude/CLAUDE.md",
+      "metadata_root": "~/.claude/b-agentic",
+      "skills_install_root": "~/.claude/skills",
+      "config_template_dir": "runtimes/claude-code/configs",
+      "config_schema_family": "claude-user-config",
+      "command_wrappers": {
+        "supported": false,
+        "source_dir": null,
+        "install_root": null
+      }
+    },
+    {
+      "name": "opencode",
+      "display_name": "OpenCode",
+      "reference_runtime": false,
+      "kernel_source": "runtimes/opencode/kernel.md",
+      "memory_file": "AGENTS.md",
+      "memory_install_path": "~/.config/opencode/AGENTS.md",
+      "metadata_root": "~/.config/opencode/b-agentic",
+      "skills_install_root": "~/.claude/skills",
+      "config_template_dir": "runtimes/opencode/configs",
+      "config_schema_family": "opencode-json",
+      "command_wrappers": {
+        "supported": true,
+        "source_dir": "runtimes/opencode/commands",
+        "install_root": "~/.config/opencode/commands"
+      }
+    }
+  ]
+}

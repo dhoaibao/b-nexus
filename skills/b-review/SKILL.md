@@ -1,13 +1,15 @@
 ---
 name: b-review
 description: >
-  Pre-PR changed-code review for reviewer-style reads of a diff, commit range,
-  or checkpoint after implementation. Do NOT invoke for repo/suite audits,
-  UI/design review, plan review, or research synthesis review. Unlike b-audit,
-  b-review is diff/range-first and judges changed code adequacy, risk, and
-  missing tests.
+  Pre-PR changed-code review for reviewer-style reads of a diff, commit
+  range, or checkpoint after implementation. Do NOT invoke for repo/suite
+  audits, UI/design review, plan review, or research synthesis review.
+  Unlike b-audit, b-review is diff/range-first and judges changed code
+  adequacy, risk, and missing tests.
 argument-hint: "[--range=<ref>..<ref>] [--baseline=<path|url>] [--skip-tests]"
 ---
+
+<!-- Generated from skills/registry.yaml and skills/b-review/prompt.md. Edit those sources, not this file. -->
 
 # b-review
 

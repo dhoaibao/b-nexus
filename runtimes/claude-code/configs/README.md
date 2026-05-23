@@ -53,6 +53,8 @@ MCP safety rules:
 
 ## Validator scope
 
-`scripts/validate-skills.sh` is the shared regression gate for runtime-neutral skills and shared contract files. Claude-specific paths, memory filenames, install-layout details, and runtime caveats stay adapter-owned here and in `runtimes/claude-code/scripts/validate.sh`.
+`scripts/validate-skills.sh` is the stable wrapper over `tooling/validate/run.sh`, which runs shared regression checks for runtime-neutral skills and shared contract files plus each registered runtime validator. Claude-specific paths, memory filenames, install-layout details, and runtime caveats stay adapter-owned here and in `runtimes/claude-code/scripts/validate.sh`.
+
+`scripts/smoke-install.sh` is the stable wrapper over `tests/smoke/install.sh`. The Claude adapter contributes its install coverage through `runtimes/claude-code/tests/smoke.sh`.
 
 The only shared bridge marker intentionally permitted outside the Claude adapter is `${CLAUDE_SKILL_DIR}` support-path usage in shared skills.

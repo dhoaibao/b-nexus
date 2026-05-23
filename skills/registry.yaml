@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "format": "json-subset-of-yaml",
+  "skills": [
+    {
+      "name": "b-orchestrate",
+      "phase": "End-to-end",
+      "use": "Coordinate phase handoffs until PR-ready, ready with follow-ups, or blocked",
+      "command": {
+        "alias": "b-orchestrate",
+        "description": "Coordinate an end-to-end PR-readiness workflow",
+        "exposed": true,
+        "target": "workflow"
+      },
+      "routing": {
+        "intent": "End-to-end PR readiness workflow across phases",
+        "triggers": [
+          "orchestrate",
+          "workflow",
+          "end-to-end",
+          "ready for PR",
+          "full cycle"
+        ]
+      },
+      "prompt": {
+        "description": "End-to-end PR readiness orchestration for workflows spanning plan, implementation, optional tests, review, and review-fix loops until ready for PR. Invokes phase skills via the Skill tool, parses their status blocks, and stops at approval, blocker, or readiness. Unlike b-implement, b-orchestrate owns sequencing across multiple skills rather than changing code itself.",
+        "argument_hint": "[workflow-goal]"
+      }
+    },
+    {
+      "name": "b-plan",
+      "phase": "Decide",
+      "use": "Clarify unclear goals or turn a clear goal into an execution plan",
+      "command": {
+        "alias": "b-plan",
+        "description": "Turn a goal into an execution-ready plan",
+        "exposed": true
+      },
+      "routing": {
+        "intent": "Decide how to build, decompose work",
+        "triggers": [
+          "plan",
+          "design",
+          "decompose",
+          "approach",
+          "\"how should I\"",
+          "clarify",
+          "requirements",
+          "scope"
+        ]
+      },
+      "prompt": {
+        "description": "Turn goals into execution-ready plans. Handles both underspecified requests (clarify first) and clear goals (plan directly). Decomposes work, chooses an approach, and writes ordered steps. Unlike b-implement, b-plan does not change code.",
+        "argument_hint": "[task]"
+      }
+    },
+    {
+      "name": "b-research",
+      "phase": "Decide",
+      "use": "Fetch external docs, API facts, comparisons, or recent evidence",
+      "command": {
+        "alias": "b-research",
+        "description": "Fetch external docs, API facts, and recent evidence",
+        "exposed": true
+      },
+      "routing": {
+        "intent": "External docs, API facts, comparisons",
+        "triggers": [
+          "docs",
+          "library",
+          "API",
+          "compare",
+          "look up",
+          "\"what is\""
+        ]
+      },
+      "prompt": {
+        "description": "External knowledge, from quick lookup to multi-source synthesis, for library/framework docs, API facts, config keys, method signatures, comparisons, deep dives, or recency-sensitive topics. Auto-detects depth; never asks the user to pick a mode. Unlike b-debug or b-plan, it fetches docs and web information rather than tracing code or choosing implementation.",
+        "argument_hint": "[question-or-source]"
+      }
+    },
+    {
+      "name": "b-implement",
+      "phase": "Build",
+      "use": "Execute approved plans or small direct requests",
+      "command": {
+        "alias": "b-implement",
+        "description": "Execute an approved plan or small direct request",
+        "exposed": true
+      },
+      "routing": {
+        "intent": "Execute approved or clearly scoped work",
+        "triggers": [
+          "implement",
+          "add",
+          "build",
+          "execute",
+          "finish",
+          "ship"
+        ]
+      },
+      "prompt": {
+        "description": "Execute approved or scoped work safely after /b-plan approval, when the user asks to execute or implement scoped work, or when a small direct request meets the shared §3 threshold. Reads the approved plan, applies the next small step, verifies it, and stops for new decisions. Unlike b-plan, b-implement changes code.",
+        "argument_hint": "[plan-path-or-task]"
+      }
+    },
+    {
+      "name": "b-refactor",
+      "phase": "Build",
+      "use": "Rename, extract, move, inline, simplify, or delete behavior-preserving code",
+      "command": {
+        "alias": "b-refactor",
+        "description": "Run a named behavior-preserving refactor",
+        "exposed": true
+      },
+      "routing": {
+        "intent": "Mechanical rename, extract, move, inline, simplify, delete",
+        "triggers": [
+          "rename",
+          "extract",
+          "move",
+          "inline",
+          "simplify",
+          "delete",
+          "cleanup"
+        ]
+      },
+      "prompt": {
+        "description": "Code refactoring: impact analysis, mechanical transformation, and verification for named behavior-preserving transforms: rename, extract, move, inline, delete dead code, or simplify a specific target. Vague cleanups go to b-plan first. Unlike b-plan, which decides what to build, b-refactor owns mechanical edits.",
+        "argument_hint": "[refactor-target]"
+      }
+    },
+    {
+      "name": "b-debug",
+      "phase": "Validate",
+      "use": "Confirm runtime root cause and fix minimally",
+      "command": {
+        "alias": "b-debug",
+        "description": "Diagnose and fix a runtime bug or broken behavior",
+        "exposed": true
+      },
+      "routing": {
+        "intent": "Runtime bug, error, \"not working\"",
+        "triggers": [
+          "bug",
+          "broken",
+          "error",
+          "stack trace",
+          "\"not working\"",
+          "regression"
+        ]
+      },
+      "prompt": {
+        "description": "Systematic hypothesis-driven debugging for runtime bugs, errors, broken behavior, slow paths, memory issues, and stack traces. Traces execution, confirms root cause, then fixes minimally and verifies. Unlike b-test, b-debug owns runtime behavior failures, not test-mechanic issues such as wrong assertions, mocks, or fixtures.",
+        "argument_hint": "[symptom-or-error]"
+      }
+    },
+    {
+      "name": "b-test",
+      "phase": "Validate",
+      "use": "Write or fix unit, integration, and contract tests",
+      "command": {
+        "alias": "b-test",
+        "description": "Write or fix unit, integration, and contract tests",
+        "exposed": true
+      },
+      "routing": {
+        "intent": "Unit/integration tests, coverage, failing tests",
+        "triggers": [
+          "tests",
+          "coverage",
+          "failing test",
+          "snapshot",
+          "mock"
+        ]
+      },
+      "prompt": {
+        "description": "Test-driven development, test debugging, and test coverage evaluation. Use for writing tests, fixing failing tests, evaluating coverage, or working TDD-style. Unlike b-debug, which traces runtime bugs, b-test owns non-browser test-specific failures: wrong assertions, missing mocks, fixture or setup issues, and coverage gaps. Browser, DOM, visual, and e2e verification belongs to b-browser.",
+        "argument_hint": "[test-task-or-failure]"
+      }
+    },
+    {
+      "name": "b-browser",
+      "phase": "Validate",
+      "use": "Collect browser, visual, screenshot, live UI, or e2e evidence",
+      "command": {
+        "alias": "b-browser",
+        "description": "Collect browser, DOM, visual, or e2e evidence",
+        "exposed": true
+      },
+      "routing": {
+        "intent": "Browser/DOM/visual/e2e verification",
+        "triggers": [
+          "browser",
+          "DOM",
+          "e2e",
+          "visual",
+          "screenshot",
+          "Playwright",
+          "Cypress",
+          "jsdom"
+        ]
+      },
+      "prompt": {
+        "description": "Browser automation and evidence operator for Playwright, Cypress, Puppeteer, WebDriver, visual, screenshot, browser-session, live UI, and e2e checks. Unlike b-test, b-browser owns browser/DOM readiness evidence, not non-browser unit, integration, or contract tests.",
+        "argument_hint": "[browser-or-e2e-request]"
+      }
+    },
+    {
+      "name": "b-review",
+      "phase": "Validate",
+      "use": "Review changed code for blockers, regressions, security, and coverage",
+      "command": {
+        "alias": "b-review",
+        "description": "Review changed code for blockers and regressions",
+        "exposed": true
+      },
+      "routing": {
+        "intent": "Pre-PR changed-code review",
+        "triggers": [
+          "review",
+          "PR",
+          "lint",
+          "pre-PR",
+          "\"what would a reviewer\""
+        ]
+      },
+      "prompt": {
+        "description": "Pre-PR changed-code review for reviewer-style reads of a diff, commit range, or checkpoint after implementation. Do NOT invoke for repo/suite audits, UI/design review, plan review, or research synthesis review. Unlike b-audit, b-review is diff/range-first and judges changed code adequacy, risk, and missing tests.",
+        "argument_hint": "[--range=<ref>..<ref>] [--baseline=<path|url>] [--skip-tests]"
+      }
+    },
+    {
+      "name": "b-audit",
+      "phase": "Validate",
+      "use": "Audit the b-agentic suite for systemic risk (suite-only)",
+      "command": {
+        "alias": "b-audit",
+        "description": "Audit the b-agentic suite for systemic risk",
+        "exposed": true
+      },
+      "routing": {
+        "intent": "b-agentic suite self-audit (suite-only)",
+        "triggers": [
+          "audit",
+          "repo audit",
+          "suite audit",
+          "maintainer audit"
+        ]
+      },
+      "prompt": {
+        "description": "b-agentic suite self-audit only. Reviewer-style audits of the b-agentic runtime contract, skill layout, installer, validator, tool boundaries, or safety-gate drift. Unlike b-review, b-audit is not diff/range-first and reports sampled coverage plus residual risk. For any other codebase, use b-review.",
+        "argument_hint": "[--surface=<area>] [--baseline=<path|url>] [--skip-checks]"
+      }
+    },
+    {
+      "name": "b-ship",
+      "phase": "Ship",
+      "use": "Commit, push, and open a PR after READY FOR PR",
+      "command": {
+        "alias": "b-ship",
+        "description": "Commit, push, and open a PR after approval",
+        "exposed": true
+      },
+      "routing": null,
+      "prompt": {
+        "description": "Commit, push, and open a pull request after the suite reaches READY FOR PR. Invoked by the user or b-orchestrate when a reviewed diff is ready to ship. Safety-gates each git action (commit, push, PR creation); never force-pushes. Stops after the PR URL is printed; post-PR automation is out of scope.",
+        "argument_hint": "[--draft] [--title=<title>] [--base=<branch>]"
+      }
+    }
+  ]
+}

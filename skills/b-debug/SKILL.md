@@ -9,6 +9,8 @@ description: >
 argument-hint: "[symptom-or-error]"
 ---
 
+<!-- Generated from skills/registry.yaml and skills/b-debug/prompt.md. Edit those sources, not this file. -->
+
 # b-debug
 
 $ARGUMENTS
