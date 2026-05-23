@@ -304,10 +304,41 @@ PY
   assert_file "$sandbox_opencode/home/.config/opencode/b-agentic/install.json"
   assert_contains "$sandbox_opencode/home/.config/opencode/b-agentic/install.json" '"runtime": "opencode"'
   assert_contains "$sandbox_opencode/home/.config/opencode/b-agentic/install.json" '"activationState": "active"'
+  assert_contains "$sandbox_opencode/home/.config/opencode/b-agentic/install.json" '"mcpAction": "write"'
   assert_no_path "$sandbox_opencode/home/.claude.json"
   assert_no_path "$sandbox_opencode/home/.claude/settings.json"
+  assert_file "$sandbox_opencode/home/.config/opencode/opencode.json"
+  assert_json_value "$sandbox_opencode/home/.config/opencode/opencode.json" "set(data['mcp']) == {'serena', 'context7', 'brave-search', 'firecrawl', 'playwright', 'gitnexus'}"
+  assert_json_value "$sandbox_opencode/home/.config/opencode/opencode.json" "data['mcp']['serena']['command'][0] == 'serena'"
+  assert_json_value "$sandbox_opencode/home/.config/opencode/opencode.json" "data['mcp']['context7']['headers']['CONTEXT7_API_KEY'] == '{env:CONTEXT7_API_KEY}'"
+  assert_json_value "$sandbox_opencode/home/.config/opencode/opencode.json" "data['mcp']['playwright']['command'][-1] == '--isolated'"
+  assert_json_value "$sandbox_opencode/home/.config/opencode/opencode.json" "data['mcp']['gitnexus']['command'] == ['gitnexus', 'mcp']"
   expect_install_status 0 "$sandbox_opencode" "$snapshot_repo" --runtime=opencode --uninstall
   assert_no_path "$sandbox_opencode/home/.config/opencode/b-agentic"
+  assert_no_path "$sandbox_opencode/home/.config/opencode/opencode.json"
+
+  local sandbox_opencode_prompt_keys="$WORK_DIR/opencode-prompt-keys"
+  mkdir -p "$sandbox_opencode_prompt_keys/home"
+  expect_install_with_tty_status 0 "$sandbox_opencode_prompt_keys" "$snapshot_repo" $'ctx7-oc-key\nbrave-oc-key\nfirecrawl-oc-key\n' --runtime=opencode --prompt-api-keys
+  assert_json_value "$sandbox_opencode_prompt_keys/home/.config/opencode/opencode.json" "data['mcp']['context7']['headers']['CONTEXT7_API_KEY'] == 'ctx7-oc-key'"
+  assert_json_value "$sandbox_opencode_prompt_keys/home/.config/opencode/opencode.json" "data['mcp']['brave-search']['environment']['BRAVE_API_KEY'] == 'brave-oc-key'"
+  assert_json_value "$sandbox_opencode_prompt_keys/home/.config/opencode/opencode.json" "data['mcp']['firecrawl']['environment']['FIRECRAWL_API_KEY'] == 'firecrawl-oc-key'"
+  assert_contains "$sandbox_opencode_prompt_keys/home/.config/opencode/b-agentic/templates/mcp.user.template.json" '{env:BRAVE_API_KEY}'
+  assert_not_contains "$sandbox_opencode_prompt_keys/home/.config/opencode/b-agentic/templates/mcp.user.template.json" 'brave-oc-key'
+  expect_install_status 0 "$sandbox_opencode_prompt_keys" "$snapshot_repo" --runtime=opencode --uninstall
+  assert_no_path "$sandbox_opencode_prompt_keys/home/.config/opencode/opencode.json"
+
+  local sandbox_opencode_merge="$WORK_DIR/opencode-merge"
+  mkdir -p "$sandbox_opencode_merge/home/.config/opencode"
+  printf '{"mcp":{"my-custom":{"type":"local","command":["my-tool"]}},"userOnly":true}\n' > "$sandbox_opencode_merge/home/.config/opencode/opencode.json"
+  expect_install_status 0 "$sandbox_opencode_merge" "$snapshot_repo" --runtime=opencode
+  assert_json_value "$sandbox_opencode_merge/home/.config/opencode/opencode.json" "'my-custom' in data['mcp']"
+  assert_json_value "$sandbox_opencode_merge/home/.config/opencode/opencode.json" "'gitnexus' in data['mcp']"
+  assert_json_value "$sandbox_opencode_merge/home/.config/opencode/opencode.json" "data.get('userOnly') is True"
+  assert_contains "$sandbox_opencode_merge/home/.config/opencode/b-agentic/install.json" '"mcpAction": "merge"'
+  expect_install_status 0 "$sandbox_opencode_merge" "$snapshot_repo" --runtime=opencode --uninstall
+  assert_json_value "$sandbox_opencode_merge/home/.config/opencode/opencode.json" "set(data['mcp']) == {'my-custom'}"
+  assert_json_value "$sandbox_opencode_merge/home/.config/opencode/opencode.json" "data.get('userOnly') is True"
 
   printf 'smoke-install.sh passed\n'
 }

@@ -532,13 +532,15 @@ def managed_mcp_server(current_server, incoming_server, server_name):
         if isinstance(headers, dict) and isinstance(incoming_headers, dict) and 'CONTEXT7_API_KEY' in headers:
             headers['CONTEXT7_API_KEY'] = incoming_headers.get('CONTEXT7_API_KEY')
     elif server_name == 'brave-search':
-        env = normalized.get('env')
-        incoming_env = incoming_server.get('env', {})
+        env_key = 'environment' if 'environment' in incoming_server else 'env'
+        env = normalized.get(env_key)
+        incoming_env = incoming_server.get(env_key, {})
         if isinstance(env, dict) and isinstance(incoming_env, dict) and 'BRAVE_API_KEY' in env:
             env['BRAVE_API_KEY'] = incoming_env.get('BRAVE_API_KEY')
     elif server_name == 'firecrawl':
-        env = normalized.get('env')
-        incoming_env = incoming_server.get('env', {})
+        env_key = 'environment' if 'environment' in incoming_server else 'env'
+        env = normalized.get(env_key)
+        incoming_env = incoming_server.get(env_key, {})
         if isinstance(env, dict) and isinstance(incoming_env, dict) and 'FIRECRAWL_API_KEY' in env:
             env['FIRECRAWL_API_KEY'] = incoming_env.get('FIRECRAWL_API_KEY')
     elif server_name == 'gitnexus':
@@ -551,10 +553,11 @@ if not isinstance(current, dict) or not isinstance(incoming, dict) or not isinst
     raise SystemExit(f'{label} cleanup requires JSON object inputs')
 
 cleaned = cleanup(current, incoming, original)
-if label == '.claude.json':
-    cleaned_servers = cleaned.get('mcpServers')
-    incoming_servers = incoming.get('mcpServers', {})
-    original_servers = original.get('mcpServers', {})
+if label in ('.claude.json', 'opencode.json'):
+    mcp_key = 'mcp' if label == 'opencode.json' else 'mcpServers'
+    cleaned_servers = cleaned.get(mcp_key)
+    incoming_servers = incoming.get(mcp_key, {})
+    original_servers = original.get(mcp_key, {})
     if isinstance(cleaned_servers, dict) and isinstance(incoming_servers, dict):
         for server_name in incoming_servers:
             if not isinstance(original_servers, dict) or server_name not in original_servers:
@@ -563,7 +566,7 @@ if label == '.claude.json':
             if managed_mcp_server(cleaned_servers.get(server_name), incoming_servers.get(server_name), server_name):
                 cleaned_servers.pop(server_name, None)
         if not cleaned_servers:
-            cleaned.pop('mcpServers', None)
+            cleaned.pop(mcp_key, None)
 if cleaned == current:
     raise SystemExit(2)
 if cleaned == {}:

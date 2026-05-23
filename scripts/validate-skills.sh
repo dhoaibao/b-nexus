@@ -211,44 +211,79 @@ for json_path in sorted((root / 'runtimes').glob('*/configs/*.json')):
             errors.append(f'{json_path}: contains secret-looking placeholder/literal {pattern.pattern!r}')
 
     if json_path.name.startswith('mcp.'):
-        servers = data.get('mcpServers')
+        is_opencode = 'opencode' in json_path.parts
+        mcp_key = 'mcp' if is_opencode else 'mcpServers'
+        servers = data.get(mcp_key)
         if not isinstance(servers, dict) or not servers:
-            errors.append(f'{json_path}: missing non-empty mcpServers object')
+            errors.append(f'{json_path}: missing non-empty {mcp_key} object')
             continue
 
-        if 'brave-search' in servers:
-            env = servers['brave-search'].get('env', {})
-            if env.get('BRAVE_API_KEY') != '${BRAVE_API_KEY}':
-                errors.append(f'{json_path}: brave-search must use ${{BRAVE_API_KEY}} placeholder')
-            args = servers['brave-search'].get('args', [])
-            if '@brave/brave-search-mcp-server' not in args:
-                errors.append(f'{json_path}: brave-search must use @brave/brave-search-mcp-server')
+        expected_user = {'serena', 'context7', 'brave-search', 'firecrawl', 'playwright', 'gitnexus'}
 
-        if 'firecrawl' in servers:
-            env = servers['firecrawl'].get('env', {})
-            if env.get('FIRECRAWL_API_KEY') != '${FIRECRAWL_API_KEY}':
-                errors.append(f'{json_path}: firecrawl must use ${{FIRECRAWL_API_KEY}} placeholder')
+        if is_opencode:
+            if 'brave-search' in servers:
+                env = servers['brave-search'].get('environment', {})
+                if env.get('BRAVE_API_KEY') != '{env:BRAVE_API_KEY}':
+                    errors.append(f'{json_path}: brave-search must use {{env:BRAVE_API_KEY}} placeholder')
+                cmd = servers['brave-search'].get('command', [])
+                if '@brave/brave-search-mcp-server' not in cmd:
+                    errors.append(f'{json_path}: brave-search must use @brave/brave-search-mcp-server')
 
-        if 'playwright' in servers and '--isolated' not in servers['playwright'].get('args', []):
-            errors.append(f'{json_path}: playwright must use --isolated by default')
+            if 'firecrawl' in servers:
+                env = servers['firecrawl'].get('environment', {})
+                if env.get('FIRECRAWL_API_KEY') != '{env:FIRECRAWL_API_KEY}':
+                    errors.append(f'{json_path}: firecrawl must use {{env:FIRECRAWL_API_KEY}} placeholder')
 
-        if 'context7' in servers:
-            server = servers['context7']
-            if server.get('type') != 'http' or server.get('url') != 'https://mcp.context7.com/mcp':
-                errors.append(f'{json_path}: context7 must use the official MCP HTTP endpoint')
-            headers = server.get('headers', {})
-            if headers.get('CONTEXT7_API_KEY') != '${CONTEXT7_API_KEY:-}':
-                errors.append(f'{json_path}: context7 must use ${{CONTEXT7_API_KEY:-}} optional header placeholder')
+            if 'playwright' in servers and '--isolated' not in servers['playwright'].get('command', []):
+                errors.append(f'{json_path}: playwright must use --isolated by default')
 
-        if 'gitnexus' in servers and json_path.name != 'mcp.user.template.json':
-            errors.append(f'{json_path}: gitnexus belongs only in the global user config')
-        if 'gitnexus' in servers:
-            gitnexus = servers['gitnexus']
-            if gitnexus.get('command') != 'gitnexus' or gitnexus.get('args') != ['mcp']:
-                errors.append(f'{json_path}: gitnexus must use installed gitnexus mcp command')
+            if 'context7' in servers:
+                server = servers['context7']
+                if server.get('type') != 'remote' or server.get('url') != 'https://mcp.context7.com/mcp':
+                    errors.append(f'{json_path}: context7 must use the official MCP remote endpoint')
+                headers = server.get('headers', {})
+                if headers.get('CONTEXT7_API_KEY') != '{env:CONTEXT7_API_KEY}':
+                    errors.append(f'{json_path}: context7 must use {{env:CONTEXT7_API_KEY}} header placeholder')
+
+            if 'gitnexus' in servers and json_path.name != 'mcp.user.template.json':
+                errors.append(f'{json_path}: gitnexus belongs only in the global user config')
+            if 'gitnexus' in servers:
+                if servers['gitnexus'].get('command') != ['gitnexus', 'mcp']:
+                    errors.append(f'{json_path}: gitnexus must use installed gitnexus mcp command')
+
+        else:
+            if 'brave-search' in servers:
+                env = servers['brave-search'].get('env', {})
+                if env.get('BRAVE_API_KEY') != '${BRAVE_API_KEY}':
+                    errors.append(f'{json_path}: brave-search must use ${{BRAVE_API_KEY}} placeholder')
+                args = servers['brave-search'].get('args', [])
+                if '@brave/brave-search-mcp-server' not in args:
+                    errors.append(f'{json_path}: brave-search must use @brave/brave-search-mcp-server')
+
+            if 'firecrawl' in servers:
+                env = servers['firecrawl'].get('env', {})
+                if env.get('FIRECRAWL_API_KEY') != '${FIRECRAWL_API_KEY}':
+                    errors.append(f'{json_path}: firecrawl must use ${{FIRECRAWL_API_KEY}} placeholder')
+
+            if 'playwright' in servers and '--isolated' not in servers['playwright'].get('args', []):
+                errors.append(f'{json_path}: playwright must use --isolated by default')
+
+            if 'context7' in servers:
+                server = servers['context7']
+                if server.get('type') != 'http' or server.get('url') != 'https://mcp.context7.com/mcp':
+                    errors.append(f'{json_path}: context7 must use the official MCP HTTP endpoint')
+                headers = server.get('headers', {})
+                if headers.get('CONTEXT7_API_KEY') != '${CONTEXT7_API_KEY:-}':
+                    errors.append(f'{json_path}: context7 must use ${{CONTEXT7_API_KEY:-}} optional header placeholder')
+
+            if 'gitnexus' in servers and json_path.name != 'mcp.user.template.json':
+                errors.append(f'{json_path}: gitnexus belongs only in the global user config')
+            if 'gitnexus' in servers:
+                gitnexus = servers['gitnexus']
+                if gitnexus.get('command') != 'gitnexus' or gitnexus.get('args') != ['mcp']:
+                    errors.append(f'{json_path}: gitnexus must use installed gitnexus mcp command')
 
         if json_path.name == 'mcp.user.template.json':
-            expected_user = {'serena', 'context7', 'brave-search', 'firecrawl', 'playwright', 'gitnexus'}
             actual_user = set(servers)
             if actual_user != expected_user:
                 errors.append(f'{json_path}: user MCP template must contain all default global servers {sorted(expected_user)}, found {sorted(actual_user)}')

@@ -39,12 +39,18 @@ for required in [
     if required not in contract_index:
         errors.append(f'references/contract/index.md: missing OpenCode-native marker {required!r}')
 
-for required in ['SKILLS_DST', 'KERNEL_DST', 'METADATA_DIR', 'runtime_main']:
+for required in ['SKILLS_DST', 'KERNEL_DST', 'METADATA_DIR', 'runtime_main', 'OPENCODE_JSON_DST', 'install_mcp_config']:
     if required not in opencode_install:
         errors.append(f'runtimes/opencode/scripts/install.sh: missing OpenCode installer marker {required!r}')
 
+mcp_template_path = root / 'runtimes' / 'opencode' / 'configs' / 'mcp.user.template.json'
+if not mcp_template_path.exists():
+    errors.append('runtimes/opencode/configs/mcp.user.template.json: missing MCP template')
+
 if 'OpenCode Runtime Layout' not in opencode_readme:
     errors.append('runtimes/opencode/configs/README.md: missing title')
+if 'mcp.user.template.json' not in opencode_readme:
+    errors.append('runtimes/opencode/configs/README.md: missing mcp.user.template.json reference')
 
 if errors:
     for error in errors:

@@ -6,7 +6,7 @@ When this document cites `runtimes/claude-code/kernel.md`, that is the source-re
 
 Runtime enforcement is intentionally mechanical: `runtimes/claude-code/kernel.md` owns the runtime gate checklist, each skill step uses explicit read gates for shared schemas/protocols/checklists, Claude skills expose `/b-*` slash commands, and `scripts/validate-skills.sh` rejects passive pointers that would rely on memory.
 
-MCP setup is part of the normal one-command install for Claude Code. The installer merges Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus into Claude Code's user-scope `~/.claude.json`, while runtime skills still choose MCP lazily by evidence need rather than by installed config. OpenCode users configure MCP servers manually in `opencode.json`.
+MCP setup is part of the normal one-command install for both Claude Code and OpenCode. The Claude Code installer merges Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus into `~/.claude.json`; the OpenCode installer merges the same six servers into `~/.config/opencode/opencode.json`. Runtime skills still choose MCP lazily by evidence need rather than by installed config.
 
 Browser, DOM-rendered, visual, and e2e verification belongs to `b-browser`, not `b-test`. The suite does not add jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent browser/DOM tooling as a project dependency side effect. For UI/browser-relevant work, readiness claims require `b-browser`-verified supplied/CI evidence, existing-tool evidence, approved live-browser evidence, or an accepted follow-up.
 
@@ -294,5 +294,6 @@ Supported via a bridge adapter. OpenCode reads Claude Code skills natively, so s
 
 **Constraints**
 - Skills use `${CLAUDE_SKILL_DIR}` references; this requires Claude Code to be installed or the env var to be set manually.
-- No OpenCode-specific MCP or settings templates ship in this iteration; configure MCP servers manually in `~/.config/opencode/opencode.json`.
+- No OpenCode-specific settings template ships; settings remain Claude Code–only.
+- MCP servers are auto-installed into `~/.config/opencode/opencode.json` via `runtimes/opencode/configs/mcp.user.template.json`.
 - Temporary artifacts use `/tmp/opencode/b-agentic/`.
