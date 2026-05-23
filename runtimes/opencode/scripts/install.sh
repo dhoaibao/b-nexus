@@ -8,6 +8,9 @@ readonly OPENCODE_DIR="${B_AGENTIC_OPENCODE_DIR:-$HOME/.config/opencode}"
 readonly METADATA_DIR="$OPENCODE_DIR/b-agentic"
 readonly BACKUPS_DIR="$METADATA_DIR/backups"
 readonly SKILLS_DST="${B_AGENTIC_SKILLS_DST:-$HOME/.claude/skills}"
+readonly COMMANDS_SRC="$SOURCE_DIR/runtimes/$RUNTIME/commands"
+readonly COMMANDS_DST="${B_AGENTIC_OPENCODE_COMMANDS_DIR:-$HOME/.config/opencode/commands}"
+readonly COMMANDS_SNAPSHOT_DST="$METADATA_DIR/commands"
 readonly KERNEL_DST="$OPENCODE_DIR/AGENTS.md"
 readonly KERNEL_SNAPSHOT_DST="$METADATA_DIR/AGENTS.md"
 readonly REFERENCES_DST="$METADATA_DIR/references"
@@ -144,12 +147,72 @@ install_mcp_config() {
   merge_json_file "$TEMPLATES_SRC/mcp.user.template.json" "$OPENCODE_JSON_DST" "mcp" "opencodeJson"
 }
 
+command_names() {
+  python3 - "$COMMANDS_SRC" <<'PY'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+for path in sorted(root.glob('*.md')):
+    print(path.stem)
+PY
+}
+
+install_commands() {
+  local -n installed_ref="$1"
+  ensure_dir "$COMMANDS_DST"
+  installed_ref=()
+
+  local name src dst previous_snapshot next_snapshot
+  next_snapshot="$(mktemp -d "${TMPDIR:-/tmp}/b-agentic-opencode-commands.XXXXXX")"
+  while IFS= read -r name; do
+    [ -n "$name" ] || continue
+
+    src="$COMMANDS_SRC/$name.md"
+    dst="$COMMANDS_DST/$name.md"
+    previous_snapshot="$COMMANDS_SNAPSHOT_DST/$name.md"
+
+    if [ -f "$dst" ]; then
+      if [ -f "$previous_snapshot" ] && cmp -s "$dst" "$previous_snapshot"; then
+        copy_file "$src" "$dst"
+        copy_file "$src" "$next_snapshot/$name.md"
+        installed_ref+=("$name")
+        continue
+      fi
+
+      if cmp -s "$dst" "$src"; then
+        if [ -f "$previous_snapshot" ]; then
+          copy_file "$src" "$next_snapshot/$name.md"
+          installed_ref+=("$name")
+        else
+          warn "preserving existing OpenCode command: $dst"
+        fi
+        continue
+      fi
+
+      if [ -f "$previous_snapshot" ]; then
+        warn "preserving modified OpenCode command wrapper: $dst"
+      else
+        warn "preserving existing OpenCode command: $dst"
+      fi
+      continue
+    fi
+
+    copy_file "$src" "$dst"
+    copy_file "$src" "$next_snapshot/$name.md"
+    installed_ref+=("$name")
+  done < <(command_names)
+
+  copy_dir_replace "$next_snapshot" "$COMMANDS_SNAPSHOT_DST"
+  rm -rf "$next_snapshot"
+}
+
 print_install_report() {
-  local activation_state="$1" skill_count="$2" memory_action="$3" memory_backup="$4" mcp_action="$5" mcp_backup="$6"
+  local activation_state="$1" skill_count="$2" command_count="$3" memory_action="$4" memory_backup="$5" mcp_action="$6" mcp_backup="$7"
 
   log ""
   log "b-agentic OpenCode install complete"
   log "skillsSynced: $skill_count -> $SKILLS_DST"
+  log "commandsSynced: $command_count -> $COMMANDS_DST"
   log "kernel: $memory_action -> $KERNEL_DST"
   log "mcp: $mcp_action -> $OPENCODE_JSON_DST"
   log "references: sync -> $REFERENCES_DST"
@@ -162,9 +225,7 @@ print_install_report() {
 }
 
 write_manifest() {
-  local memory_action="$1" activation_state="$2" memory_backup="$3" mcp_action="$4" mcp_state="$5" mcp_backup="$6"
-  shift 6
-  local skills=("$@")
+  local memory_action="$1" activation_state="$2" memory_backup="$3" mcp_action="$4" mcp_state="$5" mcp_backup="$6" skills="$7" commands="$8"
 
   if dry_run_enabled; then
     printf '[dry-run] write manifest %s\n' "$MANIFEST_DST" >&2
@@ -185,16 +246,19 @@ write_manifest() {
     OPENCODE_DIR="$OPENCODE_DIR" \
     OPENCODE_JSON_DST="$OPENCODE_JSON_DST" \
     SKILLS_DST="$SKILLS_DST" \
+    COMMANDS_DST="$COMMANDS_DST" \
     REFERENCES_DST="$REFERENCES_DST" \
     TEMPLATES_DST="$TEMPLATES_DST" \
     KERNEL_DST="$KERNEL_DST" \
-    SKILLS="${skills[*]}" \
+    SKILLS="$skills" \
+    COMMANDS="$commands" \
     python3 - <<'PY'
 import json
 import os
 from pathlib import Path
 
 skills = [name for name in os.environ['SKILLS'].split() if name]
+commands = [name for name in os.environ['COMMANDS'].split() if name]
 manifest = {
     'suite': 'b-agentic',
     'runtime': os.environ['RUNTIME'],
@@ -208,10 +272,12 @@ manifest = {
         'opencodeJson': os.environ['OPENCODE_JSON_DST'],
         'kernel': os.environ['KERNEL_DST'],
         'skills': os.environ['SKILLS_DST'],
+        'commands': os.environ['COMMANDS_DST'],
         'references': os.environ['REFERENCES_DST'],
         'templates': os.environ['TEMPLATES_DST'],
     },
     'skills': skills,
+    'commands': commands,
     'backups': {
         'agentsMd': os.environ['MEMORY_BACKUP'],
         'opencodeJson': os.environ['MCP_BACKUP'],
@@ -221,10 +287,31 @@ Path(os.environ['MANIFEST_DST']).write_text(json.dumps(manifest, indent=2, sort_
 PY
 }
 
+manifest_command_names() {
+  if [ ! -f "$MANIFEST_DST" ]; then
+    command_names
+    return 0
+  fi
+
+  python3 - "$MANIFEST_DST" <<'PY'
+import json
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+try:
+    data = json.loads(path.read_text())
+except Exception:
+    data = {}
+for name in data.get('commands', []):
+    print(name)
+PY
+}
+
 runtime_uninstall() {
   require_bin python3
   log "Uninstalling b-agentic from OpenCode personal config"
-  local name
+  local name commands_path command_snapshot
+  commands_path="$(manifest_path_value commands "$COMMANDS_DST")"
   if [ -f "$MANIFEST_DST" ]; then
     while IFS= read -r name; do
       [ -n "$name" ] || continue
@@ -248,6 +335,23 @@ PY
     done
   fi
 
+  while IFS= read -r name; do
+    [ -n "$name" ] || continue
+    command_snapshot="$COMMANDS_SNAPSHOT_DST/$name.md"
+    if [ ! -f "$commands_path/$name.md" ]; then
+      continue
+    fi
+    if [ ! -f "$command_snapshot" ]; then
+      warn "preserving OpenCode command with no managed snapshot: $commands_path/$name.md"
+      continue
+    fi
+    if cmp -s "$commands_path/$name.md" "$command_snapshot"; then
+      run_cmd rm -f "$commands_path/$name.md"
+    else
+      warn "preserving modified OpenCode command wrapper: $commands_path/$name.md"
+    fi
+  done < <(manifest_command_names)
+
   remove_managed_kernel
   local opencode_json_path
   opencode_json_path="$(manifest_path_value opencodeJson "$OPENCODE_JSON_DST")"
@@ -258,14 +362,17 @@ PY
 
 runtime_main() {
   command -v opencode >/dev/null 2>&1 || warn "opencode CLI not found; files will still be installed for OpenCode to discover later."
+  [ -d "$COMMANDS_SRC" ] || die "missing command source directory: $COMMANDS_SRC"
 
-  local skill
+  local skill command
   local installed_skills=()
+  local installed_commands=()
   while IFS= read -r skill; do
     [ -n "$skill" ] || continue
     installed_skills+=("$skill")
   done < <(skill_names)
   install_skills
+  install_commands installed_commands
 
   install_references_and_templates
 
@@ -290,9 +397,9 @@ runtime_main() {
     mcp_backup="$prompted_mcp_backup"
   fi
 
-  write_manifest "$memory_action" "$activation_state" "$memory_backup" "$mcp_action" "$mcp_state" "$mcp_backup" "${installed_skills[@]}"
+  write_manifest "$memory_action" "$activation_state" "$memory_backup" "$mcp_action" "$mcp_state" "$mcp_backup" "${installed_skills[*]}" "${installed_commands[*]}"
 
-  print_install_report "$activation_state" "${#installed_skills[@]}" "$memory_action" "$memory_backup" "$mcp_action" "$mcp_backup"
+  print_install_report "$activation_state" "${#installed_skills[@]}" "${#installed_commands[@]}" "$memory_action" "$memory_backup" "$mcp_action" "$mcp_backup"
   ensure_repo_gitignore_guard
   if [ "$activation_state" = "pending" ]; then
     log "Existing $KERNEL_DST was preserved. Review $KERNEL_SNAPSHOT_DST and rerun with --replace-memory to activate the kernel."

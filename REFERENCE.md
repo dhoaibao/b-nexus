@@ -290,7 +290,7 @@ The reference runtime. Skills install to `~/.claude/skills/` and expose `/b-*` s
 
 ### OpenCode
 
-Supported via a bridge adapter. OpenCode reads Claude Code skills natively, so skills remain Claude-Code-shaped and install to `~/.claude/skills/` for cross-tool compatibility. The kernel installs to `~/.config/opencode/AGENTS.md`. Suite metadata lives at `~/.config/opencode/b-agentic/`.
+Supported via a bridge adapter. OpenCode reads Claude Code skills natively, so skills remain Claude-Code-shaped and install to `~/.claude/skills/` for cross-tool compatibility. The adapter also installs thin `/b-*` command wrappers into `~/.config/opencode/commands/`; those wrappers delegate back to the matching skills, and colliding command files are preserved instead of overwritten. The kernel installs to `~/.config/opencode/AGENTS.md`. Suite metadata lives at `~/.config/opencode/b-agentic/`.
 
 **Constraints**
 - Skills use `${CLAUDE_SKILL_DIR}` references; this requires Claude Code to be installed or the env var to be set manually.

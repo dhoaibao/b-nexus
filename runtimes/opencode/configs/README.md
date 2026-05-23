@@ -8,6 +8,7 @@ The OpenCode release supports a personal-global install:
 
 - Kernel memory: `~/.config/opencode/AGENTS.md`
 - Skills: `~/.claude/skills/<skill-name>/SKILL.md` (cross-tool compatibility; OpenCode reads Claude Code skill directories natively)
+- Command wrappers: `~/.config/opencode/commands/<command-name>.md`
 - Skill-local shared references: `~/.claude/skills/<skill-name>/references/b-agentic/*.md`
 - Suite metadata, backups, and source snapshots: `~/.config/opencode/b-agentic/`
 - Shared reference snapshot: `~/.config/opencode/b-agentic/references/*.md`
@@ -20,9 +21,11 @@ The OpenCode release supports a personal-global install:
 
 OpenCode exposes each skill directory via its native skill tool. Skills are loaded on-demand when the agent invokes the `skill` tool. Skill descriptions are the primary routing signal.
 
+The adapter also installs thin markdown command wrappers into `~/.config/opencode/commands/` so `/b-*` commands stay available in the TUI. Each wrapper delegates back to the matching skill instead of duplicating the full skill body. If a command file with the same name already exists, the installer preserves it and skips that managed wrapper.
+
 ## Safety policy
 
-The installer never overwrites an existing `~/.config/opencode/AGENTS.md` without `--replace-memory`. Plain install syncs skills and references, and writes the kernel. Existing files are backed up before replacement.
+The installer never overwrites an existing `~/.config/opencode/AGENTS.md` without `--replace-memory`. Plain install syncs skills and references, and writes the kernel. Existing colliding command files are preserved in place, and uninstall removes only wrapper files that still match the managed snapshot.
 
 ## Global MCP Setup
 

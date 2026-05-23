@@ -301,10 +301,14 @@ PY
   assert_file "$sandbox_opencode/home/.config/opencode/AGENTS.md"
   assert_contains "$sandbox_opencode/home/.config/opencode/AGENTS.md" '<!-- b-agentic-managed -->'
   assert_file "$sandbox_opencode/home/.claude/skills/b-plan/SKILL.md"
+  assert_file "$sandbox_opencode/home/.config/opencode/commands/b-plan.md"
+  assert_contains "$sandbox_opencode/home/.config/opencode/commands/b-plan.md" 'Load the `b-plan` skill'
   assert_file "$sandbox_opencode/home/.config/opencode/b-agentic/install.json"
   assert_contains "$sandbox_opencode/home/.config/opencode/b-agentic/install.json" '"runtime": "opencode"'
   assert_contains "$sandbox_opencode/home/.config/opencode/b-agentic/install.json" '"activationState": "active"'
   assert_contains "$sandbox_opencode/home/.config/opencode/b-agentic/install.json" '"mcpAction": "write"'
+  assert_json_value "$sandbox_opencode/home/.config/opencode/b-agentic/install.json" "'b-plan' in data['commands']"
+  assert_json_value "$sandbox_opencode/home/.config/opencode/b-agentic/install.json" "data['paths']['commands'].endswith('/.config/opencode/commands')"
   assert_no_path "$sandbox_opencode/home/.claude.json"
   assert_no_path "$sandbox_opencode/home/.claude/settings.json"
   assert_file "$sandbox_opencode/home/.config/opencode/opencode.json"
@@ -316,6 +320,33 @@ PY
   expect_install_status 0 "$sandbox_opencode" "$snapshot_repo" --runtime=opencode --uninstall
   assert_no_path "$sandbox_opencode/home/.config/opencode/b-agentic"
   assert_no_path "$sandbox_opencode/home/.config/opencode/opencode.json"
+  assert_no_path "$sandbox_opencode/home/.config/opencode/commands/b-plan.md"
+
+  local sandbox_opencode_command_collision="$WORK_DIR/opencode-command-collision"
+  mkdir -p "$sandbox_opencode_command_collision/home/.config/opencode/commands"
+  printf 'user command\n' > "$sandbox_opencode_command_collision/home/.config/opencode/commands/b-plan.md"
+  expect_install_status 0 "$sandbox_opencode_command_collision" "$snapshot_repo" --runtime=opencode
+  assert_contains "$sandbox_opencode_command_collision/home/.config/opencode/commands/b-plan.md" 'user command'
+  assert_json_value "$sandbox_opencode_command_collision/home/.config/opencode/b-agentic/install.json" "'b-plan' not in data['commands']"
+  expect_install_status 0 "$sandbox_opencode_command_collision" "$snapshot_repo" --runtime=opencode --uninstall
+  assert_contains "$sandbox_opencode_command_collision/home/.config/opencode/commands/b-plan.md" 'user command'
+
+  local sandbox_opencode_identical_collision="$WORK_DIR/opencode-identical-collision"
+  mkdir -p "$sandbox_opencode_identical_collision/home/.config/opencode/commands"
+  cp "$snapshot_repo/runtimes/opencode/commands/b-plan.md" "$sandbox_opencode_identical_collision/home/.config/opencode/commands/b-plan.md"
+  expect_install_status 0 "$sandbox_opencode_identical_collision" "$snapshot_repo" --runtime=opencode
+  assert_json_value "$sandbox_opencode_identical_collision/home/.config/opencode/b-agentic/install.json" "'b-plan' not in data['commands']"
+  expect_install_status 0 "$sandbox_opencode_identical_collision" "$snapshot_repo" --runtime=opencode --uninstall
+  assert_file "$sandbox_opencode_identical_collision/home/.config/opencode/commands/b-plan.md"
+  assert_contains "$sandbox_opencode_identical_collision/home/.config/opencode/commands/b-plan.md" 'Load the `b-plan` skill'
+
+  local sandbox_opencode_modified_command="$WORK_DIR/opencode-modified-command"
+  mkdir -p "$sandbox_opencode_modified_command/home"
+  expect_install_status 0 "$sandbox_opencode_modified_command" "$snapshot_repo" --runtime=opencode
+  printf 'user edit\n' >> "$sandbox_opencode_modified_command/home/.config/opencode/commands/b-plan.md"
+  expect_install_status 0 "$sandbox_opencode_modified_command" "$snapshot_repo" --runtime=opencode --uninstall
+  assert_file "$sandbox_opencode_modified_command/home/.config/opencode/commands/b-plan.md"
+  assert_contains "$sandbox_opencode_modified_command/home/.config/opencode/commands/b-plan.md" 'user edit'
 
   local sandbox_opencode_prompt_keys="$WORK_DIR/opencode-prompt-keys"
   mkdir -p "$sandbox_opencode_prompt_keys/home"

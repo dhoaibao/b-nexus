@@ -18,6 +18,7 @@ opencode_readme = (root / 'runtimes' / 'opencode' / 'configs' / 'README.md').rea
 contract_index = (root / 'references' / 'contract' / 'index.md').read_text() if (root / 'references' / 'contract' / 'index.md').exists() else ''
 maintainer = (root / 'CLAUDE.md').read_text() if (root / 'CLAUDE.md').exists() else ''
 opencode_install = (root / 'runtimes' / 'opencode' / 'scripts' / 'install.sh').read_text() if (root / 'runtimes' / 'opencode' / 'scripts' / 'install.sh').exists() else ''
+commands_dir = root / 'runtimes' / 'opencode' / 'commands'
 
 if not kernel_path.exists():
     errors.append('runtimes/opencode/kernel.md: missing')
@@ -43,6 +44,15 @@ for required in ['SKILLS_DST', 'KERNEL_DST', 'METADATA_DIR', 'runtime_main', 'OP
     if required not in opencode_install:
         errors.append(f'runtimes/opencode/scripts/install.sh: missing OpenCode installer marker {required!r}')
 
+if not commands_dir.exists():
+    errors.append('runtimes/opencode/commands: missing OpenCode command wrapper source directory')
+elif len(list(commands_dir.glob('*.md'))) != 11:
+    errors.append(f'runtimes/opencode/commands: expected 11 command wrapper files, found {len(list(commands_dir.glob("*.md")))}')
+
+for required in ['COMMANDS_SRC', 'COMMANDS_DST', 'install_commands', 'commandsSynced']:
+    if required not in opencode_install:
+        errors.append(f'runtimes/opencode/scripts/install.sh: missing OpenCode command wrapper marker {required!r}')
+
 mcp_template_path = root / 'runtimes' / 'opencode' / 'configs' / 'mcp.user.template.json'
 if not mcp_template_path.exists():
     errors.append('runtimes/opencode/configs/mcp.user.template.json: missing MCP template')
@@ -51,6 +61,8 @@ if 'OpenCode Runtime Layout' not in opencode_readme:
     errors.append('runtimes/opencode/configs/README.md: missing title')
 if 'mcp.user.template.json' not in opencode_readme:
     errors.append('runtimes/opencode/configs/README.md: missing mcp.user.template.json reference')
+if '~/.config/opencode/commands/' not in opencode_readme:
+    errors.append('runtimes/opencode/configs/README.md: missing OpenCode command wrapper path documentation')
 
 if errors:
     for error in errors:

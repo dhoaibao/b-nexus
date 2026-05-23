@@ -4,7 +4,7 @@
 
 `b-agentic` turns rough developer intent into disciplined loops: clarify, plan, build, validate, debug, review, and audit. It is optimized around scoped execution, repo evidence, MCP tools, verification, and clean handoffs.
 
-Claude Code is the reference runtime; OpenCode is supported via a bridge adapter. Skills install as native skills and appear as `/b-*` commands.
+Claude Code is the reference runtime; OpenCode is supported via a bridge adapter. Skills install as native skills, and the OpenCode adapter also installs thin `/b-*` command wrappers.
 
 ## Install & Update
 
@@ -45,11 +45,14 @@ The installer deploys this repo into the active runtime's personal config:
 **OpenCode:**
 - `runtimes/opencode/kernel.md` -> `~/.config/opencode/AGENTS.md` when missing or approved
 - `skills/<name>/` -> `~/.claude/skills/<name>/` (cross-tool compatibility)
+- `runtimes/opencode/commands/` -> `~/.config/opencode/commands/`
 - `references/*.md` -> `~/.config/opencode/b-agentic/references/`
 - `references/*.md` -> `~/.claude/skills/<name>/references/b-agentic/` for each skill
 - `runtimes/opencode/configs/mcp.user.template.json` -> merged into `~/.config/opencode/opencode.json` with Serena configured as `serena start-mcp-server --context ide --project-from-cwd`
 - `runtimes/opencode/configs/*.md` -> `~/.config/opencode/b-agentic/templates/`
 - install metadata and backups -> `~/.config/opencode/b-agentic/`
+
+The OpenCode wrapper files keep the `/b-*` command names available in the command palette while delegating back to the matching native skill. If a command file with the same name already exists, the installer preserves it and skips that managed wrapper.
 
 Use `--runtime=opencode` or set `B_AGENTIC_RUNTIME=opencode` to install for OpenCode:
 
@@ -61,7 +64,7 @@ If an existing kernel file is preserved, the installer exits with `activationSta
 
 ## One Command
 
-Plain install syncs the runtime, merges recommended settings, and installs all MCP servers at Claude Code user scope:
+For Claude Code, plain install syncs the runtime, merges recommended settings, and installs all MCP servers at Claude Code user scope:
 
 ```text
 b-agentic Claude Code install complete
@@ -72,6 +75,21 @@ mcp: write|merge -> ~/.claude.json
 references: sync -> ~/.claude/b-agentic/references
 templates: sync -> ~/.claude/b-agentic/templates
 manifest: write -> ~/.claude/b-agentic/install.json
+backups: ...
+activationState: active|pending
+```
+
+For OpenCode, the install report also includes the managed command wrapper sync:
+
+```text
+b-agentic OpenCode install complete
+skillsSynced: 11 -> ~/.claude/skills
+commandsSynced: 11 -> ~/.config/opencode/commands
+kernel: write|replace|preserve -> ~/.config/opencode/AGENTS.md
+mcp: write|merge -> ~/.config/opencode/opencode.json
+references: sync -> ~/.config/opencode/b-agentic/references
+templates: sync -> ~/.config/opencode/b-agentic/templates
+manifest: write -> ~/.config/opencode/b-agentic/install.json
 backups: ...
 activationState: active|pending
 ```
@@ -115,7 +133,7 @@ Typical flow:
 /b-ship                 # commit, push, and open PR after READY FOR PR
 ```
 
-All skills are model-invocable when their descriptions match the request. Skill descriptions are the primary routing signal; Claude Code loads the skill whose trigger conditions best fit the user's intent.
+All skills are model-invocable when their descriptions match the request. Skill descriptions are the primary routing signal; the active runtime loads the skill whose trigger conditions best fit the user's intent.
 
 ## Repository Map
 
