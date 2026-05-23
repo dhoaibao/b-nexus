@@ -2,15 +2,15 @@
 
 Reference guide for the 11-skill set that makes up `b-agentic`, an agent workflow kernel for Claude Code and OpenCode. For install and high-level repo overview, see [README.md](README.md). For maintainer guidance, see [CLAUDE.md](CLAUDE.md).
 
-When this document cites `runtimes/claude-code/kernel.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the active `CLAUDE.md`; detailed runtime behavior lives at `references/contract/` in this repo and at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/` inside installed skills. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
+When this document cites `runtimes/claude-code/kernel.md`, that is the source-repo runtime kernel path. Installed skill prose should reference the active runtime kernel; detailed runtime behavior lives at `references/contract/` in this repo and at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/` inside installed skills. Shared skills and shared contract files stay runtime-neutral; `${CLAUDE_SKILL_DIR}` support-path usage is the only intentional shared bridge marker in this iteration. Runtime references are required read gates when a skill needs their schemas, checklists, or protocols.
 
-Runtime enforcement is intentionally mechanical: `runtimes/claude-code/kernel.md` owns the runtime gate checklist, each skill step uses explicit read gates for shared schemas/protocols/checklists, Claude skills expose `/b-*` slash commands, and `scripts/validate-skills.sh` rejects passive pointers that would rely on memory.
+Runtime enforcement is intentionally mechanical: the runtime kernels own the gate checklist, each skill step uses explicit read gates for shared schemas/protocols/checklists, runtime adapters expose `/b-*` entry points, and `scripts/validate-skills.sh` rejects passive pointers that would rely on memory.
 
 MCP setup is part of the normal one-command install for both Claude Code and OpenCode. The Claude Code installer merges Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus into `~/.claude.json`; the OpenCode installer merges the same six servers into `~/.config/opencode/opencode.json`. Runtime skills still choose MCP lazily by evidence need rather than by installed config.
 
 Browser, DOM-rendered, visual, and e2e verification belongs to `b-browser`, not `b-test`. The suite does not add jsdom, Playwright, Cypress, Puppeteer, WebDriver, or equivalent browser/DOM tooling as a project dependency side effect. For UI/browser-relevant work, readiness claims require `b-browser`-verified supplied/CI evidence, existing-tool evidence, approved live-browser evidence, or an accepted follow-up.
 
-All skills are model-invocable when their descriptions match the request. Claude Code routes to the skill whose trigger conditions best fit the user's intent. `b-plan` includes Clarification mode for underspecified requests.
+All skills are model-invocable when their descriptions match the request. The active runtime routes to the skill whose trigger conditions best fit the user's intent. `b-plan` includes Clarification mode for underspecified requests.
 
 ---
 
@@ -45,7 +45,7 @@ Turns goals into execution-ready plans. Handles both underspecified requests (Cl
 - Defaults to quick mode for low-risk, chat-sized scoped work and uses full mode only for durable, multi-session, dependency-heavy, or risky coordination.
 - Reads runtime contract and `skills/b-plan/reference.md` gates before saved-plan metadata, artifact paths, templates, staleness, or status output.
 - Avoids promoting routine multi-step work to a saved plan solely because it has several obvious substeps.
-- Saves full plans under `.b-agentic/b-plan/<plan-file-slug>.md` with durable frontmatter and `contract_version` from `runtimes/claude-code/kernel.md`; the filename stays English while frontmatter `slug` remains the canonical task slug.
+- Saves full plans under `.b-agentic/b-plan/<plan-file-slug>.md` with durable frontmatter and the current shared runtime `contract_version`; the filename stays English while frontmatter `slug` remains the canonical task slug.
 - Promotes quick plans to saved plans when risk, breadth, or coordination grows.
 - Uses repo evidence only when it materially improves sequencing or touch-point accuracy.
 - Records assumptions separately from confirmed decisions unless the user confirms them.
@@ -290,10 +290,10 @@ The reference runtime. Skills install to `~/.claude/skills/` and expose `/b-*` s
 
 ### OpenCode
 
-Supported via a bridge adapter. OpenCode reads Claude Code skills natively, so skills remain Claude-Code-shaped and install to `~/.claude/skills/` for cross-tool compatibility. The adapter also installs thin `/b-*` command wrappers into `~/.config/opencode/commands/`; those wrappers delegate back to the matching skills, and colliding command files are preserved instead of overwritten. The kernel installs to `~/.config/opencode/AGENTS.md`. Suite metadata lives at `~/.config/opencode/b-agentic/`.
+Supported via a bridge adapter. OpenCode intentionally consumes the shared Claude-shaped skill tree from `~/.claude/skills/` for cross-tool compatibility, while shared skills and shared contract files stay runtime-neutral. The adapter also installs thin `/b-*` command wrappers into `~/.config/opencode/commands/`; those wrappers delegate back to the matching skills, and colliding command files are preserved instead of overwritten. The kernel installs to `~/.config/opencode/AGENTS.md`. Suite metadata lives at `~/.config/opencode/b-agentic/`.
 
 **Constraints**
-- Skills use `${CLAUDE_SKILL_DIR}` references; this requires Claude Code to be installed or the env var to be set manually.
+- `${CLAUDE_SKILL_DIR}` support-path usage is the only intentional shared bridge marker in the shared layer.
 - No OpenCode-specific settings template ships; settings remain Claude Code–only.
 - MCP servers are auto-installed into `~/.config/opencode/opencode.json` via `runtimes/opencode/configs/mcp.user.template.json`; the Serena entry uses `--context ide`.
 - Temporary artifacts use `/tmp/opencode/b-agentic/`.

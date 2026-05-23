@@ -35,7 +35,7 @@ Answer external-knowledge questions at the lightest reliable depth, with fetched
 - `brave-search` (open-web discovery for unknown URLs, recent sources, and comparisons)
 - `firecrawl-extraction` (known URLs and local documents when extraction is available)
 - `firecrawl-extended` *(optional, for site maps or structured fields)*
-- `firecrawl-deep` *(last resort; approval-gated by `CLAUDE.md`)*
+- `firecrawl-deep` *(last resort; explicit approval required)*
 
 
 ## Steps

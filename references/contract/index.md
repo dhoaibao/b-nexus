@@ -1,6 +1,6 @@
 # b-agentic — Agent Workflow Kernel Contract
 
-> Detailed schemas, rubrics, edge-case protocols, tool bundles, and operational rules for the `b-agentic` agent workflow kernel. The active runtime kernel lives in `CLAUDE.md` (Claude Code) or `AGENTS.md` (OpenCode); installed skills should consult their bundled supporting files at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/` when a skill points to detailed behavior. Installed contract files live at `~/.claude/b-agentic/references/contract/` (Claude Code) or `~/.config/opencode/b-agentic/references/contract/` (OpenCode), and temporary run artifacts at `/tmp/claude-code/b-agentic/` (Claude Code) or `/tmp/opencode/b-agentic/` (OpenCode).
+> Detailed schemas, rubrics, edge-case protocols, tool bundles, and operational rules for the `b-agentic` agent workflow kernel. The active runtime kernel lives in the runtime's installed memory file; installed skills should consult their bundled supporting files at `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/` when a skill points to detailed behavior. Installed contract files live in the active runtime's b-agentic reference directory (for example, `~/.claude/b-agentic/references/contract/` or `~/.config/opencode/b-agentic/references/contract/`), and temporary run artifacts in the active runtime's temp scratch path (for example, `/tmp/claude-code/b-agentic/` or `/tmp/opencode/b-agentic/`).
 
 ## Quick Index
 
@@ -23,4 +23,3 @@ Use this index to jump to the smallest section file that owns the needed schema,
 | §12 Common rationalizations | `contract/12-anti-patterns.md` | suite-wide anti-patterns and counters | checking whether a shortcut violates suite discipline |
 
 ---
-

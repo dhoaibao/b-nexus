@@ -4,7 +4,7 @@
 
 `b-agentic` turns rough developer intent into disciplined loops: clarify, plan, build, validate, debug, review, and audit. It is optimized around scoped execution, repo evidence, MCP tools, verification, and clean handoffs.
 
-Claude Code is the reference runtime; OpenCode is supported via a bridge adapter. Skills install as native skills, and the OpenCode adapter also installs thin `/b-*` command wrappers.
+Claude Code is the reference runtime; OpenCode is supported via a bridge adapter. Shared skills and shared contract files stay runtime-neutral, and the OpenCode adapter also installs thin `/b-*` command wrappers.
 
 ## Install & Update
 
@@ -52,7 +52,7 @@ The installer deploys this repo into the active runtime's personal config:
 - `runtimes/opencode/configs/*.md` -> `~/.config/opencode/b-agentic/templates/`
 - install metadata and backups -> `~/.config/opencode/b-agentic/`
 
-The OpenCode wrapper files keep the `/b-*` command names available in the command palette while delegating back to the matching native skill. If a command file with the same name already exists, the installer preserves it and skips that managed wrapper.
+The OpenCode wrapper files keep the `/b-*` command names available in the command palette while delegating back to the matching native skill. If a command file with the same name already exists, the installer preserves it and skips that managed wrapper. `${CLAUDE_SKILL_DIR}` support-path usage remains the only intentional shared bridge marker in this iteration.
 
 Use `--runtime=opencode` or set `B_AGENTIC_RUNTIME=opencode` to install for OpenCode:
 
@@ -149,7 +149,7 @@ b-agentic/
 │       ├── kernel.md      # Always-on runtime rules (installs as ~/.config/opencode/AGENTS.md)
 │       ├── configs/       # Runtime layout documentation
 │       └── scripts/       # OpenCode-specific install and validate scripts
-├── references/            # shared runtime references copied into skill support dirs
+├── references/            # shared runtime-neutral references copied into skill support dirs
 ├── skills/<name>/         # Skill instructions and optional reference.md files
 ├── install.sh             # Shared installer entrypoint; delegates to runtime scripts
 └── scripts/               # Shared validation and smoke-test helpers

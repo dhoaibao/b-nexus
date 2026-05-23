@@ -15,7 +15,7 @@ The OpenCode release supports a personal-global install:
 - Sensitive artifacts: `~/.config/opencode/b-agentic/<skill>/<run-id>/` or `/tmp/opencode/b-agentic/<skill>/<run-id>/`
 - Temporary logs: `/tmp/opencode/b-agentic/<skill>/<slug>.log`
 
-> **Constraint:** Skills remain Claude-Code-shaped because OpenCode reads the Anthropic Agent Skills format natively, including from `~/.claude/skills/`. `${CLAUDE_SKILL_DIR}` references in skills continue to work when Claude Code is installed. Full native skill re-templating for OpenCode is a future iteration.
+> **Constraint:** OpenCode intentionally consumes the shared Claude-shaped skill tree from `~/.claude/skills/`. Shared skills and shared contract files still must stay runtime-neutral; `${CLAUDE_SKILL_DIR}` support-path usage is the only intentional shared bridge marker in this iteration. Full native skill re-templating for OpenCode is a future iteration.
 
 ## Invocation policy
 
@@ -51,4 +51,4 @@ MCP safety rules:
 
 ## Validator scope
 
-`scripts/validate-skills.sh` discovers and runs `runtimes/<name>/scripts/validate.sh` for each adapter. Shared checks (skill count, frontmatter, required sections) run first, then per-runtime validators check adapter-specific invariants.
+`scripts/validate-skills.sh` discovers and runs `runtimes/<name>/scripts/validate.sh` for each adapter. Shared checks should fail on runtime-specific wording drift in shared skills and shared contract files, while the OpenCode adapter validator checks only adapter-owned invariants and this documented bridge constraint.

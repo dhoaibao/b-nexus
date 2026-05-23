@@ -53,4 +53,6 @@ MCP safety rules:
 
 ## Validator scope
 
-`scripts/validate-skills.sh` currently encodes Claude-Code-specific assertions: required path markers in `references/contract/index.md` (`~/.claude/b-agentic`, `/tmp/claude-code/b-agentic`, `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/`), kernel-marker checks against `runtimes/claude-code/kernel.md`, and the existence and content of this file (`runtimes/claude-code/configs/README.md`). Validator policy is Claude-Code-only until a second adapter generalises those checks; see `CLAUDE.md` "Runtime Adapters" for the full TODO list.
+`scripts/validate-skills.sh` is the shared regression gate for runtime-neutral skills and shared contract files. Claude-specific paths, memory filenames, install-layout details, and runtime caveats stay adapter-owned here and in `runtimes/claude-code/scripts/validate.sh`.
+
+The only shared bridge marker intentionally permitted outside the Claude adapter is `${CLAUDE_SKILL_DIR}` support-path usage in shared skills.

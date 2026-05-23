@@ -18,7 +18,7 @@ If `$ARGUMENTS` is present, treat it as the task description and proceed.
 
 ## When to use
 
-- The task is non-trivial under `CLAUDE.md` section 3.
+- The task is non-trivial under the shared §3 glossary.
 - The goal is clear, but approach, sequencing, risk, or dependencies matter.
 - The end state, acceptance criteria, constraints, or non-goals are unclear.
 - The user asks for a plan, architecture direction, or ordered implementation steps.
@@ -46,7 +46,7 @@ If `$ARGUMENTS` is present, treat it as the task description and proceed.
 - **Quick mode:** default for low-risk scoped work. Return a short chat plan and ask for approval.
 - **Full mode:** use only for non-trivial work, real structural choice, public/sensitive risk, or durable coordination need. Read `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/06-safety.md` and `${CLAUDE_SKILL_DIR}/references/b-agentic/contract/08-artifacts.md` before saving a plan under `.b-agentic/b-plan/<plan-file-slug>.md`.
 
-Default to quick mode when the plan is low/trivial risk, fits in chat, and can be executed in one coherent session. Do not promote to full mode solely because the task has several routine substeps. Use full mode when the plan is non-trivial per `CLAUDE.md` §3 (touches more than 3 files, a public contract, a sensitive path, CI/build config, or adds/changes a dependency), needs durable approval, spans sessions, has unresolved dependencies, or discovery reveals broad references, security-sensitive behavior, deployment risk, or a plan that is no longer readable in chat.
+Default to quick mode when the plan is low/trivial risk, fits in chat, and can be executed in one coherent session. Do not promote to full mode solely because the task has several routine substeps. Use full mode when the plan is non-trivial per the shared §3 glossary (touches more than 3 files, a public contract, a sensitive path, CI/build config, or adds/changes a dependency), needs durable approval, spans sessions, has unresolved dependencies, or discovery reveals broad references, security-sensitive behavior, deployment risk, or a plan that is no longer readable in chat.
 
 ### Step 2 - Lock scope and decisions
 

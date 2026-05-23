@@ -1,6 +1,6 @@
 ## 0. Relationship To Runtime Kernel
 
-The authoritative active runtime kernel lives in `runtimes/claude-code/kernel.md` in this source repo and installs as `~/.claude/CLAUDE.md` when the user permits activation. This detailed contract must not duplicate the kernel rule list; it expands the schemas, rubrics, tool bundles, and edge-case protocols that the kernel links to.
+The authoritative active runtime kernel lives under `runtimes/<name>/kernel.md` in this source repo and installs as the runtime's memory file when the user permits activation. This detailed contract must not duplicate the kernel rule list; it expands the schemas, rubrics, tool bundles, and edge-case protocols that the kernel links to.
 
 ### Reference checklist
 
@@ -19,7 +19,7 @@ Runtime-critical gates are the points where missed instructions most often creat
 - **Artifact gate (§8):** before writing saved plans, reports, manifests, run logs, sensitive artifacts, or non-plan run directories.
 - **Output/handoff gate (§9):** before emitting non-trivial final output, status blocks, saved reports, error envelopes, or handoff envelopes.
 
-Use this wording pattern in installed Claude skills when a gate is required: `Read ${CLAUDE_SKILL_DIR}/references/b-agentic/contract/ §N before <action>`. For a per-skill `reference.md`, use: `Read ${CLAUDE_SKILL_DIR}/reference.md before <action>`. Keep schemas in this contract; the skill owns only the local trigger for reading them.
+Use this wording pattern in installed runtime skills when a gate is required: `Read ${CLAUDE_SKILL_DIR}/references/b-agentic/contract/ §N before <action>`. For a per-skill `reference.md`, use: `Read ${CLAUDE_SKILL_DIR}/reference.md before <action>`. Keep schemas in this contract; the skill owns only the local trigger for reading them.
 
 ### Runtime gate checklist
 
@@ -47,4 +47,3 @@ Trivial happy paths keep the compact path in §7 and §9; do not add status bloc
 This runtime contract version is `2026-05-16`. New saved plans and multi-artifact manifests should include this value as `contract_version` so future agents can detect stale artifact semantics. In schema examples and reusable templates, write the field as `<current-contract-version>` to avoid drift; concrete run artifacts use the actual version string from this section. Legacy artifacts without this field remain valid but should be treated as pre-versioned.
 
 ---
-

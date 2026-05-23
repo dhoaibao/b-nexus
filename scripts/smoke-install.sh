@@ -329,6 +329,25 @@ PY
   assert_json_value "$sandbox_opencode/home/.config/opencode/opencode.json" "data['mcp']['playwright']['command'][0] == 'bunx'"
   assert_json_value "$sandbox_opencode/home/.config/opencode/opencode.json" "data['mcp']['playwright']['command'][-1] == '--isolated'"
   assert_json_value "$sandbox_opencode/home/.config/opencode/opencode.json" "data['mcp']['gitnexus']['command'] == ['gitnexus', 'mcp']"
+  assert_file "$sandbox_opencode/home/.config/opencode/b-agentic/references/contract/index.md"
+  assert_not_contains "$sandbox_opencode/home/.config/opencode/b-agentic/references/contract/index.md" 'The active runtime kernel lives in `CLAUDE.md` (Claude Code) or `AGENTS.md` (OpenCode)'
+  assert_not_contains "$sandbox_opencode/home/.config/opencode/b-agentic/references/contract/00-kernel.md" 'runtimes/claude-code/kernel.md'
+  assert_not_contains "$sandbox_opencode/home/.config/opencode/b-agentic/references/contract/05-evidence.md" 'active `CLAUDE.md`'
+  assert_not_contains "$sandbox_opencode/home/.config/opencode/b-agentic/references/contract/06-safety.md" 'Use `~/.claude/b-agentic/...` or `/tmp/claude-code/b-agentic/...` instead by default.'
+  assert_not_contains "$sandbox_opencode/home/.config/opencode/b-agentic/references/contract/07-execution.md" 'save the full output under `/tmp/claude-code/b-agentic/<skill>/<slug>.log`'
+  assert_not_contains "$sandbox_opencode/home/.config/opencode/b-agentic/references/contract/08-artifacts.md" 'auth/session state and similar secrets default to `~/.claude/b-agentic/<skill>/<run-id>/` or `/tmp/claude-code/b-agentic/<skill>/<run-id>/`'
+  assert_not_contains "$sandbox_opencode/home/.config/opencode/b-agentic/references/contract/10-decisions.md" 'capture the failing output under `/tmp/claude-code/b-agentic/b-test/`'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-plan/SKILL.md" 'CLAUDE.md section 3'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-plan/SKILL.md" 'per `CLAUDE.md` §3'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-implement/SKILL.md" 'CLAUDE.md section 3'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-research/SKILL.md" 'approval-gated by `CLAUDE.md`'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-plan/references/b-agentic/contract/index.md" 'The active runtime kernel lives in `CLAUDE.md` (Claude Code) or `AGENTS.md` (OpenCode)'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-plan/references/b-agentic/contract/00-kernel.md" 'runtimes/claude-code/kernel.md'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-plan/references/b-agentic/contract/05-evidence.md" 'active `CLAUDE.md`'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-plan/references/b-agentic/contract/06-safety.md" 'Use `~/.claude/b-agentic/...` or `/tmp/claude-code/b-agentic/...` instead by default.'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-plan/references/b-agentic/contract/07-execution.md" 'save the full output under `/tmp/claude-code/b-agentic/<skill>/<slug>.log`'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-plan/references/b-agentic/contract/08-artifacts.md" 'auth/session state and similar secrets default to `~/.claude/b-agentic/<skill>/<run-id>/` or `/tmp/claude-code/b-agentic/<skill>/<run-id>/`'
+  assert_not_contains "$sandbox_opencode/home/.claude/skills/b-plan/references/b-agentic/contract/10-decisions.md" 'capture the failing output under `/tmp/claude-code/b-agentic/b-test/`'
   expect_install_status 0 "$sandbox_opencode" "$snapshot_repo" --runtime=opencode --uninstall
   assert_no_path "$sandbox_opencode/home/.config/opencode/b-agentic"
   assert_no_path "$sandbox_opencode/home/.config/opencode/opencode.json"

@@ -58,13 +58,13 @@ for doc_path, doc_text in [('README.md', readme), ('REFERENCE.md', reference)]:
             errors.append(f'{doc_path}: stale pattern {needle!r}')
 
 for required in [
-    'The active runtime kernel lives in `CLAUDE.md`',
+    "runtime kernel lives in the runtime's installed memory file",
     '${CLAUDE_SKILL_DIR}/references/b-agentic/contract/',
     '~/.claude/b-agentic',
     '/tmp/claude-code/b-agentic',
 ]:
     if required not in contract_index:
-        errors.append(f'references/contract/index.md: missing Claude-native marker {required!r}')
+        errors.append(f'references/contract/index.md: missing shared or Claude-runtime marker {required!r}')
 
 if 'global/AGENTS.md' in contract_index:
     errors.append('references/contract/index.md: contains stale active OpenCode path global/AGENTS.md')

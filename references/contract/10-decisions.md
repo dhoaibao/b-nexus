@@ -35,7 +35,7 @@ Never modify production code purely because a test is red. Never modify an asser
 
 ### Flake handling
 
-Rerun the suspected test up to 2 times in isolation. If it passes some runs and fails others without any code change, mark it `flaky`, capture the failing output under `/tmp/claude-code/b-agentic/b-test/`, and investigate ordering, shared state, async timing, or external time/network dependence before either skipping or rewriting it.
+Rerun the suspected test up to 2 times in isolation. If it passes some runs and fails others without any code change, mark it `flaky`, capture the failing output under the active runtime's temp scratch path (for example, `/tmp/claude-code/b-agentic/b-test/` or `/tmp/opencode/b-agentic/b-test/`), and investigate ordering, shared state, async timing, or external time/network dependence before either skipping or rewriting it.
 
 ### Browser and DOM verification boundary
 
@@ -111,4 +111,3 @@ When the user signals stop, cancel, or abort mid-workflow or mid-skill:
 5. Do not continue work after the abandonment signal unless the user explicitly resumes.
 
 ---
-

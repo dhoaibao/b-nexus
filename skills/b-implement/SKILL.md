@@ -3,7 +3,7 @@ name: b-implement
 description: >
   Execute approved or scoped work safely after /b-plan approval, when the user
   asks to execute or implement scoped work, or when a small direct request meets
-  the threshold in CLAUDE.md section 3. Reads the approved plan, applies the
+  the shared §3 threshold. Reads the approved plan, applies the
   next small step, verifies it, and stops for new decisions. Unlike b-plan,
   b-implement changes code.
 argument-hint: "[plan-path-or-task]"
@@ -21,7 +21,7 @@ If `$ARGUMENTS` is present, treat it as a plan path, plan slug, approved chat pl
 
 - The user approved a saved or chat plan.
 - The next action is to edit code or docs within known scope.
-- The request meets the small direct request threshold in `CLAUDE.md` section 3.
+- The request meets the small direct request threshold in the shared §3 glossary.
 
 ## When NOT to use
 

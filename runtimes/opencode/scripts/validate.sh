@@ -63,6 +63,10 @@ if 'mcp.user.template.json' not in opencode_readme:
     errors.append('runtimes/opencode/configs/README.md: missing mcp.user.template.json reference')
 if '~/.config/opencode/commands/' not in opencode_readme:
     errors.append('runtimes/opencode/configs/README.md: missing OpenCode command wrapper path documentation')
+if 'runtime-neutral' not in opencode_readme:
+    errors.append('runtimes/opencode/configs/README.md: must state that shared skills/contracts stay runtime-neutral')
+if '${CLAUDE_SKILL_DIR}' not in opencode_readme or 'only intentional shared bridge marker' not in opencode_readme:
+    errors.append('runtimes/opencode/configs/README.md: must keep the shared bridge-marker constraint explicit')
 
 if errors:
     for error in errors:

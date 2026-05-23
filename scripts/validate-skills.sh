@@ -119,6 +119,10 @@ for path in skill_paths:
         if needle in text:
             errors.append(f'{path}: stale pattern {needle!r}')
 
+    for runtime_doc in ['CLAUDE.md', 'AGENTS.md']:
+        if runtime_doc in text:
+            errors.append(f'{path}: shared skills must stay runtime-neutral and must not mention {runtime_doc}')
+
     if 'references/b-agentic/contract/' in text and '${CLAUDE_SKILL_DIR}/references/b-agentic/contract/' not in text:
         errors.append(f'{path}: contract read gates must use ${{CLAUDE_SKILL_DIR}} support path')
 
@@ -153,6 +157,16 @@ reference = (root / 'REFERENCE.md').read_text() if (root / 'REFERENCE.md').exist
 maintainer_path = root / 'CLAUDE.md'
 maintainer = maintainer_path.read_text() if maintainer_path.exists() else ''
 
+shared_contract_paths = [
+    root / 'references' / 'contract' / '00-kernel.md',
+    root / 'references' / 'contract' / '04-tool-model.md',
+    root / 'references' / 'contract' / '05-evidence.md',
+    root / 'references' / 'contract' / '06-safety.md',
+    root / 'references' / 'contract' / '07-execution.md',
+    root / 'references' / 'contract' / '08-artifacts.md',
+    root / 'references' / 'contract' / '10-decisions.md',
+]
+
 kernel_path = root / 'runtimes' / 'claude-code' / 'kernel.md'
 kernel = kernel_path.read_text() if kernel_path.exists() else ''
 contract_index_path = root / 'references' / 'contract' / 'index.md'
@@ -180,6 +194,24 @@ for doc_path, doc_text in [('README.md', readme), ('REFERENCE.md', reference)]:
 
 if 'One Command' not in readme or 'skillsSynced' not in readme:
     errors.append('README.md: missing one-command install/output documentation')
+
+for contract_path in shared_contract_paths:
+    if not contract_path.exists():
+        errors.append(f'{contract_path}: missing shared contract file')
+        continue
+
+    contract_text = contract_path.read_text()
+    if 'CLAUDE.md' in contract_text or 'AGENTS.md' in contract_text:
+        errors.append(f'{contract_path}: shared contract files must refer to the active runtime kernel, not a runtime-specific memory filename')
+
+    if 'runtimes/claude-code/kernel.md' in contract_text and 'runtimes/<name>/kernel.md' not in contract_text:
+        errors.append(f'{contract_path}: shared contract files must not hardcode the Claude runtime kernel path')
+
+    if '~/.claude/b-agentic' in contract_text and '~/.config/opencode/b-agentic' not in contract_text and 'active runtime' not in contract_text:
+        errors.append(f'{contract_path}: Claude-only user-scope artifact paths in shared contract files must be runtime-neutral or dual-runtime')
+
+    if '/tmp/claude-code/b-agentic' in contract_text and '/tmp/opencode/b-agentic' not in contract_text and 'active runtime' not in contract_text:
+        errors.append(f'{contract_path}: Claude-only temp artifact paths in shared contract files must be runtime-neutral or dual-runtime')
 
 if contract_version:
     for plan_path in sorted((root / '.b-agentic' / 'b-plan').glob('*.md')):
