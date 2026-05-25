@@ -260,6 +260,7 @@ for name in skills:
     lines.extend([
         "[[skills.config]]",
         f"path = {toml_string(skill_path)}",
+        "enabled = true",
         "",
     ])
 

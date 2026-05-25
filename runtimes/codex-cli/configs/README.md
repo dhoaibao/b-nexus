@@ -20,13 +20,13 @@ The Codex adapter supports a personal-global install:
 
 ## Invocation policy
 
-Codex exposes installed skills through `/skills` and `$skill-name`, and can also choose them implicitly from the skill description. The adapter installs skills under `~/.codex/skills/` and registers them through `[[skills.config]]` entries whose `path` points to the skill folder that contains `SKILL.md`.
+Codex exposes installed skills through `/skills` and `$skill-name`, and can also choose them implicitly from the skill description. The adapter installs skills under `~/.codex/skills/` and registers them through `[[skills.config]]` entries whose `path` points to the skill folder that contains `SKILL.md` and whose `enabled = true` flag keeps the entry valid under the current Codex config schema.
 
 The adapter does not install custom `/b-*` wrapper files. Codex-native skill discovery is the supported invocation surface unless Codex later documents a first-class wrapper mechanism.
 
 ## Safety policy
 
-The installer never overwrites an existing `~/.codex/AGENTS.md` without `--replace-memory`. Plain install syncs runtime-local skills, installs the shared reference snapshot under `~/.codex/b-agentic/references/`, and writes a managed block into `~/.codex/config.toml` for `mcp_servers.*` and `[[skills.config]]` entries. Existing user config outside that managed block is preserved.
+The installer never overwrites an existing `~/.codex/AGENTS.md` without `--replace-memory`. Plain install syncs runtime-local skills, installs the shared reference snapshot under `~/.codex/b-agentic/references/`, and writes a managed block into `~/.codex/config.toml` for `mcp_servers.*` and `[[skills.config]]` entries, including the required `enabled = true` field for each managed skill. Existing user config outside that managed block is preserved.
 
 Codex runtime install and maintainer validation/smoke checks require Python 3.11+ because TOML parsing uses the standard-library `tomllib` module.
 
