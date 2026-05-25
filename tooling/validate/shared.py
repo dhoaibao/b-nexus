@@ -427,12 +427,25 @@ runtime_readiness_install_lines = [
     "serena: install/init separately; installer never runs onboarding",
     "gitnexus: install/index separately if you want graph radar",
     "api-keys: Context7, Brave Search, and Firecrawl need user-scope keys",
+    "print_shell_tool_recommendations",
+]
+shared_shell_install_lines = [
+    "recommended_shell_commands() {",
+    "printf 'rg, fd/fdfind, jq, tmux, fzf'",
+    'log "shellTooling:"',
+    'log "  installer: suggestions only; no packages were installed automatically"',
 ]
 runtime_readiness_doc_lines = [
     "## MCP readiness after install",
     "`playwright` is immediately available once Bun is on `PATH`; no extra suite-owned setup runs.",
     "`serena` entry is installed, but full symbol-aware value still depends on the user having Serena installed and completing first-use setup when needed. The installer never runs `serena setup`, `serena init`, or onboarding.",
     "`gitnexus` entry is installed, but graph radar depends on the user having GitNexus installed and running their own indexing/analyze flow. The installer never runs GitNexus setup or indexing.",
+]
+runtime_shell_doc_lines = [
+    "## Optional shell tooling recommendations",
+    "Install reports also print an optional shell-tooling hint block for `rg`, `fd`/`fdfind`, `jq`, `tmux`, and `fzf`.",
+    "When the installer can detect Homebrew, `apt`, or `dnf`, it prints the matching package command; otherwise it falls back to a manual-install note.",
+    "The installer never auto-installs these packages.",
 ]
 for runtime_name, api_key_line in [
     ("claude-code", "`context7`, `brave-search`, and `firecrawl` entries are installed immediately, but live requests need user-scope API keys in `~/.claude.json`."),
@@ -442,7 +455,8 @@ for runtime_name, api_key_line in [
     install_path = ROOT / "runtimes" / runtime_name / "scripts" / "install.sh"
     readme_path = ROOT / "runtimes" / runtime_name / "configs" / "README.md"
     require_contains(install_path, read_text(install_path), runtime_readiness_install_lines, "runtime readiness install line")
-    require_contains(readme_path, read_text(readme_path), runtime_readiness_doc_lines + [api_key_line], "runtime readiness doc line")
+    require_contains(readme_path, read_text(readme_path), runtime_readiness_doc_lines + runtime_shell_doc_lines + [api_key_line], "runtime readiness doc line")
+require_contains(ROOT / "tooling" / "install" / "common.sh", read_text(ROOT / "tooling" / "install" / "common.sh"), shared_shell_install_lines, "shared shell tooling install line")
 
 for contract_path in shared_contract_paths:
     if not contract_path.exists():

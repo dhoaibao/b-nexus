@@ -72,6 +72,33 @@ run_runtime_smoke_cases() {
   assert_contains "$sandbox_opencode_install_report/install.log" 'serena: install/init separately; installer never runs onboarding'
   assert_contains "$sandbox_opencode_install_report/install.log" 'gitnexus: install/index separately if you want graph radar'
   assert_contains "$sandbox_opencode_install_report/install.log" 'api-keys: Context7, Brave Search, and Firecrawl need user-scope keys'
+  assert_contains "$sandbox_opencode_install_report/install.log" 'shellTooling:'
+  assert_contains "$sandbox_opencode_install_report/install.log" 'recommended: rg, fd/fdfind, jq, tmux, fzf'
+  assert_contains "$sandbox_opencode_install_report/install.log" 'installer: suggestions only; no packages were installed automatically'
+
+  HOME="$sandbox_opencode_install_report/home" \
+  B_AGENTIC_REPO="$snapshot_repo" \
+  B_AGENTIC_DIR="$sandbox_opencode_install_report/source-apt" \
+  B_AGENTIC_PROMPT_API_KEYS=N \
+  B_AGENTIC_SHELL_RECOMMEND_MANAGER=apt \
+  bash "$ROOT_DIR/install.sh" --runtime=opencode >"$sandbox_opencode_install_report/install-apt.log" 2>&1
+  assert_contains "$sandbox_opencode_install_report/install-apt.log" 'install: sudo apt install -y ripgrep fd-find jq tmux fzf'
+
+  HOME="$sandbox_opencode_install_report/home" \
+  B_AGENTIC_REPO="$snapshot_repo" \
+  B_AGENTIC_DIR="$sandbox_opencode_install_report/source-dnf" \
+  B_AGENTIC_PROMPT_API_KEYS=N \
+  B_AGENTIC_SHELL_RECOMMEND_MANAGER=dnf \
+  bash "$ROOT_DIR/install.sh" --runtime=opencode >"$sandbox_opencode_install_report/install-dnf.log" 2>&1
+  assert_contains "$sandbox_opencode_install_report/install-dnf.log" 'install: sudo dnf install -y ripgrep fd-find jq tmux fzf'
+
+  HOME="$sandbox_opencode_install_report/home" \
+  B_AGENTIC_REPO="$snapshot_repo" \
+  B_AGENTIC_DIR="$sandbox_opencode_install_report/source-manual" \
+  B_AGENTIC_PROMPT_API_KEYS=N \
+  B_AGENTIC_SHELL_RECOMMEND_MANAGER=manual \
+  bash "$ROOT_DIR/install.sh" --runtime=opencode >"$sandbox_opencode_install_report/install-manual.log" 2>&1
+  assert_contains "$sandbox_opencode_install_report/install-manual.log" 'install: install manually: ripgrep, fd or fd-find, jq, tmux, fzf'
 
   mkdir -p "$sandbox_opencode_cwd_repo/home" "$sandbox_opencode_cwd_repo/current-repo"
   git -C "$sandbox_opencode_cwd_repo/current-repo" init -q

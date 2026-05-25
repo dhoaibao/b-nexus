@@ -130,6 +130,7 @@ runtime_print_install_report() {
   log "  serena: install/init separately; installer never runs onboarding"
   log "  gitnexus: install/index separately if you want graph radar"
   log "  api-keys: Context7, Brave Search, and Firecrawl need user-scope keys"
+  print_shell_tool_recommendations
 }
 
 runtime_uninstall_configs() {

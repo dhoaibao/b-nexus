@@ -628,6 +628,112 @@ collect_api_keys() {
   fi
 }
 
+recommended_shell_commands() {
+  printf 'rg, fd/fdfind, jq, tmux, fzf'
+}
+
+linux_distribution_family() {
+  [ -r /etc/os-release ] || {
+    printf 'unknown'
+    return 0
+  }
+
+  local distro_id="" distro_like=""
+  while IFS='=' read -r key value; do
+    value="${value%\"}"
+    value="${value#\"}"
+    case "$key" in
+      ID) distro_id="$value" ;;
+      ID_LIKE) distro_like="$value" ;;
+    esac
+  done < /etc/os-release
+
+  case " $distro_id $distro_like " in
+    *" debian "*|*" ubuntu "*) printf 'debian' ;;
+    *" fedora "*|*" rhel "*|*" centos "*|*" rocky "*|*" almalinux "*) printf 'redhat' ;;
+    *) printf 'unknown' ;;
+  esac
+}
+
+detect_shell_tool_package_manager() {
+  local override="${B_AGENTIC_SHELL_RECOMMEND_MANAGER:-}"
+  local linux_family=""
+  if [ -n "$override" ]; then
+    case "$override" in
+      brew|apt|dnf|manual)
+        printf '%s' "$override"
+        return 0
+        ;;
+      *)
+        printf 'manual'
+        return 0
+        ;;
+    esac
+  fi
+
+  case "$(uname -s 2>/dev/null || printf 'unknown')" in
+    Darwin)
+      if command -v brew >/dev/null 2>&1; then
+        printf 'brew'
+      else
+        printf 'manual'
+      fi
+      ;;
+    Linux)
+      linux_family="$(linux_distribution_family)"
+      case "$linux_family" in
+        debian)
+          if command -v apt-get >/dev/null 2>&1 || command -v apt >/dev/null 2>&1; then
+            printf 'apt'
+          else
+            printf 'manual'
+          fi
+          ;;
+        redhat)
+          if command -v dnf >/dev/null 2>&1; then
+            printf 'dnf'
+          else
+            printf 'manual'
+          fi
+          ;;
+        *)
+          if command -v apt-get >/dev/null 2>&1 || command -v apt >/dev/null 2>&1; then
+            printf 'apt'
+            return 0
+          fi
+          if command -v dnf >/dev/null 2>&1; then
+            printf 'dnf'
+            return 0
+          fi
+          printf 'manual'
+          ;;
+      esac
+      ;;
+    *)
+      printf 'manual'
+      ;;
+  esac
+}
+
+shell_tool_install_hint() {
+  case "$1" in
+    brew) printf 'brew install ripgrep fd jq tmux fzf' ;;
+    apt) printf 'sudo apt install -y ripgrep fd-find jq tmux fzf' ;;
+    dnf) printf 'sudo dnf install -y ripgrep fd-find jq tmux fzf' ;;
+    *) printf 'install manually: ripgrep, fd or fd-find, jq, tmux, fzf' ;;
+  esac
+}
+
+print_shell_tool_recommendations() {
+  local package_manager
+  package_manager="$(detect_shell_tool_package_manager)"
+
+  log "shellTooling:"
+  log "  recommended: $(recommended_shell_commands)"
+  log "  installer: suggestions only; no packages were installed automatically"
+  log "  install: $(shell_tool_install_hint "$package_manager")"
+}
+
 install_mcp_config() {
   merge_json_file "$TEMPLATES_SRC/mcp.user.template.json" "$MCP_CONFIG_DST" "mcp" "$MCP_BACKUP_KEY"
 }

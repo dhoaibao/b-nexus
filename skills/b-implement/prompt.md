@@ -58,7 +58,7 @@ Before editing, state the current step in one line: source of truth, files or sy
 
 Use Serena for symbol-aware edits.
 
-- Keep native tools first for one-file prose/config/string edits where symbol or graph evidence adds nothing.
+- Keep native tools first for one-file prose/config/string edits where symbol or graph evidence adds nothing; prefer `rg`, `fd`/`fdfind`, and `jq` when those commands are available and materially faster.
 - Use Serena first when the step needs exact declarations, references, diagnostics, or symbol-aware edits.
 - Reach for GitNexus only when the approved step crosses shared/exported, route/tool, or multi-module boundaries and blast-radius evidence will change how you execute the step.
 - Use Context7 only when one narrow third-party API uncertainty blocks the next local edit or verification choice; pin the relevant version before trusting the result.

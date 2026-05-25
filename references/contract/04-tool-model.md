@@ -17,7 +17,7 @@ Skills reference bundles by conceptual name; the actual MCP server name is in th
 
 ### Tool priority
 
-Use the lightest reliable tool. Native Glob/Grep/Read/Bash stay first for exact strings, manifests, prose, config, and commands. MCP bundles are available capabilities, not default context sources; activate them only when they close the next evidence gap. Native tools are not MCP bundles; skill files may name them separately when they are part of the workflow.
+Use the lightest reliable tool. Native local tools such as exact file reads, `rg`, `fd`/`fdfind`, `grep`, `find`, `jq`, and `bash` stay first for exact strings, manifests, prose, config, and commands. MCP bundles are available capabilities, not default context sources; activate them only when they close the next evidence gap. Native tools are not MCP bundles; skill files may name them separately when they are part of the workflow.
 
 | Task shape | First choice | Then narrow with |
 |---|---|---|
@@ -34,7 +34,7 @@ Use the lightest reliable tool. Native Glob/Grep/Read/Bash stay first for exact 
 Use deeper MCP guidance where it materially improves evidence quality or coordination, not as a blanket default:
 
 - **High-ROI lanes:** `b-plan` for cross-module or route/tool/consumer scoping, `b-implement` for shared/exported-boundary changes or symbol-heavy edits, `b-review` for blast-radius and shared-risk inspection, `b-research` for external docs/facts, and `b-browser` for browser/DOM/visual evidence.
-- **Native-first lanes:** small direct requests, one-file docs/config/prose edits, exact local string checks, obvious single-symbol edits, and ordinary git/status/diff inspection.
+- **Native-first lanes:** small direct requests, one-file docs/config/prose edits, exact local string checks, obvious single-symbol edits, and ordinary git/status/diff inspection. Prefer `rg`, `fd`/`fdfind`, and `jq` when they are available and materially faster than broader fallbacks.
 - **Escalation rule:** if local evidence already answers the next decision, do not add MCP calls just because the bundle exists.
 - **Runtime readiness rule:** installers and runtime docs may explain what still needs user setup, but availability messaging does not justify auto-running onboarding, indexing, or other user-scope setup steps.
 

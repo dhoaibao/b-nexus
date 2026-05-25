@@ -67,7 +67,7 @@ Read `../../b-agentic/references/contract/09-output.md` before handing off to an
 Skip code discovery for greenfield or docs-only work. Otherwise use the lightest tool that answers the next planning question:
 
 - GitNexus only for graph-shaped subsystem, route, consumer, or process-flow questions.
-- Serena/native tools for exact owners, declarations, references, nearby conventions, and stable anchors for prose/config edits.
+- Serena/native tools for exact owners, declarations, references, nearby conventions, and stable anchors for prose/config edits; prefer `rg`, `fd`/`fdfind`, and `jq` when they exist and materially speed local evidence.
 - For small or obvious 1-3 file plans, keep discovery local; do not spend MCP budget unless shared-boundary risk appears.
 - For cross-module, exported, or route/tool planning, do at most one targeted GitNexus pass to map blast radius, then switch back to Serena/native tools for exact files and symbols.
 - Use Context7 only when a versioned third-party API detail changes the plan, step ordering, or acceptance criteria; otherwise keep planning grounded in repo evidence.

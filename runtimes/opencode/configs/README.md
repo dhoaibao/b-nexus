@@ -56,6 +56,12 @@ MCP safety rules:
 - `serena` entry is installed, but full symbol-aware value still depends on the user having Serena installed and completing first-use setup when needed. The installer never runs `serena setup`, `serena init`, or onboarding.
 - `gitnexus` entry is installed, but graph radar depends on the user having GitNexus installed and running their own indexing/analyze flow. The installer never runs GitNexus setup or indexing.
 
+## Optional shell tooling recommendations
+
+Install reports also print an optional shell-tooling hint block for `rg`, `fd`/`fdfind`, `jq`, `tmux`, and `fzf`.
+When the installer can detect Homebrew, `apt`, or `dnf`, it prints the matching package command; otherwise it falls back to a manual-install note.
+The installer never auto-installs these packages.
+
 ## Validator scope
 
 `scripts/validate-skills.sh` is the stable wrapper over `tooling/validate/run.sh`, which discovers and runs `runtimes/<name>/scripts/validate.sh` for each registered adapter. Shared checks should fail on runtime-specific wording drift in shared skills and shared contract files, while runtime-owned checks enforce the OpenCode install layout documented here.
