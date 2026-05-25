@@ -72,8 +72,21 @@ run_runtime_smoke_cases() {
   assert_contains "$sandbox_install_report/install.log" 'gitnexus: install/index separately if you want graph radar'
   assert_contains "$sandbox_install_report/install.log" 'api-keys: Context7, Brave Search, and Firecrawl need user-scope keys'
   assert_contains "$sandbox_install_report/install.log" 'shellTooling:'
+  assert_contains "$sandbox_install_report/install.log" 'tier1:'
   assert_contains "$sandbox_install_report/install.log" 'recommended: rg, fd/fdfind, jq, tmux, fzf'
+  assert_contains "$sandbox_install_report/install.log" 'tier2:'
+  assert_contains "$sandbox_install_report/install.log" 'optional: bat/batcat, yq, git-delta, gh'
+  assert_contains "$sandbox_install_report/install.log" 'use-when: readable file previews, YAML-heavy work, better git diffs, and GitHub-heavy workflows'
   assert_contains "$sandbox_install_report/install.log" 'installer: suggestions only; no packages were installed automatically'
+
+  HOME="$sandbox_install_report/home" \
+  B_AGENTIC_REPO="$snapshot_repo" \
+  B_AGENTIC_DIR="$sandbox_install_report/source-brew" \
+  B_AGENTIC_PROMPT_API_KEYS=N \
+  B_AGENTIC_SHELL_RECOMMEND_MANAGER=brew \
+  bash "$ROOT_DIR/install.sh" >"$sandbox_install_report/install-brew.log" 2>&1
+  assert_contains "$sandbox_install_report/install-brew.log" 'install: brew install ripgrep fd jq tmux fzf'
+  assert_contains "$sandbox_install_report/install-brew.log" 'install: brew install bat yq git-delta gh'
 
   HOME="$sandbox_install_report/home" \
   B_AGENTIC_REPO="$snapshot_repo" \
@@ -82,6 +95,7 @@ run_runtime_smoke_cases() {
   B_AGENTIC_SHELL_RECOMMEND_MANAGER=apt \
   bash "$ROOT_DIR/install.sh" >"$sandbox_install_report/install-apt.log" 2>&1
   assert_contains "$sandbox_install_report/install-apt.log" 'install: sudo apt install -y ripgrep fd-find jq tmux fzf'
+  assert_contains "$sandbox_install_report/install-apt.log" 'install: sudo apt install -y bat yq git-delta gh'
 
   HOME="$sandbox_install_report/home" \
   B_AGENTIC_REPO="$snapshot_repo" \
@@ -90,6 +104,7 @@ run_runtime_smoke_cases() {
   B_AGENTIC_SHELL_RECOMMEND_MANAGER=dnf \
   bash "$ROOT_DIR/install.sh" >"$sandbox_install_report/install-dnf.log" 2>&1
   assert_contains "$sandbox_install_report/install-dnf.log" 'install: sudo dnf install -y ripgrep fd-find jq tmux fzf'
+  assert_contains "$sandbox_install_report/install-dnf.log" 'install: sudo dnf install -y bat yq git-delta gh'
 
   HOME="$sandbox_install_report/home" \
   B_AGENTIC_REPO="$snapshot_repo" \
@@ -98,6 +113,7 @@ run_runtime_smoke_cases() {
   B_AGENTIC_SHELL_RECOMMEND_MANAGER=manual \
   bash "$ROOT_DIR/install.sh" >"$sandbox_install_report/install-manual.log" 2>&1
   assert_contains "$sandbox_install_report/install-manual.log" 'install: install manually: ripgrep, fd or fd-find, jq, tmux, fzf'
+  assert_contains "$sandbox_install_report/install-manual.log" 'install: install manually: bat or batcat, yq, git-delta, gh'
 
   mkdir -p "$sandbox_cwd_repo/home" "$sandbox_cwd_repo/current-repo"
   git -C "$sandbox_cwd_repo/current-repo" init -q

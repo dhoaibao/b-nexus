@@ -432,6 +432,10 @@ runtime_readiness_install_lines = [
 shared_shell_install_lines = [
     "recommended_shell_commands() {",
     "printf 'rg, fd/fdfind, jq, tmux, fzf'",
+    "optional_shell_commands() {",
+    "printf 'bat/batcat, yq, git-delta, gh'",
+    "optional_shell_tool_workflows() {",
+    "printf 'readable file previews, YAML-heavy work, better git diffs, and GitHub-heavy workflows'",
     'log "shellTooling:"',
     'log "  installer: suggestions only; no packages were installed automatically"',
 ]
@@ -443,8 +447,9 @@ runtime_readiness_doc_lines = [
 ]
 runtime_shell_doc_lines = [
     "## Optional shell tooling recommendations",
-    "Install reports also print an optional shell-tooling hint block for `rg`, `fd`/`fdfind`, `jq`, `tmux`, and `fzf`.",
-    "When the installer can detect Homebrew, `apt`, or `dnf`, it prints the matching package command; otherwise it falls back to a manual-install note.",
+    "Install reports print a default shell-tooling tier for `rg`, `fd`/`fdfind`, `jq`, `tmux`, and `fzf`, plus a separate optional tier for `bat`/`batcat`, `yq`, `git-delta`, and `gh`.",
+    "The tier-2 block is aimed at readable file previews, YAML-heavy work, better git diffs, and GitHub-heavy workflows.",
+    "When the installer can detect Homebrew, `apt`, or `dnf`, it prints matching package commands for both tiers; otherwise it falls back to manual-install notes.",
     "The installer never auto-installs these packages.",
 ]
 for runtime_name, api_key_line in [

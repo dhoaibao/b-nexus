@@ -632,6 +632,14 @@ recommended_shell_commands() {
   printf 'rg, fd/fdfind, jq, tmux, fzf'
 }
 
+optional_shell_commands() {
+  printf 'bat/batcat, yq, git-delta, gh'
+}
+
+optional_shell_tool_workflows() {
+  printf 'readable file previews, YAML-heavy work, better git diffs, and GitHub-heavy workflows'
+}
+
 linux_distribution_family() {
   [ -r /etc/os-release ] || {
     printf 'unknown'
@@ -724,14 +732,28 @@ shell_tool_install_hint() {
   esac
 }
 
+optional_shell_tool_install_hint() {
+  case "$1" in
+    brew) printf 'brew install bat yq git-delta gh' ;;
+    apt) printf 'sudo apt install -y bat yq git-delta gh' ;;
+    dnf) printf 'sudo dnf install -y bat yq git-delta gh' ;;
+    *) printf 'install manually: bat or batcat, yq, git-delta, gh' ;;
+  esac
+}
+
 print_shell_tool_recommendations() {
   local package_manager
   package_manager="$(detect_shell_tool_package_manager)"
 
   log "shellTooling:"
-  log "  recommended: $(recommended_shell_commands)"
+  log "  tier1:"
+  log "    recommended: $(recommended_shell_commands)"
+  log "    install: $(shell_tool_install_hint "$package_manager")"
+  log "  tier2:"
+  log "    optional: $(optional_shell_commands)"
+  log "    use-when: $(optional_shell_tool_workflows)"
+  log "    install: $(optional_shell_tool_install_hint "$package_manager")"
   log "  installer: suggestions only; no packages were installed automatically"
-  log "  install: $(shell_tool_install_hint "$package_manager")"
 }
 
 install_mcp_config() {

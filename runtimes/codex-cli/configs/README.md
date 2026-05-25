@@ -59,8 +59,9 @@ MCP safety rules:
 
 ## Optional shell tooling recommendations
 
-Install reports also print an optional shell-tooling hint block for `rg`, `fd`/`fdfind`, `jq`, `tmux`, and `fzf`.
-When the installer can detect Homebrew, `apt`, or `dnf`, it prints the matching package command; otherwise it falls back to a manual-install note.
+Install reports print a default shell-tooling tier for `rg`, `fd`/`fdfind`, `jq`, `tmux`, and `fzf`, plus a separate optional tier for `bat`/`batcat`, `yq`, `git-delta`, and `gh`.
+The tier-2 block is aimed at readable file previews, YAML-heavy work, better git diffs, and GitHub-heavy workflows.
+When the installer can detect Homebrew, `apt`, or `dnf`, it prints matching package commands for both tiers; otherwise it falls back to manual-install notes.
 The installer never auto-installs these packages.
 
 ## Validator scope
