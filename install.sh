@@ -6,6 +6,7 @@
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash
 #   curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --dry-run
+#   curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --runtime=all
 #   curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --uninstall
 
 set -euo pipefail
@@ -105,6 +106,7 @@ parse_args() {
       --runtime=*)
         RUNTIME="${1#--runtime=}"
         case "$RUNTIME" in
+          all) ;;
           *[^a-z0-9_-]*) die "invalid runtime name: $RUNTIME (use lowercase alphanumeric, dashes, underscores)" ;;
         esac
         ;;
@@ -122,6 +124,45 @@ set_source_dir() {
   REFERENCES_SRC="$SOURCE_DIR/references"
   TEMPLATES_SRC="$SOURCE_DIR/runtimes/$RUNTIME/configs"
   KERNEL_SRC="$SOURCE_DIR/runtimes/$RUNTIME/kernel.md"
+}
+
+validate_shared_source_layout() {
+  [ -d "$SKILLS_SRC" ] || die "missing source directory: $SKILLS_SRC"
+  [ -d "$REFERENCES_SRC" ] || die "missing source directory: $REFERENCES_SRC"
+  [ -f "$SOURCE_DIR/tooling/install/common.sh" ] || die "missing installer core: $SOURCE_DIR/tooling/install/common.sh"
+  [ -f "$SOURCE_DIR/runtimes/registry.yaml" ] || die "missing runtime registry: $SOURCE_DIR/runtimes/registry.yaml"
+}
+
+validate_runtime_source_layout() {
+  [ -d "$TEMPLATES_SRC" ] || die "missing source directory: $TEMPLATES_SRC"
+  [ -f "$KERNEL_SRC" ] || die "missing kernel source: $KERNEL_SRC"
+}
+
+runtime_names() {
+  require_bin python3
+  python3 - "$SOURCE_DIR/runtimes/registry.yaml" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+registry = json.loads(Path(sys.argv[1]).read_text())
+for runtime in registry.get('runtimes', []):
+    name = runtime.get('name')
+    if isinstance(name, str) and name:
+        print(name)
+PY
+}
+
+runtime_registered() {
+  local target="$1"
+  local runtime_name
+  while IFS= read -r runtime_name; do
+    [ -n "$runtime_name" ] || continue
+    if [ "$runtime_name" = "$target" ]; then
+      return 0
+    fi
+  done < <(runtime_names)
+  return 1
 }
 
 sync_source() {
@@ -160,10 +201,17 @@ sync_source() {
     set_source_dir "$LOCAL_REPO"
   fi
 
-  [ -d "$SKILLS_SRC" ] || die "missing source directory: $SKILLS_SRC"
-  [ -d "$REFERENCES_SRC" ] || die "missing source directory: $REFERENCES_SRC"
-  [ -d "$TEMPLATES_SRC" ] || die "missing source directory: $TEMPLATES_SRC"
-  [ -f "$KERNEL_SRC" ] || die "missing kernel source: $KERNEL_SRC"
+  validate_shared_source_layout
+}
+
+prepare_source() {
+  if uninstall_enabled && { [ -d "$LOCAL_REPO/.git" ] || [ -d "$LOCAL_REPO/skills" ]; }; then
+    set_source_dir "$LOCAL_REPO"
+    validate_shared_source_layout
+    return 0
+  fi
+
+  sync_source
 }
 
 source_installer_core() {
@@ -180,14 +228,78 @@ load_runtime_driver() {
   source "$runtime_script"
 }
 
+run_runtime_action() {
+  local runtime_name="$1"
+  local rc=0
+
+  set +e
+  (
+    RUNTIME="$runtime_name"
+    set_source_dir "$SOURCE_DIR"
+    validate_runtime_source_layout
+    source_installer_core
+    load_runtime_driver
+    if uninstall_enabled; then
+      runtime_uninstall
+    else
+      runtime_main
+    fi
+  )
+  rc=$?
+  set -e
+
+  return "$rc"
+}
+
+run_all_runtimes() {
+  local runtime_name rc overall_rc=0 runtime_count=0
+  local action_label="Installing"
+  if uninstall_enabled; then
+    action_label="Uninstalling"
+  fi
+
+  log "$action_label all registered runtimes"
+
+  while IFS= read -r runtime_name; do
+    [ -n "$runtime_name" ] || continue
+    runtime_count=$((runtime_count + 1))
+    log ""
+    log "==> $runtime_name"
+
+    if run_runtime_action "$runtime_name"; then
+      rc=0
+    else
+      rc=$?
+    fi
+
+    case "$rc" in
+      0) ;;
+      2)
+        if [ "$overall_rc" -eq 0 ]; then
+          overall_rc=2
+        fi
+        ;;
+      *)
+        return "$rc"
+        ;;
+    esac
+  done < <(runtime_names)
+
+  [ "$runtime_count" -gt 0 ] || die "no runtimes registered in $SOURCE_DIR/runtimes/registry.yaml"
+  return "$overall_rc"
+}
+
 main() {
   parse_args "$@"
+  prepare_source
 
-  if uninstall_enabled; then
-    [ -d "$LOCAL_REPO/.git" ] || sync_source
-  else
-    sync_source
+  if [ "$RUNTIME" = "all" ]; then
+    run_all_runtimes
+    return $?
   fi
+
+  runtime_registered "$RUNTIME" || die "unknown runtime: $RUNTIME"
+  validate_runtime_source_layout
 
   source_installer_core
   load_runtime_driver

@@ -26,10 +26,17 @@ Install for Codex CLI:
 curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --runtime=codex-cli
 ```
 
+Install for all registered runtimes:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --runtime=all
+```
+
 Codex CLI config merge uses Python 3.11+ standard-library TOML parsing.
 
 Useful flags:
 
+- `--runtime=all` to run install or uninstall across every runtime in `runtimes/registry.yaml`
 - `--dry-run` to preview changes
 - `--replace-memory` to replace an existing managed kernel file
 - `--uninstall` to remove managed files
