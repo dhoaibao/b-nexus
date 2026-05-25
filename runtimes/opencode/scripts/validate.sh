@@ -108,7 +108,7 @@ else:
             f'(missing: {missing_commands}, extra: {extra_commands})'
         )
 
-for required in ['COMMANDS_SRC', 'COMMANDS_DST', 'install_commands', 'commandsSynced']:
+for required in ['COMMANDS_SRC', 'COMMANDS_DST', 'install_commands', 'report_item "commands"']:
     if required not in opencode_install:
         errors.append(f'runtimes/opencode/scripts/install.sh: missing OpenCode command wrapper marker {required!r}')
 

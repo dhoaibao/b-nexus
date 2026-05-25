@@ -152,18 +152,18 @@ ui_print_intro() {
     target="all runtimes"
   fi
 
-  printf '\n%b==%b b-agentic %s %b::%b %s\n' \
-    "$UI_COLOR_ACCENT" "$UI_COLOR_RESET" "$action" "$UI_COLOR_DIM" "$UI_COLOR_RESET" "$target" >&2
+  printf '\n%b==%b b-agentic installer\n' \
+    "$UI_COLOR_ACCENT" "$UI_COLOR_RESET" >&2
+  printf '%b::%b mode %s | runtime %s\n' \
+    "$UI_COLOR_DIM" "$UI_COLOR_RESET" "$action" "$target" >&2
 }
 
 ui_print_runtime_banner() {
   local runtime_label="$1" activation_state="$2"
   [ "${UI_ENABLED:-0}" -eq 1 ] || return 0
 
-  printf '\n%b+------------------------------------------+%b\n' "$UI_COLOR_ACCENT" "$UI_COLOR_RESET" >&2
-  printf '%b| %-40s |%b\n' "$UI_COLOR_ACCENT" "b-agentic ready for $runtime_label" "$UI_COLOR_RESET" >&2
-  printf '%b| %-40s |%b\n' "$UI_COLOR_ACCENT" "activation: $activation_state" "$UI_COLOR_RESET" >&2
-  printf '%b+------------------------------------------+%b\n' "$UI_COLOR_ACCENT" "$UI_COLOR_RESET" >&2
+  printf '\n%b==%b %s %b::%b activation %s\n' \
+    "$UI_COLOR_ACCENT" "$UI_COLOR_RESET" "$runtime_label" "$UI_COLOR_DIM" "$UI_COLOR_RESET" "$activation_state" >&2
 }
 
 cleanup() {

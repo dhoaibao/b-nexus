@@ -9,23 +9,58 @@ ensure_dir() {
   run_cmd mkdir -p "$dir_path"
 }
 
+INSTALL_STAGE_CURRENT=0
+INSTALL_STAGE_TOTAL=0
+INSTALL_STAGE_LABEL=""
+
+set_install_stage_total() {
+  INSTALL_STAGE_CURRENT=0
+  INSTALL_STAGE_TOTAL="${1:-0}"
+}
+
+set_next_install_stage_label() {
+  local label="$1"
+  INSTALL_STAGE_CURRENT=$((INSTALL_STAGE_CURRENT + 1))
+
+  if [ "${INSTALL_STAGE_TOTAL:-0}" -gt 0 ]; then
+    printf -v INSTALL_STAGE_LABEL '[%s/%s] %s' "$INSTALL_STAGE_CURRENT" "$INSTALL_STAGE_TOTAL" "$label"
+    return 0
+  fi
+
+  printf -v INSTALL_STAGE_LABEL '[%s] %s' "$INSTALL_STAGE_CURRENT" "$label"
+}
+
+announce_install_stage() {
+  local stage_label="$1"
+
+  if [ "${UI_ENABLED:-0}" -eq 1 ] && ! dry_run_enabled; then
+    return 0
+  fi
+
+  log "==> $stage_label"
+}
+
 run_stage() {
   local label="$1"
   shift
-  local rc=0
+  local rc=0 stage_label=""
+
+  set_next_install_stage_label "$label"
+  stage_label="$INSTALL_STAGE_LABEL"
+  announce_install_stage "$stage_label"
 
   if dry_run_enabled; then
     "$@"
     return $?
   fi
 
-  ui_start_spinner "$label"
+  ui_start_spinner "$stage_label"
   if "$@"; then
     rc=0
   else
     rc=$?
   fi
-  ui_stop_spinner "$rc" "$label"
+  ui_stop_spinner "$rc" "$stage_label"
   return "$rc"
 }
 
@@ -33,20 +68,24 @@ capture_output_stage() {
   local label="$1"
   local -n output_ref="$2"
   shift 2
-  local output="" rc=0
+  local output="" rc=0 stage_label=""
+
+  set_next_install_stage_label "$label"
+  stage_label="$INSTALL_STAGE_LABEL"
+  announce_install_stage "$stage_label"
 
   if dry_run_enabled; then
     output_ref="$("$@")"
     return $?
   fi
 
-  ui_start_spinner "$label"
+  ui_start_spinner "$stage_label"
   if output="$("$@")"; then
     rc=0
   else
     rc=$?
   fi
-  ui_stop_spinner "$rc" "$label"
+  ui_stop_spinner "$rc" "$stage_label"
   [ "$rc" -eq 0 ] || return "$rc"
 
   output_ref="$output"
@@ -741,19 +780,68 @@ optional_shell_tool_install_hint() {
   esac
 }
 
+report_section() {
+  log ""
+  log "$1:"
+}
+
+report_item() {
+  local label="$1" value="$2"
+  log "  $label: $value"
+}
+
+print_install_report_header() {
+  local runtime_label="$1"
+  local action_label="install"
+
+  if dry_run_enabled; then
+    action_label="dry-run"
+  fi
+
+  ui_print_runtime_banner "$runtime_label" "$INSTALL_ACTIVATION_STATE"
+  log ""
+  log "b-agentic $action_label complete for $runtime_label"
+}
+
+print_install_report_readiness() {
+  report_section "Readiness"
+  report_item "serena" "install/init separately; installer never runs onboarding"
+  report_item "gitnexus" "install/index separately if you want graph radar"
+  report_item "api-keys" "Context7, Brave Search, and Firecrawl need user-scope keys"
+}
+
 print_shell_tool_recommendations() {
   local package_manager
   package_manager="$(detect_shell_tool_package_manager)"
 
-  log "shellTooling:"
-  log "  tier1:"
-  log "    recommended: $(recommended_shell_commands)"
-  log "    install: $(shell_tool_install_hint "$package_manager")"
-  log "  tier2:"
-  log "    optional: $(optional_shell_commands)"
-  log "    use-when: $(optional_shell_tool_workflows)"
-  log "    install: $(optional_shell_tool_install_hint "$package_manager")"
-  log "  installer: suggestions only; no packages were installed automatically"
+  report_section "Shell tooling"
+  report_item "core" "$(recommended_shell_commands)"
+  report_item "core-install" "$(shell_tool_install_hint "$package_manager")"
+  report_item "optional" "$(optional_shell_commands)"
+  report_item "optional-use" "$(optional_shell_tool_workflows)"
+  report_item "optional-install" "$(optional_shell_tool_install_hint "$package_manager")"
+  report_item "installer" "suggestions only; no packages were installed automatically"
+}
+
+print_install_report_next_steps() {
+  local runtime_label="$1"
+
+  report_section "Next steps"
+
+  if dry_run_enabled; then
+    report_item "apply" "rerun without --dry-run when you want to write files"
+    report_item "manifest" "no manifest was written during dry-run"
+    return 0
+  fi
+
+  if [ "$INSTALL_ACTIVATION_STATE" = "pending" ]; then
+    report_item "activate" "review $KERNEL_SNAPSHOT_DST, then rerun with --replace-memory if you want b-agentic active in $KERNEL_DST"
+  else
+    report_item "launch" "start a new $runtime_label session so it picks up $KERNEL_DST"
+  fi
+
+  report_item "manifest" "review $MANIFEST_DST for installed paths and backup metadata"
+  report_item "keys" "add user-scope API keys only if you plan to use Context7, Brave Search, or Firecrawl"
 }
 
 install_mcp_config() {
@@ -877,9 +965,14 @@ uninstall_installed_skills() {
 runtime_warn_missing_cli() { :; }
 runtime_install_extra_assets() { :; }
 runtime_uninstall_extra_assets() { :; }
+runtime_install_config_stage_count() { printf '0'; }
 
 runtime_install_common() {
+  local config_stage_count=0
+
   runtime_warn_missing_cli
+  config_stage_count="$(runtime_install_config_stage_count)"
+  set_install_stage_total $((6 + config_stage_count))
 
   collect_installed_skills INSTALL_SKILL_NAMES
   run_stage "Syncing skills" install_skills
@@ -901,13 +994,13 @@ runtime_install_common() {
   runtime_print_install_report
 
   if [ "$INSTALL_ACTIVATION_STATE" = "pending" ]; then
-    log "Existing $KERNEL_DST was preserved. Review $KERNEL_SNAPSHOT_DST and rerun with --replace-memory to activate the kernel."
     return 2
   fi
 }
 
 runtime_uninstall_common() {
   require_bin python3
+  set_install_stage_total 4
   log "Uninstalling b-agentic from $RUNTIME_UNINSTALL_LABEL"
   run_stage "Removing managed skills" uninstall_installed_skills
   run_stage "Removing runtime extras" runtime_uninstall_extra_assets

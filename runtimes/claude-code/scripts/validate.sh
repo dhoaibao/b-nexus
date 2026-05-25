@@ -72,7 +72,7 @@ for required in ['runtimes/$RUNTIME/kernel.md', 'skills', 'references/b-agentic'
     if required not in install_sh:
         errors.append(f'install.sh: missing shared installer marker {required!r}')
 
-for required in ['settingsAction', 'mcpAction', 'CLAUDE_JSON_DST', 'skillsSynced', '$HOME/.claude', 'activationState']:
+for required in ['settingsAction', 'mcpAction', 'CLAUDE_JSON_DST', 'report_item "skills"', '$HOME/.claude', 'report_item "activation"']:
     if required not in claude_install:
         errors.append(f'runtimes/claude-code/scripts/install.sh: missing Claude installer marker {required!r}')
 

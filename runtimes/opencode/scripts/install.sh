@@ -35,6 +35,10 @@ runtime_warn_missing_cli() {
   command -v opencode >/dev/null 2>&1 || warn "opencode CLI not found; files will still be installed for OpenCode to discover later."
 }
 
+runtime_install_config_stage_count() {
+  printf '1'
+}
+
 command_names() {
   python3 - "$COMMANDS_SRC" <<'PY'
 from pathlib import Path
@@ -170,25 +174,22 @@ PY
 }
 
 runtime_print_install_report() {
-  ui_print_runtime_banner "OpenCode" "$INSTALL_ACTIVATION_STATE"
-  log ""
-  log "b-agentic OpenCode install complete"
-  log "skillsSynced: ${#INSTALL_SKILL_NAMES[@]} -> $SKILLS_DST"
-  log "commandsSynced: ${#INSTALL_COMMAND_NAMES[@]} -> $COMMANDS_DST"
-  log "kernel: $INSTALL_MEMORY_ACTION -> $KERNEL_DST"
-  log "mcp: $INSTALL_MCP_ACTION -> $OPENCODE_JSON_DST"
-  log "references: sync -> $REFERENCES_DST"
-  log "templates: sync -> $TEMPLATES_DST"
-  log "manifest: write -> $MANIFEST_DST"
-  log "backups:"
-  log "  kernel: $INSTALL_MEMORY_BACKUP"
-  log "  mcp: $INSTALL_MCP_BACKUP"
-  log "activationState: $INSTALL_ACTIVATION_STATE"
-  log "mcpReadiness:"
-  log "  serena: install/init separately; installer never runs onboarding"
-  log "  gitnexus: install/index separately if you want graph radar"
-  log "  api-keys: Context7, Brave Search, and Firecrawl need user-scope keys"
+  print_install_report_header "OpenCode"
+  report_section "Summary"
+  report_item "activation" "$INSTALL_ACTIVATION_STATE"
+  report_item "skills" "${#INSTALL_SKILL_NAMES[@]} synced -> $SKILLS_DST"
+  report_item "commands" "${#INSTALL_COMMAND_NAMES[@]} synced -> $COMMANDS_DST"
+  report_item "kernel" "$INSTALL_MEMORY_ACTION -> $KERNEL_DST"
+  report_item "mcp" "$INSTALL_MCP_ACTION -> $OPENCODE_JSON_DST"
+  report_item "references" "sync -> $REFERENCES_DST"
+  report_item "templates" "sync -> $TEMPLATES_DST"
+  report_item "manifest" "write -> $MANIFEST_DST"
+  report_section "Backups"
+  report_item "kernel" "$INSTALL_MEMORY_BACKUP"
+  report_item "mcp" "$INSTALL_MCP_BACKUP"
+  print_install_report_readiness
   print_shell_tool_recommendations
+  print_install_report_next_steps "OpenCode"
 }
 
 manifest_command_names() {

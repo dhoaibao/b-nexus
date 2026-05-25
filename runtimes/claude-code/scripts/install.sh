@@ -33,6 +33,10 @@ runtime_warn_missing_cli() {
   command -v claude >/dev/null 2>&1 || warn "claude CLI not found; files will still be installed for Claude Code to discover later."
 }
 
+runtime_install_config_stage_count() {
+  printf '2'
+}
+
 install_settings_config() {
   merge_json_file "$TEMPLATES_SRC/settings.template.json" "$SETTINGS_DST" "settings" "settings"
 }
@@ -111,26 +115,23 @@ PY
 }
 
 runtime_print_install_report() {
-  ui_print_runtime_banner "Claude Code" "$INSTALL_ACTIVATION_STATE"
-  log ""
-  log "b-agentic Claude Code install complete"
-  log "skillsSynced: ${#INSTALL_SKILL_NAMES[@]} -> $SKILLS_DST"
-  log "kernel: $INSTALL_MEMORY_ACTION -> $KERNEL_DST"
-  log "settings: $INSTALL_SETTINGS_ACTION -> $SETTINGS_DST"
-  log "mcp: $INSTALL_MCP_ACTION -> $CLAUDE_JSON_DST"
-  log "references: sync -> $REFERENCES_DST"
-  log "templates: sync -> $TEMPLATES_DST"
-  log "manifest: write -> $MANIFEST_DST"
-  log "backups:"
-  log "  kernel: $INSTALL_MEMORY_BACKUP"
-  log "  settings: $INSTALL_SETTINGS_BACKUP"
-  log "  mcp: $INSTALL_MCP_BACKUP"
-  log "activationState: $INSTALL_ACTIVATION_STATE"
-  log "mcpReadiness:"
-  log "  serena: install/init separately; installer never runs onboarding"
-  log "  gitnexus: install/index separately if you want graph radar"
-  log "  api-keys: Context7, Brave Search, and Firecrawl need user-scope keys"
+  print_install_report_header "Claude Code"
+  report_section "Summary"
+  report_item "activation" "$INSTALL_ACTIVATION_STATE"
+  report_item "skills" "${#INSTALL_SKILL_NAMES[@]} synced -> $SKILLS_DST"
+  report_item "kernel" "$INSTALL_MEMORY_ACTION -> $KERNEL_DST"
+  report_item "settings" "$INSTALL_SETTINGS_ACTION -> $SETTINGS_DST"
+  report_item "mcp" "$INSTALL_MCP_ACTION -> $CLAUDE_JSON_DST"
+  report_item "references" "sync -> $REFERENCES_DST"
+  report_item "templates" "sync -> $TEMPLATES_DST"
+  report_item "manifest" "write -> $MANIFEST_DST"
+  report_section "Backups"
+  report_item "kernel" "$INSTALL_MEMORY_BACKUP"
+  report_item "settings" "$INSTALL_SETTINGS_BACKUP"
+  report_item "mcp" "$INSTALL_MCP_BACKUP"
+  print_install_report_readiness
   print_shell_tool_recommendations
+  print_install_report_next_steps "Claude Code"
 }
 
 runtime_uninstall_configs() {

@@ -59,6 +59,10 @@ runtime_warn_missing_cli() {
   command -v codex >/dev/null 2>&1 || warn "codex CLI not found; files will still be installed for Codex to discover later."
 }
 
+runtime_install_config_stage_count() {
+  printf '1'
+}
+
 collect_codex_api_keys() {
   can_prompt_api_keys || return 0
 
@@ -370,24 +374,21 @@ PY
 }
 
 runtime_print_install_report() {
-  ui_print_runtime_banner "Codex CLI" "$INSTALL_ACTIVATION_STATE"
-  log ""
-  log "b-agentic Codex CLI install complete"
-  log "skillsSynced: ${#INSTALL_SKILL_NAMES[@]} -> $SKILLS_DST"
-  log "kernel: $INSTALL_MEMORY_ACTION -> $KERNEL_DST"
-  log "config: $INSTALL_CONFIG_ACTION -> $CODEX_CONFIG_DST"
-  log "references: sync -> $REFERENCES_DST"
-  log "templates: sync -> $TEMPLATES_DST"
-  log "manifest: write -> $MANIFEST_DST"
-  log "backups:"
-  log "  kernel: $INSTALL_MEMORY_BACKUP"
-  log "  config: $INSTALL_CONFIG_BACKUP"
-  log "activationState: $INSTALL_ACTIVATION_STATE"
-  log "mcpReadiness:"
-  log "  serena: install/init separately; installer never runs onboarding"
-  log "  gitnexus: install/index separately if you want graph radar"
-  log "  api-keys: Context7, Brave Search, and Firecrawl need user-scope keys"
+  print_install_report_header "Codex CLI"
+  report_section "Summary"
+  report_item "activation" "$INSTALL_ACTIVATION_STATE"
+  report_item "skills" "${#INSTALL_SKILL_NAMES[@]} synced -> $SKILLS_DST"
+  report_item "kernel" "$INSTALL_MEMORY_ACTION -> $KERNEL_DST"
+  report_item "config" "$INSTALL_CONFIG_ACTION -> $CODEX_CONFIG_DST"
+  report_item "references" "sync -> $REFERENCES_DST"
+  report_item "templates" "sync -> $TEMPLATES_DST"
+  report_item "manifest" "write -> $MANIFEST_DST"
+  report_section "Backups"
+  report_item "kernel" "$INSTALL_MEMORY_BACKUP"
+  report_item "config" "$INSTALL_CONFIG_BACKUP"
+  print_install_report_readiness
   print_shell_tool_recommendations
+  print_install_report_next_steps "Codex CLI"
 }
 
 remove_codex_config_block() {
@@ -461,6 +462,7 @@ runtime_uninstall_configs() {
 runtime_main() {
   runtime_warn_missing_cli
   runtime_require_tomllib
+  set_install_stage_total 5
 
   collect_installed_skills INSTALL_SKILL_NAMES
   run_stage "Syncing skills" install_skills
@@ -474,13 +476,13 @@ runtime_main() {
   runtime_print_install_report
 
   if [ "$INSTALL_ACTIVATION_STATE" = "pending" ]; then
-    log "Existing $KERNEL_DST was preserved. Review $KERNEL_SNAPSHOT_DST and rerun with --replace-memory to activate the kernel."
     return 2
   fi
 }
 
 runtime_uninstall() {
   require_bin python3
+  set_install_stage_total 3
   log "Uninstalling b-agentic from $RUNTIME_UNINSTALL_LABEL"
   run_stage "Removing managed skills" uninstall_installed_skills
   run_stage "Removing managed kernel" remove_managed_kernel

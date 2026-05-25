@@ -406,7 +406,7 @@ if unexpected_root_docs:
         f"{unexpected_root_docs}; keep root docs targeted and move skill detail or support material under skills/, references/, or runtimes/"
     )
 
-if "One Command" not in readme or "skillsSynced" not in readme:
+if "One Command" not in readme or "Summary" not in readme or "Next steps" not in readme:
     errors.append("README.md: missing one-command install/output documentation")
 
 bundle_names = tool_model_bundle_names(tool_model_text)
@@ -423,11 +423,9 @@ else:
             )
 
 runtime_readiness_install_lines = [
-    "mcpReadiness:",
-    "serena: install/init separately; installer never runs onboarding",
-    "gitnexus: install/index separately if you want graph radar",
-    "api-keys: Context7, Brave Search, and Firecrawl need user-scope keys",
+    'print_install_report_readiness',
     "print_shell_tool_recommendations",
+    'print_install_report_next_steps',
 ]
 shared_shell_install_lines = [
     "recommended_shell_commands() {",
@@ -436,8 +434,8 @@ shared_shell_install_lines = [
     "printf 'bat/batcat, yq, git-delta, gh'",
     "optional_shell_tool_workflows() {",
     "printf 'readable file previews, YAML-heavy work, better git diffs, and GitHub-heavy workflows'",
-    'log "shellTooling:"',
-    'log "  installer: suggestions only; no packages were installed automatically"',
+    'report_section "Shell tooling"',
+    'report_item "installer" "suggestions only; no packages were installed automatically"',
 ]
 runtime_readiness_doc_lines = [
     "## MCP readiness after install",

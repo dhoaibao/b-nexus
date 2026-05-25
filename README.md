@@ -47,7 +47,7 @@ The installer writes only to user-scope runtime locations. It does not create `.
 
 ## One Command
 
-The installer is designed to be a one-command bootstrap. It installs the kernel, syncs skills, writes runtime templates, and prints a short result summary with fields such as `skillsSynced` so you can see what changed without reading installer internals. That summary now includes a default shell-tooling tier for `rg`, `fd`/`fdfind`, `jq`, `tmux`, and `fzf`, plus a separate optional tier for `bat`/`batcat`, `yq`, `git-delta`, and `gh`. When the installer can detect Homebrew, `apt`, or `dnf`, it prints matching package commands for both tiers. The installer never auto-installs those packages.
+The installer is designed to be a one-command bootstrap. It installs the kernel, syncs skills, writes runtime templates, and prints numbered stage progress followed by a short `Summary`, `Readiness`, `Shell tooling`, and `Next steps` report so you can see what changed without reading installer internals. The shell-tooling section includes a default core tier for `rg`, `fd`/`fdfind`, `jq`, `tmux`, and `fzf`, plus a separate optional tier for `bat`/`batcat`, `yq`, `git-delta`, and `gh`. When the installer can detect Homebrew, `apt`, or `dnf`, it prints matching package commands for both tiers. The installer never auto-installs those packages.
 
 ## What You Get
 
