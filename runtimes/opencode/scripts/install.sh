@@ -101,9 +101,7 @@ runtime_install_extra_assets() {
 }
 
 runtime_install_configs() {
-  local mcp_result
-  mcp_result="$(install_mcp_config)"
-  read_install_triplet "$mcp_result" "skip" "none" "none" \
+  run_install_triplet_stage "Merging MCP config" install_mcp_config "skip" "none" "none" \
     INSTALL_MCP_ACTION INSTALL_MCP_STATE INSTALL_MCP_BACKUP
 }
 
@@ -172,6 +170,7 @@ PY
 }
 
 runtime_print_install_report() {
+  ui_print_runtime_banner "OpenCode" "$INSTALL_ACTIVATION_STATE"
   log ""
   log "b-agentic OpenCode install complete"
   log "skillsSynced: ${#INSTALL_SKILL_NAMES[@]} -> $SKILLS_DST"

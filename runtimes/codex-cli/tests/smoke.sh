@@ -10,6 +10,7 @@ run_runtime_smoke_cases() {
   local sandbox_codex_preserve="$WORK_DIR/codex-preserve"
   local sandbox_codex_replace="$WORK_DIR/codex-replace"
   local sandbox_codex_dry_run="$WORK_DIR/codex-dry-run"
+  local sandbox_codex_dry_run_tty="$WORK_DIR/codex-dry-run-tty"
   local sandbox_codex_prompt_keys="$WORK_DIR/codex-prompt-keys"
   local sandbox_codex_merge="$WORK_DIR/codex-merge"
   local sandbox_codex_legacy_managed="$WORK_DIR/codex-legacy-managed"
@@ -86,6 +87,29 @@ run_runtime_smoke_cases() {
   expect_install_status 0 "$sandbox_codex_dry_run" "$snapshot_repo" --runtime=codex-cli --dry-run
   assert_no_path "$sandbox_codex_dry_run/home/.codex"
   assert_no_path "$sandbox_codex_dry_run/source"
+
+  mkdir -p "$sandbox_codex_dry_run_tty/home"
+  env \
+    HOME="$sandbox_codex_dry_run_tty/home" \
+    B_AGENTIC_REPO="$snapshot_repo" \
+    B_AGENTIC_DIR="$sandbox_codex_dry_run_tty/source" \
+    B_AGENTIC_PROMPT_API_KEYS=N \
+    script -q -e -c "bash '$ROOT_DIR/install.sh' --runtime=codex-cli --dry-run" \
+      "$sandbox_codex_dry_run_tty/install.log" >/dev/null 2>&1
+  python3 - "$sandbox_codex_dry_run_tty/install.log" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text()
+text = re.sub(r'\x1b\[[0-9;?]*[ -/]*[@-~]', '', text).replace('\r', '\n')
+
+if '[dry-run]' not in text:
+    raise SystemExit('expected dry-run command output in tty log')
+for marker in ('[ok]', '[-]', '[\\]', '[|]', '[/]'):
+    if marker in text:
+        raise SystemExit(f'unexpected spinner marker in dry-run tty log: {marker}')
+PY
 
   mkdir -p "$sandbox_codex_prompt_keys/home"
   expect_install_with_tty_status 0 "$sandbox_codex_prompt_keys" "$snapshot_repo" $'ctx7-codex-key\nbrave-codex-key\nfirecrawl-codex-key\n' --runtime=codex-cli --prompt-api-keys

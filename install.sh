@@ -28,12 +28,148 @@ REFERENCES_SRC="$SOURCE_DIR/references"
 TEMPLATES_SRC="$SOURCE_DIR/runtimes/$RUNTIME/configs"
 KERNEL_SRC="$SOURCE_DIR/runtimes/$RUNTIME/kernel.md"
 DRY_RUN_SOURCE_DIR=""
+UI_MODE="${B_AGENTIC_UI:-auto}"
+UI_ENABLED=0
+UI_SPINNER_ACTIVE=0
+UI_SPINNER_LABEL=""
+UI_SPINNER_PID=""
+UI_COLOR_DIM=""
+UI_COLOR_ACCENT=""
+UI_COLOR_SUCCESS=""
+UI_COLOR_WARN=""
+UI_COLOR_ERROR=""
+UI_COLOR_RESET=""
 
-log() { printf '%s\n' "$*"; }
-warn() { printf 'warning: %s\n' "$*" >&2; }
-die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+ui_clear_ephemeral_line() {
+  [ "${UI_SPINNER_ACTIVE:-0}" -eq 1 ] || return 0
+  printf '\r\033[2K' >&2
+}
+
+ui_stop_spinner() {
+  local rc="${1:-0}" label="${2:-$UI_SPINNER_LABEL}" marker=""
+  [ "${UI_ENABLED:-0}" -eq 1 ] || return 0
+
+  if [ -n "${UI_SPINNER_PID:-}" ]; then
+    kill "$UI_SPINNER_PID" >/dev/null 2>&1 || true
+    wait "$UI_SPINNER_PID" 2>/dev/null || true
+  fi
+
+  printf '\r\033[2K' >&2
+  UI_SPINNER_ACTIVE=0
+  UI_SPINNER_LABEL=""
+  UI_SPINNER_PID=""
+
+  if [ "$rc" -eq 0 ]; then
+    marker="${UI_COLOR_SUCCESS}[ok]${UI_COLOR_RESET}"
+  else
+    marker="${UI_COLOR_ERROR}[!!]${UI_COLOR_RESET}"
+  fi
+  printf '%b %s\n' "$marker" "$label" >&2
+}
+
+log() {
+  ui_clear_ephemeral_line
+  printf '%s\n' "$*"
+}
+
+warn() {
+  ui_clear_ephemeral_line
+  printf '%bwarning:%b %s\n' "$UI_COLOR_WARN" "$UI_COLOR_RESET" "$*" >&2
+}
+
+die() {
+  if [ "${UI_SPINNER_ACTIVE:-0}" -eq 1 ]; then
+    ui_stop_spinner 1 "$UI_SPINNER_LABEL"
+  else
+    ui_clear_ephemeral_line
+  fi
+  printf '%berror:%b %s\n' "$UI_COLOR_ERROR" "$UI_COLOR_RESET" "$*" >&2
+  exit 1
+}
+
+ui_init() {
+  case "$UI_MODE" in
+    auto|"")
+      if [ -t 2 ] && [ "${TERM:-}" != "dumb" ]; then
+        UI_ENABLED=1
+      fi
+      ;;
+    always)
+      UI_ENABLED=1
+      ;;
+    never)
+      UI_ENABLED=0
+      ;;
+    *)
+      printf 'error: invalid B_AGENTIC_UI value: %s\n' "$UI_MODE" >&2
+      exit 1
+      ;;
+  esac
+
+  if [ "$UI_ENABLED" -eq 1 ]; then
+    UI_COLOR_DIM=$'\033[2m'
+    UI_COLOR_ACCENT=$'\033[36m'
+    UI_COLOR_SUCCESS=$'\033[32m'
+    UI_COLOR_WARN=$'\033[33m'
+    UI_COLOR_ERROR=$'\033[31m'
+    UI_COLOR_RESET=$'\033[0m'
+  fi
+}
+
+ui_spinner_loop() {
+  local label="$1"
+  local -a frames=('-' '\' '|' '/')
+  local index=0
+
+  while :; do
+    printf '\r\033[2K%b[%s]%b %s' "$UI_COLOR_ACCENT" "${frames[$index]}" "$UI_COLOR_RESET" "$label" >&2
+    index=$(((index + 1) % ${#frames[@]}))
+    sleep 0.1
+  done
+}
+
+ui_start_spinner() {
+  local label="$1"
+  [ "${UI_ENABLED:-0}" -eq 1 ] || return 0
+  ui_clear_ephemeral_line
+  UI_SPINNER_ACTIVE=1
+  UI_SPINNER_LABEL="$label"
+  ui_spinner_loop "$label" &
+  UI_SPINNER_PID=$!
+}
+
+ui_print_intro() {
+  local action="install"
+  local target="$RUNTIME"
+  [ "${UI_ENABLED:-0}" -eq 1 ] || return 0
+
+  if uninstall_enabled; then
+    action="uninstall"
+  elif dry_run_enabled; then
+    action="dry-run install"
+  fi
+  if [ "$RUNTIME" = "all" ]; then
+    target="all runtimes"
+  fi
+
+  printf '\n%b==%b b-agentic %s %b::%b %s\n' \
+    "$UI_COLOR_ACCENT" "$UI_COLOR_RESET" "$action" "$UI_COLOR_DIM" "$UI_COLOR_RESET" "$target" >&2
+}
+
+ui_print_runtime_banner() {
+  local runtime_label="$1" activation_state="$2"
+  [ "${UI_ENABLED:-0}" -eq 1 ] || return 0
+
+  printf '\n%b+------------------------------------------+%b\n' "$UI_COLOR_ACCENT" "$UI_COLOR_RESET" >&2
+  printf '%b| %-40s |%b\n' "$UI_COLOR_ACCENT" "b-agentic ready for $runtime_label" "$UI_COLOR_RESET" >&2
+  printf '%b| %-40s |%b\n' "$UI_COLOR_ACCENT" "activation: $activation_state" "$UI_COLOR_RESET" >&2
+  printf '%b+------------------------------------------+%b\n' "$UI_COLOR_ACCENT" "$UI_COLOR_RESET" >&2
+}
 
 cleanup() {
+  if [ "${UI_SPINNER_ACTIVE:-0}" -eq 1 ]; then
+    ui_stop_spinner 1 "$UI_SPINNER_LABEL"
+  fi
   if [ -n "$DRY_RUN_SOURCE_DIR" ]; then
     rm -rf "$DRY_RUN_SOURCE_DIR"
   fi
@@ -72,6 +208,7 @@ can_prompt_api_keys() {
 
 run_cmd() {
   if dry_run_enabled; then
+    ui_clear_ephemeral_line
     printf '[dry-run] %s\n' "$*" >&2
     return 0
   fi
@@ -291,6 +428,8 @@ run_all_runtimes() {
 
 main() {
   parse_args "$@"
+  ui_init
+  ui_print_intro
   prepare_source
 
   if [ "$RUNTIME" = "all" ]; then

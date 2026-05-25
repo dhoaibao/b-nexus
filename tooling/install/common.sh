@@ -9,6 +9,59 @@ ensure_dir() {
   run_cmd mkdir -p "$dir_path"
 }
 
+run_stage() {
+  local label="$1"
+  shift
+  local rc=0
+
+  if dry_run_enabled; then
+    "$@"
+    return $?
+  fi
+
+  ui_start_spinner "$label"
+  if "$@"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  ui_stop_spinner "$rc" "$label"
+  return "$rc"
+}
+
+capture_output_stage() {
+  local label="$1"
+  local -n output_ref="$2"
+  shift 2
+  local output="" rc=0
+
+  if dry_run_enabled; then
+    output_ref="$("$@")"
+    return $?
+  fi
+
+  ui_start_spinner "$label"
+  if output="$("$@")"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  ui_stop_spinner "$rc" "$label"
+  [ "$rc" -eq 0 ] || return "$rc"
+
+  output_ref="$output"
+}
+
+run_install_triplet_stage() {
+  local label="$1" command_name="$2" default_action="$3" default_state="$4" default_backup="$5"
+  local action_var="$6" state_var="$7" backup_var="$8"
+  local result=""
+
+  capture_output_stage "$label" result "$command_name"
+  read_install_triplet "$result" "$default_action" "$default_state" "$default_backup" \
+    "$action_var" "$state_var" "$backup_var"
+}
+
 copy_file() {
   local src="$1" dst="$2"
   ensure_dir "$(dirname "$dst")"
@@ -701,24 +754,22 @@ runtime_install_common() {
   runtime_warn_missing_cli
 
   collect_installed_skills INSTALL_SKILL_NAMES
-  install_skills
-  runtime_install_extra_assets
-  install_references_and_templates
+  run_stage "Syncing skills" install_skills
+  run_stage "Installing runtime extras" runtime_install_extra_assets
+  run_stage "Syncing references and templates" install_references_and_templates
 
-  local kernel_result
-  kernel_result="$(install_kernel)"
-  read_install_triplet "$kernel_result" "preserve" "pending" "none" \
+  run_install_triplet_stage "Installing kernel" install_kernel "preserve" "pending" "none" \
     INSTALL_MEMORY_ACTION INSTALL_ACTIVATION_STATE INSTALL_MEMORY_BACKUP
 
   runtime_install_configs
   local prompted_mcp_backup
   collect_api_keys
-  prompted_mcp_backup="$(apply_prompted_mcp_keys "$INSTALL_MCP_ACTION" "$INSTALL_MCP_BACKUP")"
+  capture_output_stage "Writing prompted MCP keys" prompted_mcp_backup apply_prompted_mcp_keys "$INSTALL_MCP_ACTION" "$INSTALL_MCP_BACKUP"
   if [ "$prompted_mcp_backup" != "none" ]; then
     INSTALL_MCP_BACKUP="$prompted_mcp_backup"
   fi
 
-  runtime_write_manifest
+  run_stage "Writing install manifest" runtime_write_manifest
   runtime_print_install_report
 
   if [ "$INSTALL_ACTIVATION_STATE" = "pending" ]; then
@@ -730,10 +781,10 @@ runtime_install_common() {
 runtime_uninstall_common() {
   require_bin python3
   log "Uninstalling b-agentic from $RUNTIME_UNINSTALL_LABEL"
-  uninstall_installed_skills
-  runtime_uninstall_extra_assets
-  remove_managed_kernel
-  runtime_uninstall_configs
+  run_stage "Removing managed skills" uninstall_installed_skills
+  run_stage "Removing runtime extras" runtime_uninstall_extra_assets
+  run_stage "Removing managed kernel" remove_managed_kernel
+  run_stage "Cleaning runtime config" runtime_uninstall_configs
   run_cmd rm -rf "$METADATA_DIR"
   log "Uninstall complete. User-owned $RUNTIME_PRESERVE_LABEL files were preserved."
 }

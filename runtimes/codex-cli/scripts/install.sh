@@ -307,9 +307,7 @@ PY
 runtime_install_configs() {
   collect_codex_api_keys
 
-  local config_result
-  config_result="$(install_codex_config)"
-  read_install_triplet "$config_result" "skip" "none" "none" \
+  run_install_triplet_stage "Updating Codex config" install_codex_config "skip" "none" "none" \
     INSTALL_CONFIG_ACTION INSTALL_CONFIG_STATE INSTALL_CONFIG_BACKUP
 }
 
@@ -372,6 +370,7 @@ PY
 }
 
 runtime_print_install_report() {
+  ui_print_runtime_banner "Codex CLI" "$INSTALL_ACTIVATION_STATE"
   log ""
   log "b-agentic Codex CLI install complete"
   log "skillsSynced: ${#INSTALL_SKILL_NAMES[@]} -> $SKILLS_DST"
@@ -463,16 +462,14 @@ runtime_main() {
   runtime_require_tomllib
 
   collect_installed_skills INSTALL_SKILL_NAMES
-  install_skills
-  install_references_and_templates
+  run_stage "Syncing skills" install_skills
+  run_stage "Syncing references and templates" install_references_and_templates
 
-  local kernel_result
-  kernel_result="$(install_kernel)"
-  read_install_triplet "$kernel_result" "preserve" "pending" "none" \
+  run_install_triplet_stage "Installing kernel" install_kernel "preserve" "pending" "none" \
     INSTALL_MEMORY_ACTION INSTALL_ACTIVATION_STATE INSTALL_MEMORY_BACKUP
 
   runtime_install_configs
-  runtime_write_manifest
+  run_stage "Writing install manifest" runtime_write_manifest
   runtime_print_install_report
 
   if [ "$INSTALL_ACTIVATION_STATE" = "pending" ]; then
@@ -484,9 +481,9 @@ runtime_main() {
 runtime_uninstall() {
   require_bin python3
   log "Uninstalling b-agentic from $RUNTIME_UNINSTALL_LABEL"
-  uninstall_installed_skills
-  remove_managed_kernel
-  runtime_uninstall_configs
+  run_stage "Removing managed skills" uninstall_installed_skills
+  run_stage "Removing managed kernel" remove_managed_kernel
+  run_stage "Cleaning runtime config" runtime_uninstall_configs
   run_cmd rm -rf "$METADATA_DIR"
   log "Uninstall complete. User-owned $RUNTIME_PRESERVE_LABEL files were preserved."
 }

@@ -38,12 +38,9 @@ install_settings_config() {
 }
 
 runtime_install_configs() {
-  local settings_result mcp_result
-  settings_result="$(install_settings_config)"
-  read_install_triplet "$settings_result" "skip" "none" "none" \
+  run_install_triplet_stage "Merging Claude settings" install_settings_config "skip" "none" "none" \
     INSTALL_SETTINGS_ACTION INSTALL_SETTINGS_STATE INSTALL_SETTINGS_BACKUP
-  mcp_result="$(install_mcp_config)"
-  read_install_triplet "$mcp_result" "skip" "none" "none" \
+  run_install_triplet_stage "Merging MCP config" install_mcp_config "skip" "none" "none" \
     INSTALL_MCP_ACTION INSTALL_MCP_STATE INSTALL_MCP_BACKUP
 }
 
@@ -114,6 +111,7 @@ PY
 }
 
 runtime_print_install_report() {
+  ui_print_runtime_banner "Claude Code" "$INSTALL_ACTIVATION_STATE"
   log ""
   log "b-agentic Claude Code install complete"
   log "skillsSynced: ${#INSTALL_SKILL_NAMES[@]} -> $SKILLS_DST"
