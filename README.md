@@ -1,8 +1,10 @@
 # b-agentic
 
-**An agent workflow kernel for Claude Code and OpenCode.**
+**An agent workflow kernel for Claude Code, OpenCode, and Codex CLI.**
 
-`b-agentic` turns rough developer intent into disciplined loops: clarify, plan, build, validate, debug, review, and ship. Claude Code is the reference runtime; OpenCode is supported through a bridge adapter that keeps the same `/b-*` skill surface available.
+`b-agentic` turns rough developer intent into disciplined loops: clarify, plan, build, validate, debug, review, and ship. Claude Code is the reference runtime; OpenCode and Codex CLI are supported through runtime-specific adapters.
+
+Skill names are runtime-neutral: Claude Code and OpenCode commonly expose `/b-*`, while Codex CLI uses `/skills`, `$skill-name`, or implicit matching.
 
 ## Install
 
@@ -17,6 +19,14 @@ Install for OpenCode:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --runtime=opencode
 ```
+
+Install for Codex CLI:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --runtime=codex-cli
+```
+
+Codex CLI config merge uses Python 3.11+ standard-library TOML parsing.
 
 Useful flags:
 
@@ -34,10 +44,11 @@ The installer is designed to be a one-command bootstrap. It installs the kernel,
 
 ## What You Get
 
-- A runtime kernel installed into the active tool: `~/.claude/CLAUDE.md` or `~/.config/opencode/AGENTS.md`
-- The `b-agentic` skill set under `~/.claude/skills/`
+- A runtime kernel installed into the active tool: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`, or `~/.codex/AGENTS.md`
+- The `b-agentic` skill set under the runtime-local skills tree (`~/.claude/skills/`, `~/.config/opencode/skills/`, or `~/.codex/skills/`)
 - Recommended runtime config templates, MCP config, and shared references
 - For OpenCode, thin `/b-*` command wrappers in `~/.config/opencode/commands/`
+- For Codex CLI, skill registration and MCP server config in `~/.codex/config.toml`
 
 If an existing kernel file is preserved, the install stays in a pending state until you replace or merge it.
 
@@ -48,29 +59,29 @@ The table below is generated from `skills/registry.yaml`.
 <!-- generated:skills-table:start -->
 | Skill | Phase | Use |
 |---|---|---|
-| `/b-orchestrate` | End-to-end | Coordinate phase handoffs until PR-ready, ready with follow-ups, or blocked |
-| `/b-plan` | Decide | Clarify unclear goals or turn a clear goal into an execution plan |
-| `/b-research` | Decide | Fetch external docs, API facts, comparisons, or recent evidence |
-| `/b-implement` | Build | Execute approved plans or small direct requests |
-| `/b-refactor` | Build | Rename, extract, move, inline, simplify, or delete behavior-preserving code |
-| `/b-debug` | Validate | Confirm runtime root cause and fix minimally |
-| `/b-test` | Validate | Write or fix unit, integration, contract, and simulated-DOM tests |
-| `/b-browser` | Validate | Collect real-browser, visual, screenshot, live UI, or e2e evidence |
-| `/b-review` | Validate | Review changed code for blockers, regressions, security, and coverage |
-| `/b-audit` | Validate | Audit the b-agentic suite for systemic risk (suite-only) |
-| `/b-ship` | Ship | Commit, push, and open a PR after READY FOR PR |
+| `b-orchestrate` | End-to-end | Coordinate phase handoffs until PR-ready, ready with follow-ups, or blocked |
+| `b-plan` | Decide | Clarify unclear goals or turn a clear goal into an execution plan |
+| `b-research` | Decide | Fetch external docs, API facts, comparisons, or recent evidence |
+| `b-implement` | Build | Execute approved plans or small direct requests |
+| `b-refactor` | Build | Rename, extract, move, inline, simplify, or delete behavior-preserving code |
+| `b-debug` | Validate | Confirm runtime root cause and fix minimally |
+| `b-test` | Validate | Write or fix unit, integration, contract, and simulated-DOM tests |
+| `b-browser` | Validate | Collect real-browser, visual, screenshot, live UI, or e2e evidence |
+| `b-review` | Validate | Review changed code for blockers, regressions, security, and coverage |
+| `b-audit` | Validate | Audit the b-agentic suite for systemic risk (suite-only) |
+| `b-ship` | Ship | Commit, push, and open a PR after READY FOR PR |
 <!-- generated:skills-table:end -->
 
 Typical flow:
 
 ```text
-/b-orchestrate [feature/fix request]
-/b-plan [goal] -> approve plan -> /b-implement -> /b-test -> /b-review
-/b-browser [UI/e2e verification]
-/b-research [external docs or recent info]
-/b-debug [runtime bug]
-/b-refactor [behavior-preserving change]
-/b-ship [commit, push, open PR]
+b-orchestrate [feature/fix request]
+b-plan [goal] -> approve plan -> b-implement -> b-test -> b-review
+b-browser [UI/e2e verification]
+b-research [external docs or recent info]
+b-debug [runtime bug]
+b-refactor [behavior-preserving change]
+b-ship [commit, push, open PR]
 ```
 
 ## Repository Layout
@@ -94,6 +105,11 @@ b-agentic/
 │   ├── opencode/
 │   │   ├── kernel.md      # OpenCode runtime kernel
 │   │   ├── commands/      # Thin /b-* command wrappers
+│   │   ├── configs/       # Runtime config templates and docs
+│   │   ├── scripts/       # Runtime-specific install and validate scripts
+│   │   └── tests/         # Runtime-specific smoke lane
+│   ├── codex-cli/
+│   │   ├── kernel.md      # Codex CLI runtime kernel
 │   │   ├── configs/       # Runtime config templates and docs
 │   │   ├── scripts/       # Runtime-specific install and validate scripts
 │   │   └── tests/         # Runtime-specific smoke lane
@@ -125,4 +141,4 @@ b-agentic/
 
 - `CLAUDE.md` is the maintainer guide for this source repo
 - `references/contract/` contains the detailed runtime contract
-- `runtimes/claude-code/configs/README.md` and `runtimes/opencode/configs/README.md` describe runtime-specific layout details
+- `runtimes/claude-code/configs/README.md`, `runtimes/opencode/configs/README.md`, and `runtimes/codex-cli/configs/README.md` describe runtime-specific layout details

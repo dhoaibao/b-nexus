@@ -35,16 +35,16 @@ Match the user's intent to one active skill. If a request spans phases, sequence
 
 | Intent | Skill |
 |---|---|
-| End-to-end PR readiness workflow across phases | `/b-orchestrate` |
-| Decide how to build, decompose work | `/b-plan` |
-| External docs, API facts, comparisons | `/b-research` |
-| Execute approved or clearly scoped work | `/b-implement` |
-| Mechanical rename, extract, move, inline, simplify, delete | `/b-refactor` |
-| Runtime bug, error, broken behavior | `/b-debug` |
-| Unit/integration/component tests, coverage, failing tests | `/b-test` |
-| Real-browser, visual, and e2e verification | `/b-browser` |
-| Pre-PR changed-code review | `/b-review` |
-| b-agentic suite self-audit (suite-only) | `/b-audit` |
+| End-to-end PR readiness workflow across phases | `b-orchestrate` |
+| Decide how to build, decompose work | `b-plan` |
+| External docs, API facts, comparisons | `b-research` |
+| Execute approved or clearly scoped work | `b-implement` |
+| Mechanical rename, extract, move, inline, simplify, delete | `b-refactor` |
+| Runtime bug, error, broken behavior | `b-debug` |
+| Unit/integration/component tests, coverage, failing tests | `b-test` |
+| Real-browser, visual, and e2e verification | `b-browser` |
+| Pre-PR changed-code review | `b-review` |
+| b-agentic suite self-audit (suite-only) | `b-audit` |
 
 ### Trigger Precedence
 
@@ -54,7 +54,7 @@ Match the user's intent to one active skill. If a request spans phases, sequence
 - Unclear user goal, end state, or acceptance criteria stays in `b-plan` (Clarification mode).
 - Unclear implementation approach or sequencing with a clear goal beats `b-implement`; use `b-plan`.
 - `b-research` is for genuine external-knowledge blockers, not questions the codebase or repo docs can answer locally.
-- Simulated DOM/component-test work stays with `b-test`; real-browser, visual, browser-session, live UI, and e2e verification use `b-browser`. `/b-ship` is explicit-command-only after readiness is established. No skill may add browser or DOM tooling as a side effect; see runtime contract §10 for the boundary table and tool list.
+- Simulated DOM/component-test work stays with `b-test`; real-browser, visual, browser-session, live UI, and e2e verification use `b-browser`. `b-ship` is explicit-command-only after readiness is established. No skill may add browser or DOM tooling as a side effect; see runtime contract §10 for the boundary table and tool list.
 - `b-audit` is for b-agentic suite self-audits only; use `b-review` for all other codebase review tasks. See runtime contract §10 for the tiebreaker and the inline Context7 lookup threshold.
 
 Keep one active skill until its stop condition is hit. Required subtasks are handoffs, not parallel skill runs. If a new request arrives mid-flow, state the conflict and ask whether to pause, queue, or abandon unless the current transform must first reach a coherent checkpoint.
@@ -96,12 +96,12 @@ Use the lightest reliable tool. Native Glob/Grep/Read/Bash stay first for exact 
 |---|---|---|
 | Graph overview, architecture, blast radius | `gitnexus-radar` when indexed, fresh, target-aware | `serena-symbol-toolkit` |
 | Exact symbol/body/references/edits | `serena-symbol-toolkit` | Native tools + `apply_patch` |
-| Library/framework docs | `context7-docs` | `/b-research` |
+| Library/framework docs | `context7-docs` | `b-research` |
 | Web/news/image discovery | `brave-search` | `firecrawl-extraction` for source content |
 | Known URL or local document extraction | `firecrawl-extraction` | `firecrawl-extended`, then approval-gated `firecrawl-deep` |
 | Real-browser/visual/e2e live UI operation | `playwright-browser-operator` when installed and safety-gated | Existing repo scripts, supplied evidence, or `firecrawl-extraction` for known remote pages |
 
-GitNexus is optional radar only; Serena is primary hands. Never use GitNexus for editing or exact-body inspection. Treat stale graph output as no evidence. The default user-scope MCP install provides Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus. Installed MCP config does not make MCP first-choice over native exact evidence. Unknown slash-command flags should not be ignored; ask once or continue only when intent is unambiguous.
+GitNexus is optional radar only; Serena is primary hands. Never use GitNexus for editing or exact-body inspection. Treat stale graph output as no evidence. The default user-scope MCP install provides Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus. Installed MCP config does not make MCP first-choice over native exact evidence. Unknown command flags should not be ignored; ask once or continue only when intent is unambiguous.
 
 Detailed MCP bundles, fallback ladder, tool-use heuristics, flag/mode rules, and cost gates: runtime contract §4.
 

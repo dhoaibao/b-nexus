@@ -404,6 +404,7 @@ runtime_readiness_doc_lines = [
 for runtime_name, api_key_line in [
     ("claude-code", "`context7`, `brave-search`, and `firecrawl` entries are installed immediately, but live requests need user-scope API keys in `~/.claude.json`."),
     ("opencode", "`context7`, `brave-search`, and `firecrawl` entries are installed immediately, but live requests need user-scope API keys in `~/.config/opencode/opencode.json`."),
+    ("codex-cli", "`context7`, `brave-search`, and `firecrawl` entries are installed immediately, but live requests need user-scope API keys in `~/.codex/config.toml` or matching shell environment variables."),
 ]:
     install_path = ROOT / "runtimes" / runtime_name / "scripts" / "install.sh"
     readme_path = ROOT / "runtimes" / runtime_name / "configs" / "README.md"
@@ -456,7 +457,7 @@ for verdict_prompt_path in [
     if "verdict:" not in verdict_prompt:
         errors.append(f"{rel(verdict_prompt_path)}: verdict-owning prompt must reference the verdict field explicitly")
 
-required_b_test_intent = "| Unit/integration/component tests, coverage, failing tests | `/b-test` |"
+required_b_test_intent = "| Unit/integration/component tests, coverage, failing tests | `b-test` |"
 if required_b_test_intent not in shared_kernel_template:
     errors.append(
         f"{rel(shared_kernel_template_path)}: missing updated b-test routing intent for component-test ownership"

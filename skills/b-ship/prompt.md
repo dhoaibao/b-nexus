@@ -9,7 +9,7 @@ Flags: `--draft` (open as draft PR), `--title=<title>` (skip interactive prompt)
 ## When to use
 
 - The user asks to commit, push, open a PR, or ship after a review verdict of `READY FOR PR` or `READY WITH FOLLOW-UPS`.
-- `b-orchestrate` closes a workflow with `Next: /b-ship`.
+- `b-orchestrate` closes a workflow with `Next: b-ship`.
 
 ## When NOT to use
 

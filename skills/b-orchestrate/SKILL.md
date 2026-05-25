@@ -56,46 +56,46 @@ Read `../../b-agentic/references/contract/01-routing.md` and `../../b-agentic/re
 
 For each phase transition, emit the handoff envelope in chat as audit trail, then invoke the next phase skill via the Skill tool with the workflow goal, source of truth, and any prior phase output. The invoked skill writes its `[status]` block into the shared context; read the `state` field from that block and the `verdict` field when the phase defines named outcomes. Branch on `state`: `complete` → continue to the next phase; `blocked` → surface the blocker and stop; `needs-input` → relay the question to the user, resume on answer; `handed-off` → follow the envelope's `next-skill`. If `state` is present but `verdict` is missing for a review, audit, or workflow-close decision, ask the user once instead of inferring readiness from prose or `notes:`.
 
-If the user signals stop, cancel, or abort at any point, emit a final `[status]` block with `state: needs-input`, `cause: user_blocked`, list outstanding artifacts and their paths, and include a one-line resume hint (e.g., `resume: /b-orchestrate <goal> -- continue from <phase>`). Do not delete artifacts on abandonment.
+If the user signals stop, cancel, or abort at any point, emit a final `[status]` block with `state: needs-input`, `cause: user_blocked`, list outstanding artifacts and their paths, and include a one-line resume hint (e.g., `resume: b-orchestrate <goal> -- continue from <phase>`). Do not delete artifacts on abandonment.
 
 ### Step 2 - Route the plan phase
 
-If the goal, constraints, acceptance criteria, non-goals, or intended behavior are unclear, emit a handoff envelope and invoke `/b-plan` (Clarification mode) via the Skill tool; resume only after the returned spec is concrete enough to plan. If external feasibility blocks the spec, invoke `/b-research` via the Skill tool and resume only after the returned evidence is sufficient or the blocker is reported.
+If the goal, constraints, acceptance criteria, non-goals, or intended behavior are unclear, emit a handoff envelope and invoke `b-plan` (Clarification mode) via the Skill tool; resume only after the returned spec is concrete enough to plan. If external feasibility blocks the spec, invoke `b-research` via the Skill tool and resume only after the returned evidence is sufficient or the blocker is reported.
 
-For non-trivial work, sequencing, risk, public contracts, multi-file edits, or any workflow that needs durable coordination, invoke `/b-plan` via the Skill tool. Read `../../b-agentic/references/contract/03-definitions.md` before applying the small-direct threshold. For a small direct workflow, invoke `/b-implement` via the Skill tool with the current source of truth, expected scope, and verification need; do not write an execution outline inside `b-orchestrate`.
+For non-trivial work, sequencing, risk, public contracts, multi-file edits, or any workflow that needs durable coordination, invoke `b-plan` via the Skill tool. Read `../../b-agentic/references/contract/03-definitions.md` before applying the small-direct threshold. For a small direct workflow, invoke `b-implement` via the Skill tool with the current source of truth, expected scope, and verification need; do not write an execution outline inside `b-orchestrate`.
 
-Read `../../b-agentic/references/contract/02-source-of-truth.md` before treating a saved or chat plan as approved. Do not invoke `/b-implement` from an unapproved non-trivial plan unless the user explicitly delegated that exact approval after seeing the plan.
+Read `../../b-agentic/references/contract/02-source-of-truth.md` before treating a saved or chat plan as approved. Do not invoke `b-implement` from an unapproved non-trivial plan unless the user explicitly delegated that exact approval after seeing the plan.
 
 ### Step 3 - Route implementation and verification
 
-Invoke `/b-implement` via the Skill tool for approved build steps. If its returned status block reports a runtime root-cause problem, invoke `/b-debug`. If the needed change is a concrete behavior-preserving rename, extract, move, inline, simplify, or delete, invoke `/b-refactor`.
+Invoke `b-implement` via the Skill tool for approved build steps. If its returned status block reports a runtime root-cause problem, invoke `b-debug`. If the needed change is a concrete behavior-preserving rename, extract, move, inline, simplify, or delete, invoke `b-refactor`.
 
-After each build phase, require the phase skill's verification result before continuing. If verification fails because the plan is wrong, invoke `/b-plan` instead of widening implementation scope silently.
+After each build phase, require the phase skill's verification result before continuing. If verification fails because the plan is wrong, invoke `b-plan` instead of widening implementation scope silently.
 
 ### Step 4 - Route test coverage work
 
-Invoke `/b-test` via the Skill tool when changed behavior needs non-browser unit, integration, contract, or simulated-DOM/component-test coverage, when the user requested tests, or when review confidence depends on tests. Invoke `/b-browser` via the Skill tool when real-browser, visual, screenshot, browser-session, live UI, or e2e evidence is required. Skip this phase when the change is docs-only or tests are explicitly skipped; record any accepted browser follow-up instead of treating it as covered.
+Invoke `b-test` via the Skill tool when changed behavior needs non-browser unit, integration, contract, or simulated-DOM/component-test coverage, when the user requested tests, or when review confidence depends on tests. Invoke `b-browser` via the Skill tool when real-browser, visual, screenshot, browser-session, live UI, or e2e evidence is required. Skip this phase when the change is docs-only or tests are explicitly skipped; record any accepted browser follow-up instead of treating it as covered.
 
-If `/b-test` returns a likely product behavior failure, invoke `/b-debug` before changing assertions, snapshots, or fixtures.
+If `b-test` returns a likely product behavior failure, invoke `b-debug` before changing assertions, snapshots, or fixtures.
 
 ### Step 5 - Route review and fix findings
 
-Invoke `/b-review` via the Skill tool against the current diff with the spec or approved plan as baseline. Its findings decide the next invocation:
+Invoke `b-review` via the Skill tool against the current diff with the spec or approved plan as baseline. Its findings decide the next invocation:
 
-- Implementation gap -> `/b-implement`.
-- Runtime behavior failure -> `/b-debug`.
-- Test-only gap or harness failure -> `/b-test`.
-- Real-browser/visual/e2e evidence gap -> `/b-browser`.
-- Concrete behavior-preserving transform, including simplify -> `/b-refactor`.
-- New product decision or broad redesign -> `/b-plan` (Clarification mode).
+- Implementation gap -> `b-implement`.
+- Runtime behavior failure -> `b-debug`.
+- Test-only gap or harness failure -> `b-test`.
+- Real-browser/visual/e2e evidence gap -> `b-browser`.
+- Concrete behavior-preserving transform, including simplify -> `b-refactor`.
+- New product decision or broad redesign -> `b-plan` (Clarification mode).
 
-Read `../../b-agentic/references/contract/07-execution.md` before applying the review-fix loop or stopping on repeated failures. Re-invoke `/b-review` after each coherent fix set. Stop when the review returns `verdict: READY FOR PR`, returns `verdict: READY WITH FOLLOW-UPS` accepted by the user, reports a blocker, or after **3 review-fix iterations** — whichever comes first. If the cap is reached without readiness, surface the remaining findings as accepted follow-ups or hand off to **b-plan** for redesign.
+Read `../../b-agentic/references/contract/07-execution.md` before applying the review-fix loop or stopping on repeated failures. Re-invoke `b-review` after each coherent fix set. Stop when the review returns `verdict: READY FOR PR`, returns `verdict: READY WITH FOLLOW-UPS` accepted by the user, reports a blocker, or after **3 review-fix iterations** — whichever comes first. If the cap is reached without readiness, surface the remaining findings as accepted follow-ups or hand off to **b-plan** for redesign.
 
 ### Step 6 - Close the workflow
 
 Read `../../b-agentic/references/contract/09-output.md` before reporting non-trivial workflow status or handing off unresolved work. Report the final review verdict, verification run, skipped checks, blockers, and remaining follow-ups. Do not claim `verdict: READY FOR PR` when the review had no baseline, required verification was skipped, or real-browser/visual/e2e evidence remains relevant but absent.
 
-When closing with `verdict: READY FOR PR` or `verdict: READY WITH FOLLOW-UPS`, include a one-line next-action: `Next: /b-ship to commit and open the PR`.
+When closing with `verdict: READY FOR PR` or `verdict: READY WITH FOLLOW-UPS`, include a one-line next-action: `Next: b-ship to commit and open the PR`.
 
 **Terminal cleanup.** When closing a non-trivial workflow, emit a final `[status]` block with the overall workflow label in `verdict:`, then write a manifest under `.b-agentic/b-orchestrate/<run-id>/manifest.json` listing all phase artifacts, run-ids, and any cumulative cost or degraded-bundle notes. Only report `state: complete` when every phase's own status block also reported `complete`. If `[degraded:]` labels were emitted during the workflow, the `notes:` line is required and must include the affected bundles.
 

@@ -90,7 +90,7 @@ Shape large command outputs at the source before they enter chat: use targeted f
 
 ### Truncated output
 
-If command output is truncated or times out, save the full output under the active runtime's temp scratch path (for example, `/tmp/claude-code/b-agentic/<skill>/<slug>.log` or `/tmp/opencode/b-agentic/<skill>/<slug>.log`) and inspect the failing section instead of guessing.
+If command output is truncated or times out, save the full output under the active runtime's temp scratch path (for example, `/tmp/claude-code/b-agentic/<skill>/<slug>.log`, `/tmp/opencode/b-agentic/<skill>/<slug>.log`, or `/tmp/codex-cli/b-agentic/<skill>/<slug>.log`) and inspect the failing section instead of guessing.
 
 ### Verification provenance
 
@@ -129,9 +129,9 @@ For blocked or non-trivial debug and test runs whose result depends on local set
 When the expected input is missing, do not silently fall back; ask once with a concrete default in mind:
 - No git diff → ask which commit, branch, or range to review.
 - Changed-code review with untracked files → include them from current contents for current-worktree reviews, or state they are excluded when reviewing an explicit commit/range.
-- No approved plan → check if the request meets the small-direct-request threshold (§3); otherwise route to `/b-plan`.
+- No approved plan → check if the request meets the small-direct-request threshold (§3); otherwise route to `b-plan`.
 - No test framework in the repo → ask before adding one; never introduce a framework as a side effect.
-- Browser or DOM verification request → route to `/b-browser`; do not add browser or DOM tooling as a side effect (see §10).
+- Browser or DOM verification request → route to `b-browser`; do not add browser or DOM tooling as a side effect (see §10).
 - No MCP for the requested bundle → see the fallback ladder (§4) and label the run as `[degraded: <bundle> unavailable]`. When any `[degraded:]` label is emitted, the status block's `notes:` line is required and must name the unavailable bundle and the capability that was degraded or skipped.
 
 ### Generated artifact provenance

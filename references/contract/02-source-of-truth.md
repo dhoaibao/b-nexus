@@ -9,7 +9,7 @@ Use this order when instructions compete:
 4. Current repository evidence.
 5. Conventional defaults recorded as assumptions.
 
-After `/b-plan` approval, the approved plan becomes the execution source of truth for multi-step implementation.
+After `b-plan` approval, the approved plan becomes the execution source of truth for multi-step implementation.
 
 **Saved plans are a local approval cache.** Plans under `.b-agentic/b-plan/` are covered by the `.b-agentic/.gitignore` root guard (see §6) and are intentionally not tracked in version control. They are session-local artifacts — the execution source of truth for the current session, not a shared team record. The staleness gate still applies; use mtime or `approved_at` when `approved_head` is unavailable for drift detection.
 
@@ -67,4 +67,3 @@ Do not invent product behavior, acceptance criteria, compatibility promises, or 
 - Create or update domain docs only when the active skill explicitly owns that work. Do not create glossary or ADR files as a side effect of ordinary implementation.
 
 ---
-

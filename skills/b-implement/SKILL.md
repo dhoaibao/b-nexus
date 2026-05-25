@@ -1,7 +1,7 @@
 ---
 name: b-implement
 description: >
-  Execute approved or scoped work safely after /b-plan approval, when the
+  Execute approved or scoped work safely after b-plan approval, when the
   user asks to execute or implement scoped work, or when a small direct
   request meets the shared §3 threshold. Reads the approved plan, applies
   the next small step, verifies it, and stops for new decisions. Unlike

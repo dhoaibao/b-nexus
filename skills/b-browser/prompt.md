@@ -42,7 +42,7 @@ Choose the first path that can answer the browser evidence question safely:
 - Existing repo scripts or documented commands, discovered from manifests, CI config, repo docs, or user instructions.
 - `playwright-browser-operator` live-browser actions when existing evidence/scripts are absent, insufficient, or not targeted enough.
 - `firecrawl-extraction` **only** when the evidence question is static remote page content at a known URL and no DOM state, interaction, screenshot, console, network, or session evidence is required. Not interchangeable with Playwright when any of those are needed.
-- If the repo lacks real-browser/visual/e2e tooling and no existing path above can answer the question, hand off to **b-plan** with the browser evidence gap. Tooling may be added only after explicit `/b-plan` approval and dependency-write approval.
+- If the repo lacks real-browser/visual/e2e tooling and no existing path above can answer the question, hand off to **b-plan** with the browser evidence gap. Tooling may be added only after explicit `b-plan` approval and dependency-write approval.
 - Accepted follow-up or skipped check when evidence is unavailable and the user accepts the gap.
 
 Do not invent verification commands.

@@ -304,7 +304,7 @@ def validate_registries(skills: list[dict], runtimes: list[dict]) -> list[str]:
 def render_readme_skills_table(skills: list[dict]) -> str:
     lines = ["| Skill | Phase | Use |", "|---|---|---|"]
     for skill in skills:
-        lines.append(f"| `/{skill['name']}` | {skill['phase']} | {skill['use']} |")
+        lines.append(f"| `{skill['name']}` | {skill['phase']} | {skill['use']} |")
     return "\n".join(lines)
 
 
@@ -314,7 +314,7 @@ def render_routing_intents_table(skills: list[dict]) -> str:
         routing = skill.get("routing")
         if not isinstance(routing, dict):
             continue
-        lines.append(f"| {routing['intent']} | `/{skill['name']}` |")
+        lines.append(f"| {routing['intent']} | `{skill['name']}` |")
     return "\n".join(lines)
 
 
@@ -325,7 +325,7 @@ def render_routing_triggers_table(skills: list[dict]) -> str:
         if not isinstance(routing, dict):
             continue
         trigger_text = ", ".join(routing["triggers"])
-        lines.append(f"| `/{skill['name']}` | {trigger_text} |")
+        lines.append(f"| `{skill['name']}` | {trigger_text} |")
     return "\n".join(lines)
 
 

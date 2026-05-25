@@ -16,13 +16,13 @@ Otherwise the change is **trivial** and may use the lightweight paths in each sk
 
 ### Small direct request
 
-A request that may bypass `/b-plan` and go straight to `/b-implement` must meet **all** of:
+A request that may bypass `b-plan` and go straight to `b-implement` must meet **all** of:
 - 3 or fewer files.
 - No exported/public contract change.
 - No sensitive path (auth, security, billing, migration).
 - No remaining design decision; behavior is obvious from the request.
 
-Anything failing this threshold goes back to `/b-plan`.
+Anything failing this threshold goes back to `b-plan`.
 
 ### Readiness vocabulary
 
@@ -35,7 +35,7 @@ Use these terms consistently across skills:
 
 Do not use `READY FOR PR`, `complete`, or high confidence when the required baseline, verification, or evidence is missing. For UI/browser-relevant work, real-browser/visual/e2e checks are covered only by `b-browser`-verified supplied/CI evidence, existing-tool evidence, approved live-browser evidence, or an accepted follow-up; otherwise use `READY WITH FOLLOW-UPS`, `partial`, or a lower confidence label.
 
-### Severity rubric (`/b-review`, `/b-debug`, any finding)
+### Severity rubric (`b-review`, `b-debug`, any finding)
 
 | Severity | Meaning |
 |---|---|
@@ -44,7 +44,7 @@ Do not use `READY FOR PR`, `complete`, or high confidence when the required base
 | **MINOR** | Bug-prone code, edge case, or follow-up cleanup that does not block the PR. |
 | **NIT** | Style, naming, or preference. Authors may ignore. |
 
-### Risk rubric (`/b-refactor`, `/b-implement`, verification depth)
+### Risk rubric (`b-refactor`, `b-implement`, verification depth)
 
 | Risk | Criteria |
 |---|---|

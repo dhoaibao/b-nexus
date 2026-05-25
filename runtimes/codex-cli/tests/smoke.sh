@@ -1,0 +1,123 @@
+# Sourced by tests/smoke/install.sh — do not run directly.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  echo "error: this script is sourced by tests/smoke/install.sh" >&2
+  exit 1
+fi
+
+run_runtime_smoke_cases() {
+  local snapshot_repo="$1"
+  local sandbox_codex="$WORK_DIR/codex"
+  local sandbox_codex_preserve="$WORK_DIR/codex-preserve"
+  local sandbox_codex_replace="$WORK_DIR/codex-replace"
+  local sandbox_codex_dry_run="$WORK_DIR/codex-dry-run"
+  local sandbox_codex_prompt_keys="$WORK_DIR/codex-prompt-keys"
+  local sandbox_codex_merge="$WORK_DIR/codex-merge"
+  local sandbox_codex_conflict="$WORK_DIR/codex-conflict"
+  local sandbox_codex_install_report="$WORK_DIR/codex-install-report"
+  local sandbox_codex_cwd_repo="$WORK_DIR/codex-cwd-repo"
+
+  mkdir -p "$sandbox_codex/home"
+  expect_install_status 0 "$sandbox_codex" "$snapshot_repo" --runtime=codex-cli
+  assert_file "$sandbox_codex/home/.codex/AGENTS.md"
+  assert_contains "$sandbox_codex/home/.codex/AGENTS.md" '<!-- b-agentic-managed -->'
+  assert_file "$sandbox_codex/home/.codex/skills/b-plan/SKILL.md"
+  assert_file "$sandbox_codex/home/.codex/b-agentic/install.json"
+  assert_contains "$sandbox_codex/home/.codex/b-agentic/install.json" '"runtime": "codex-cli"'
+  assert_contains "$sandbox_codex/home/.codex/b-agentic/install.json" '"activationState": "active"'
+  assert_contains "$sandbox_codex/home/.codex/b-agentic/install.json" '"configAction": "write"'
+  assert_file "$sandbox_codex/home/.codex/config.toml"
+  assert_contains "$sandbox_codex/home/.codex/config.toml" '# BEGIN b-agentic managed config'
+  assert_contains "$sandbox_codex/home/.codex/config.toml" '[mcp_servers.context7]'
+  assert_contains "$sandbox_codex/home/.codex/config.toml" 'env_http_headers = { CONTEXT7_API_KEY = "CONTEXT7_API_KEY" }'
+  assert_contains "$sandbox_codex/home/.codex/config.toml" 'env_vars = ["BRAVE_API_KEY"]'
+  assert_contains "$sandbox_codex/home/.codex/config.toml" 'env_vars = ["FIRECRAWL_API_KEY"]'
+  assert_contains "$sandbox_codex/home/.codex/config.toml" '[[skills.config]]'
+  assert_contains "$sandbox_codex/home/.codex/config.toml" 'path = "/'
+  assert_toml_value "$sandbox_codex/home/.codex/config.toml" "'serena' in data['mcp_servers']"
+  assert_toml_value "$sandbox_codex/home/.codex/config.toml" "data['mcp_servers']['serena']['args'] == ['start-mcp-server', '--context', 'ide', '--project-from-cwd']"
+  assert_toml_value "$sandbox_codex/home/.codex/config.toml" "any(item['path'].endswith('/.codex/skills/b-plan') for item in data['skills']['config'])"
+  assert_file "$sandbox_codex/home/.codex/b-agentic/references/contract/index.md"
+  assert_file "$sandbox_codex/home/.codex/b-agentic/templates/mcp.user.template.toml"
+  assert_no_path "$sandbox_codex/home/.claude"
+  assert_no_path "$sandbox_codex/home/.config/opencode"
+
+  mkdir -p "$sandbox_codex_install_report/home"
+  HOME="$sandbox_codex_install_report/home" \
+  B_AGENTIC_REPO="$snapshot_repo" \
+  B_AGENTIC_DIR="$sandbox_codex_install_report/source" \
+  B_AGENTIC_PROMPT_API_KEYS=N \
+  bash "$ROOT_DIR/install.sh" --runtime=codex-cli >"$sandbox_codex_install_report/install.log" 2>&1
+  assert_contains "$sandbox_codex_install_report/install.log" 'mcpReadiness:'
+  assert_contains "$sandbox_codex_install_report/install.log" 'serena: install/init separately; installer never runs onboarding'
+  assert_contains "$sandbox_codex_install_report/install.log" 'gitnexus: install/index separately if you want graph radar'
+  assert_contains "$sandbox_codex_install_report/install.log" 'api-keys: Context7, Brave Search, and Firecrawl need user-scope keys'
+
+  mkdir -p "$sandbox_codex_cwd_repo/home" "$sandbox_codex_cwd_repo/current-repo"
+  git -C "$sandbox_codex_cwd_repo/current-repo" init -q
+  expect_install_status_in_cwd 0 "$sandbox_codex_cwd_repo/current-repo" "$sandbox_codex_cwd_repo" "$snapshot_repo" --runtime=codex-cli
+  assert_no_path "$sandbox_codex_cwd_repo/current-repo/.b-agentic"
+  expect_install_status_in_cwd 0 "$sandbox_codex_cwd_repo/current-repo" "$sandbox_codex_cwd_repo" "$snapshot_repo" --runtime=codex-cli --uninstall
+  assert_no_path "$sandbox_codex_cwd_repo/current-repo/.b-agentic"
+
+  mkdir -p "$sandbox_codex_preserve/home/.codex"
+  printf '# User Codex Memory\n' > "$sandbox_codex_preserve/home/.codex/AGENTS.md"
+  expect_install_status 2 "$sandbox_codex_preserve" "$snapshot_repo" --runtime=codex-cli
+  assert_contains "$sandbox_codex_preserve/home/.codex/AGENTS.md" '# User Codex Memory'
+  assert_contains "$sandbox_codex_preserve/home/.codex/b-agentic/install.json" '"activationState": "pending"'
+
+  mkdir -p "$sandbox_codex_replace/home/.codex"
+  printf '# User Codex Memory\n' > "$sandbox_codex_replace/home/.codex/AGENTS.md"
+  expect_install_status 0 "$sandbox_codex_replace" "$snapshot_repo" --runtime=codex-cli --replace-memory
+  assert_contains "$sandbox_codex_replace/home/.codex/AGENTS.md" '<!-- b-agentic-managed -->'
+  assert_contains "$sandbox_codex_replace/home/.codex/b-agentic/install.json" '"memoryAction": "replace"'
+  assert_glob "$sandbox_codex_replace/home/.codex/b-agentic/backups/AGENTS.md.bak-*"
+
+  mkdir -p "$sandbox_codex_dry_run/home"
+  expect_install_status 0 "$sandbox_codex_dry_run" "$snapshot_repo" --runtime=codex-cli --dry-run
+  assert_no_path "$sandbox_codex_dry_run/home/.codex"
+  assert_no_path "$sandbox_codex_dry_run/source"
+
+  mkdir -p "$sandbox_codex_prompt_keys/home"
+  expect_install_with_tty_status 0 "$sandbox_codex_prompt_keys" "$snapshot_repo" $'ctx7-codex-key\nbrave-codex-key\nfirecrawl-codex-key\n' --runtime=codex-cli --prompt-api-keys
+  assert_contains "$sandbox_codex_prompt_keys/home/.codex/config.toml" 'http_headers = { CONTEXT7_API_KEY = "ctx7-codex-key" }'
+  assert_contains "$sandbox_codex_prompt_keys/home/.codex/config.toml" 'BRAVE_API_KEY = "brave-codex-key"'
+  assert_contains "$sandbox_codex_prompt_keys/home/.codex/config.toml" 'FIRECRAWL_API_KEY = "firecrawl-codex-key"'
+  assert_contains "$sandbox_codex_prompt_keys/home/.codex/b-agentic/templates/mcp.user.template.toml" 'env_vars = ["BRAVE_API_KEY"]'
+  assert_not_contains "$sandbox_codex_prompt_keys/home/.codex/b-agentic/templates/mcp.user.template.toml" 'brave-codex-key'
+  expect_install_status 0 "$sandbox_codex_prompt_keys" "$snapshot_repo" --runtime=codex-cli --uninstall
+  assert_no_path "$sandbox_codex_prompt_keys/home/.codex/config.toml"
+
+  mkdir -p "$sandbox_codex_merge/home/.codex"
+  cat <<'EOF' > "$sandbox_codex_merge/home/.codex/config.toml"
+model = "gpt-5.4"
+
+[mcp_servers.custom]
+command = "custom-mcp"
+
+[[skills.config]]
+path = "/tmp/custom-skill"
+EOF
+  expect_install_status 0 "$sandbox_codex_merge" "$snapshot_repo" --runtime=codex-cli
+  assert_toml_value "$sandbox_codex_merge/home/.codex/config.toml" "data['model'] == 'gpt-5.4'"
+  assert_toml_value "$sandbox_codex_merge/home/.codex/config.toml" "data['mcp_servers']['custom']['command'] == 'custom-mcp'"
+  assert_toml_value "$sandbox_codex_merge/home/.codex/config.toml" "'/tmp/custom-skill' in [item['path'] for item in data['skills']['config']]"
+  assert_toml_value "$sandbox_codex_merge/home/.codex/config.toml" "any(item['path'].endswith('/.codex/skills/b-plan') for item in data['skills']['config'])"
+  expect_install_status 0 "$sandbox_codex_merge" "$snapshot_repo" --runtime=codex-cli --uninstall
+  assert_toml_value "$sandbox_codex_merge/home/.codex/config.toml" "data == {'model': 'gpt-5.4', 'mcp_servers': {'custom': {'command': 'custom-mcp'}}, 'skills': {'config': [{'path': '/tmp/custom-skill'}]}}"
+
+  mkdir -p "$sandbox_codex_conflict/home/.codex"
+  cat <<'EOF' > "$sandbox_codex_conflict/home/.codex/config.toml"
+[mcp_servers.context7]
+url = "https://example.com/custom-context7"
+EOF
+  expect_install_status 0 "$sandbox_codex_conflict" "$snapshot_repo" --runtime=codex-cli
+  assert_toml_value "$sandbox_codex_conflict/home/.codex/config.toml" "data['mcp_servers']['context7']['url'] == 'https://example.com/custom-context7'"
+  assert_contains "$sandbox_codex_conflict/home/.codex/config.toml" '[mcp_servers.brave-search]'
+  expect_install_status 0 "$sandbox_codex_conflict" "$snapshot_repo" --runtime=codex-cli --uninstall
+  assert_toml_value "$sandbox_codex_conflict/home/.codex/config.toml" "data == {'mcp_servers': {'context7': {'url': 'https://example.com/custom-context7'}}}"
+
+  expect_install_status 0 "$sandbox_codex" "$snapshot_repo" --runtime=codex-cli --uninstall
+  assert_no_path "$sandbox_codex/home/.codex/b-agentic"
+  assert_no_path "$sandbox_codex/home/.codex/AGENTS.md"
+  assert_no_path "$sandbox_codex/home/.codex/config.toml"
+}

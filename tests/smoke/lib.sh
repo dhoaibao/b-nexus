@@ -42,6 +42,24 @@ if not eval(sys.argv[2], {'data': data}):
 PY
 }
 
+assert_toml_value() {
+  local path="$1" expression="$2"
+  python3 - "$path" "$expression" <<'PY' || fail "TOML assertion failed for $path: $expression"
+import sys
+from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    print('TOML assertions require Python 3.11+ (stdlib tomllib).', file=sys.stderr)
+    sys.exit(1)
+
+data = tomllib.loads(Path(sys.argv[1]).read_text())
+if not eval(sys.argv[2], {'data': data}):
+    sys.exit(1)
+PY
+}
+
 assert_not_contains() {
   local path="$1" needle="$2"
   ! grep -Fq "$needle" "$path" || fail "did not expect '$needle' in $path"
