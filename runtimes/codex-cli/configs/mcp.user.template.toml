@@ -7,18 +7,18 @@ url = "https://mcp.context7.com/mcp"
 env_http_headers = { CONTEXT7_API_KEY = "CONTEXT7_API_KEY" }
 
 [mcp_servers.brave-search]
-command = "bunx"
-args = ["@brave/brave-search-mcp-server", "--transport", "stdio"]
+command = "pnpm"
+args = ["dlx", "@brave/brave-search-mcp-server", "--transport", "stdio"]
 env_vars = ["BRAVE_API_KEY"]
 
 [mcp_servers.firecrawl]
-command = "bunx"
-args = ["firecrawl-mcp"]
+command = "pnpm"
+args = ["dlx", "firecrawl-mcp"]
 env_vars = ["FIRECRAWL_API_KEY"]
 
 [mcp_servers.playwright]
-command = "bunx"
-args = ["@playwright/mcp@latest", "--isolated"]
+command = "pnpm"
+args = ["dlx", "@playwright/mcp@latest", "--isolated"]
 
 [mcp_servers.gitnexus]
 command = "gitnexus"

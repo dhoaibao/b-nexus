@@ -33,7 +33,7 @@ OpenCode uses `opencode.json` for configuration. MCP servers are configured unde
 
 The installer also prompts for optional API keys (Context7, Brave Search, Firecrawl) when run with `--prompt-api-keys`. Key values are written only to the user's `opencode.json` and never to the tracked template.
 
-The managed Brave Search, Firecrawl, and Playwright entries launch through `bunx`, so Bun must be available on `PATH` when those MCP servers are started.
+The managed Brave Search, Firecrawl, and Playwright entries launch through `pnpm dlx`, so pnpm must be available on `PATH` when those MCP servers are started.
 
 | Server | Use |
 |---|---|

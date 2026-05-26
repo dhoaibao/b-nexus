@@ -605,8 +605,8 @@ for json_path in sorted((ROOT / "runtimes").glob("*/configs/*.json")):
                 if env.get("BRAVE_API_KEY") != "{env:BRAVE_API_KEY}":
                     errors.append(f"{rel(json_path)}: brave-search must use {{env:BRAVE_API_KEY}} placeholder")
                 cmd = servers["brave-search"].get("command", [])
-                if not cmd or cmd[0] != "bunx":
-                    errors.append(f"{rel(json_path)}: brave-search must use bunx")
+                if cmd[:2] != ["pnpm", "dlx"]:
+                    errors.append(f"{rel(json_path)}: brave-search must use pnpm dlx")
                 if "@brave/brave-search-mcp-server" not in cmd:
                     errors.append(f"{rel(json_path)}: brave-search must use @brave/brave-search-mcp-server")
 
@@ -615,15 +615,15 @@ for json_path in sorted((ROOT / "runtimes").glob("*/configs/*.json")):
                 if env.get("FIRECRAWL_API_KEY") != "{env:FIRECRAWL_API_KEY}":
                     errors.append(f"{rel(json_path)}: firecrawl must use {{env:FIRECRAWL_API_KEY}} placeholder")
                 cmd = servers["firecrawl"].get("command", [])
-                if not cmd or cmd[0] != "bunx":
-                    errors.append(f"{rel(json_path)}: firecrawl must use bunx")
+                if cmd[:2] != ["pnpm", "dlx"]:
+                    errors.append(f"{rel(json_path)}: firecrawl must use pnpm dlx")
                 if "firecrawl-mcp" not in cmd:
                     errors.append(f"{rel(json_path)}: firecrawl must use firecrawl-mcp")
 
             if "playwright" in servers:
                 cmd = servers["playwright"].get("command", [])
-                if not cmd or cmd[0] != "bunx":
-                    errors.append(f"{rel(json_path)}: playwright must use bunx")
+                if cmd[:2] != ["pnpm", "dlx"]:
+                    errors.append(f"{rel(json_path)}: playwright must use pnpm dlx")
                 if "@playwright/mcp@latest" not in cmd:
                     errors.append(f"{rel(json_path)}: playwright must use @playwright/mcp@latest")
                 if "--isolated" not in cmd:
@@ -648,9 +648,11 @@ for json_path in sorted((ROOT / "runtimes").glob("*/configs/*.json")):
                 env = servers["brave-search"].get("env", {})
                 if env.get("BRAVE_API_KEY") != "$BRAVE_API_KEY":
                     errors.append(f"{rel(json_path)}: brave-search must use $BRAVE_API_KEY placeholder")
-                if servers["brave-search"].get("command") != "bunx":
-                    errors.append(f"{rel(json_path)}: brave-search must use bunx")
+                if servers["brave-search"].get("command") != "pnpm":
+                    errors.append(f"{rel(json_path)}: brave-search must use pnpm dlx")
                 args = servers["brave-search"].get("args", [])
+                if not args or args[0] != "dlx":
+                    errors.append(f"{rel(json_path)}: brave-search must use pnpm dlx")
                 if "@brave/brave-search-mcp-server" not in args:
                     errors.append(f"{rel(json_path)}: brave-search must use @brave/brave-search-mcp-server")
 
@@ -658,15 +660,20 @@ for json_path in sorted((ROOT / "runtimes").glob("*/configs/*.json")):
                 env = servers["firecrawl"].get("env", {})
                 if env.get("FIRECRAWL_API_KEY") != "$FIRECRAWL_API_KEY":
                     errors.append(f"{rel(json_path)}: firecrawl must use $FIRECRAWL_API_KEY placeholder")
-                if servers["firecrawl"].get("command") != "bunx":
-                    errors.append(f"{rel(json_path)}: firecrawl must use bunx")
-                if "firecrawl-mcp" not in servers["firecrawl"].get("args", []):
+                if servers["firecrawl"].get("command") != "pnpm":
+                    errors.append(f"{rel(json_path)}: firecrawl must use pnpm dlx")
+                firecrawl_args = servers["firecrawl"].get("args", [])
+                if not firecrawl_args or firecrawl_args[0] != "dlx":
+                    errors.append(f"{rel(json_path)}: firecrawl must use pnpm dlx")
+                if "firecrawl-mcp" not in firecrawl_args:
                     errors.append(f"{rel(json_path)}: firecrawl must use firecrawl-mcp")
 
             if "playwright" in servers:
-                if servers["playwright"].get("command") != "bunx":
-                    errors.append(f"{rel(json_path)}: playwright must use bunx")
+                if servers["playwright"].get("command") != "pnpm":
+                    errors.append(f"{rel(json_path)}: playwright must use pnpm dlx")
                 args = servers["playwright"].get("args", [])
+                if not args or args[0] != "dlx":
+                    errors.append(f"{rel(json_path)}: playwright must use pnpm dlx")
                 if "@playwright/mcp@latest" not in args:
                     errors.append(f"{rel(json_path)}: playwright must use @playwright/mcp@latest")
                 if "--isolated" not in args:
@@ -693,9 +700,11 @@ for json_path in sorted((ROOT / "runtimes").glob("*/configs/*.json")):
                 env = servers["brave-search"].get("env", {})
                 if env.get("BRAVE_API_KEY") != "${BRAVE_API_KEY}":
                     errors.append(f"{rel(json_path)}: brave-search must use ${{BRAVE_API_KEY}} placeholder")
-                if servers["brave-search"].get("command") != "bunx":
-                    errors.append(f"{rel(json_path)}: brave-search must use bunx")
+                if servers["brave-search"].get("command") != "pnpm":
+                    errors.append(f"{rel(json_path)}: brave-search must use pnpm dlx")
                 args = servers["brave-search"].get("args", [])
+                if not args or args[0] != "dlx":
+                    errors.append(f"{rel(json_path)}: brave-search must use pnpm dlx")
                 if "@brave/brave-search-mcp-server" not in args:
                     errors.append(f"{rel(json_path)}: brave-search must use @brave/brave-search-mcp-server")
 
@@ -703,15 +712,20 @@ for json_path in sorted((ROOT / "runtimes").glob("*/configs/*.json")):
                 env = servers["firecrawl"].get("env", {})
                 if env.get("FIRECRAWL_API_KEY") != "${FIRECRAWL_API_KEY}":
                     errors.append(f"{rel(json_path)}: firecrawl must use ${{FIRECRAWL_API_KEY}} placeholder")
-                if servers["firecrawl"].get("command") != "bunx":
-                    errors.append(f"{rel(json_path)}: firecrawl must use bunx")
-                if "firecrawl-mcp" not in servers["firecrawl"].get("args", []):
+                if servers["firecrawl"].get("command") != "pnpm":
+                    errors.append(f"{rel(json_path)}: firecrawl must use pnpm dlx")
+                firecrawl_args = servers["firecrawl"].get("args", [])
+                if not firecrawl_args or firecrawl_args[0] != "dlx":
+                    errors.append(f"{rel(json_path)}: firecrawl must use pnpm dlx")
+                if "firecrawl-mcp" not in firecrawl_args:
                     errors.append(f"{rel(json_path)}: firecrawl must use firecrawl-mcp")
 
             if "playwright" in servers:
-                if servers["playwright"].get("command") != "bunx":
-                    errors.append(f"{rel(json_path)}: playwright must use bunx")
+                if servers["playwright"].get("command") != "pnpm":
+                    errors.append(f"{rel(json_path)}: playwright must use pnpm dlx")
                 args = servers["playwright"].get("args", [])
+                if not args or args[0] != "dlx":
+                    errors.append(f"{rel(json_path)}: playwright must use pnpm dlx")
                 if "@playwright/mcp@latest" not in args:
                     errors.append(f"{rel(json_path)}: playwright must use @playwright/mcp@latest")
                 if "--isolated" not in args:

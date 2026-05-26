@@ -255,8 +255,8 @@ def migrate_managed_values(data):
 
         if isinstance(incoming_command, list) and isinstance(old_command, list):
             legacy_commands = [list(old_command)]
-            if old_command and old_command[0] == 'npx' and incoming_command and incoming_command[0] == 'bunx':
-                legacy_commands.append(list(old_command) + [incoming_command[0]])
+            if old_command and old_command[0] == 'npx' and incoming_command and incoming_command[0] == 'pnpm':
+                legacy_commands.append(list(old_command) + ['bunx'])
             if server.get('command') in legacy_commands:
                 server['command'] = list(incoming_command)
 
@@ -284,16 +284,34 @@ def migrate_managed_values(data):
                 ['-y', '@brave/brave-search-mcp-server', '--transport', 'stdio'],
             )
             migrate_managed_launcher(
+                servers.get('brave-search'),
+                recommended_servers.get('brave-search'),
+                'bunx',
+                ['@brave/brave-search-mcp-server', '--transport', 'stdio'],
+            )
+            migrate_managed_launcher(
                 servers.get('firecrawl'),
                 recommended_servers.get('firecrawl'),
                 'npx',
                 ['-y', 'firecrawl-mcp'],
             )
             migrate_managed_launcher(
+                servers.get('firecrawl'),
+                recommended_servers.get('firecrawl'),
+                'bunx',
+                ['firecrawl-mcp'],
+            )
+            migrate_managed_launcher(
                 servers.get('playwright'),
                 recommended_servers.get('playwright'),
                 'npx',
                 ['-y', '@playwright/mcp@latest', '--isolated'],
+            )
+            migrate_managed_launcher(
+                servers.get('playwright'),
+                recommended_servers.get('playwright'),
+                'bunx',
+                ['@playwright/mcp@latest', '--isolated'],
             )
             continue
 
@@ -303,14 +321,29 @@ def migrate_managed_values(data):
             ['npx', '-y', '@brave/brave-search-mcp-server', '--transport', 'stdio'],
         )
         migrate_managed_launcher(
+            servers.get('brave-search'),
+            recommended_servers.get('brave-search'),
+            ['bunx', '@brave/brave-search-mcp-server', '--transport', 'stdio'],
+        )
+        migrate_managed_launcher(
             servers.get('firecrawl'),
             recommended_servers.get('firecrawl'),
             ['npx', '-y', 'firecrawl-mcp'],
         )
         migrate_managed_launcher(
+            servers.get('firecrawl'),
+            recommended_servers.get('firecrawl'),
+            ['bunx', 'firecrawl-mcp'],
+        )
+        migrate_managed_launcher(
             servers.get('playwright'),
             recommended_servers.get('playwright'),
             ['npx', '-y', '@playwright/mcp@latest', '--isolated'],
+        )
+        migrate_managed_launcher(
+            servers.get('playwright'),
+            recommended_servers.get('playwright'),
+            ['bunx', '@playwright/mcp@latest', '--isolated'],
         )
 
 if not isinstance(current, dict):
@@ -528,8 +561,8 @@ def managed_mcp_server(current_server, incoming_server, server_name):
 
         if isinstance(incoming_command, list) and isinstance(old_command, list):
             legacy_commands = [list(old_command)]
-            if old_command and old_command[0] == 'npx' and incoming_command and incoming_command[0] == 'bunx':
-                legacy_commands.append(list(old_command) + [incoming_command[0]])
+            if old_command and old_command[0] == 'npx' and incoming_command and incoming_command[0] == 'pnpm':
+                legacy_commands.append(list(old_command) + ['bunx'])
             if normalized.get('command') in legacy_commands:
                 normalized['command'] = list(incoming_command)
 
@@ -546,8 +579,10 @@ def managed_mcp_server(current_server, incoming_server, server_name):
             env['BRAVE_API_KEY'] = incoming_env.get('BRAVE_API_KEY')
         if env_key == 'env':
             normalize_managed_launcher('npx', ['-y', '@brave/brave-search-mcp-server', '--transport', 'stdio'])
+            normalize_managed_launcher('bunx', ['@brave/brave-search-mcp-server', '--transport', 'stdio'])
         else:
             normalize_managed_launcher(['npx', '-y', '@brave/brave-search-mcp-server', '--transport', 'stdio'])
+            normalize_managed_launcher(['bunx', '@brave/brave-search-mcp-server', '--transport', 'stdio'])
     elif server_name == 'firecrawl':
         env_key = 'environment' if 'environment' in incoming_server else 'env'
         env = normalized.get(env_key)
@@ -556,13 +591,17 @@ def managed_mcp_server(current_server, incoming_server, server_name):
             env['FIRECRAWL_API_KEY'] = incoming_env.get('FIRECRAWL_API_KEY')
         if env_key == 'env':
             normalize_managed_launcher('npx', ['-y', 'firecrawl-mcp'])
+            normalize_managed_launcher('bunx', ['firecrawl-mcp'])
         else:
             normalize_managed_launcher(['npx', '-y', 'firecrawl-mcp'])
+            normalize_managed_launcher(['bunx', 'firecrawl-mcp'])
     elif server_name == 'playwright':
         if isinstance(incoming_server.get('command'), str):
             normalize_managed_launcher('npx', ['-y', '@playwright/mcp@latest', '--isolated'])
+            normalize_managed_launcher('bunx', ['@playwright/mcp@latest', '--isolated'])
         else:
             normalize_managed_launcher(['npx', '-y', '@playwright/mcp@latest', '--isolated'])
+            normalize_managed_launcher(['bunx', '@playwright/mcp@latest', '--isolated'])
     elif server_name == 'gitnexus':
         if normalized.get('command') == 'npx' and normalized.get('args') == ['-y', 'gitnexus@latest', 'mcp']:
             normalized['command'] = 'gitnexus'

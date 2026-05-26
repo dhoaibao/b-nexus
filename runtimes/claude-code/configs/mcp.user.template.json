@@ -20,24 +20,24 @@
     },
     "brave-search": {
       "type": "stdio",
-      "command": "bunx",
-      "args": ["@brave/brave-search-mcp-server", "--transport", "stdio"],
+      "command": "pnpm",
+      "args": ["dlx", "@brave/brave-search-mcp-server", "--transport", "stdio"],
       "env": {
         "BRAVE_API_KEY": "${BRAVE_API_KEY}"
       }
     },
     "firecrawl": {
       "type": "stdio",
-      "command": "bunx",
-      "args": ["firecrawl-mcp"],
+      "command": "pnpm",
+      "args": ["dlx", "firecrawl-mcp"],
       "env": {
         "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
       }
     },
     "playwright": {
       "type": "stdio",
-      "command": "bunx",
-      "args": ["@playwright/mcp@latest", "--isolated"],
+      "command": "pnpm",
+      "args": ["dlx", "@playwright/mcp@latest", "--isolated"],
       "env": {}
     },
     "gitnexus": {

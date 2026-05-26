@@ -213,8 +213,8 @@ add_server("context7", context7_lines)
 
 brave_lines = [
     "[mcp_servers.brave-search]",
-    'command = "bunx"',
-    'args = ["@brave/brave-search-mcp-server", "--transport", "stdio"]',
+    'command = "pnpm"',
+    'args = ["dlx", "@brave/brave-search-mcp-server", "--transport", "stdio"]',
 ]
 if brave_key:
     brave_lines.extend([
@@ -227,8 +227,8 @@ add_server("brave-search", brave_lines)
 
 firecrawl_lines = [
     "[mcp_servers.firecrawl]",
-    'command = "bunx"',
-    'args = ["firecrawl-mcp"]',
+    'command = "pnpm"',
+    'args = ["dlx", "firecrawl-mcp"]',
 ]
 if firecrawl_key:
     firecrawl_lines.extend([
@@ -243,8 +243,8 @@ add_server(
     "playwright",
     [
         "[mcp_servers.playwright]",
-        'command = "bunx"',
-        'args = ["@playwright/mcp@latest", "--isolated"]',
+        'command = "pnpm"',
+        'args = ["dlx", "@playwright/mcp@latest", "--isolated"]',
     ],
 )
 
