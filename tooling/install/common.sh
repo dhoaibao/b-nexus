@@ -573,7 +573,7 @@ if not isinstance(current, dict) or not isinstance(incoming, dict) or not isinst
     raise SystemExit(f'{label} cleanup requires JSON object inputs')
 
 cleaned = cleanup(current, incoming, original)
-if label in ('.claude.json', 'opencode.json'):
+if label in ('.claude.json', 'opencode.json', 'gemini-settings.json'):
     mcp_key = 'mcp' if label == 'opencode.json' else 'mcpServers'
     cleaned_servers = cleaned.get(mcp_key)
     incoming_servers = incoming.get(mcp_key, {})
@@ -648,6 +648,8 @@ if placeholder_style == 'claude':
     sys.exit(1 if value.startswith('${') else 0)
 if placeholder_style == 'opencode':
     sys.exit(1 if value.startswith('{env:') else 0)
+if placeholder_style == 'gemini':
+    sys.exit(1 if value.startswith('$') else 0)
 sys.exit(1)
 PY
 }
@@ -845,7 +847,8 @@ print_install_report_next_steps() {
 }
 
 install_mcp_config() {
-  merge_json_file "$TEMPLATES_SRC/mcp.user.template.json" "$MCP_CONFIG_DST" "mcp" "$MCP_BACKUP_KEY"
+  local template_src="${MCP_TEMPLATE_SRC:-$TEMPLATES_SRC/mcp.user.template.json}"
+  merge_json_file "$template_src" "$MCP_CONFIG_DST" "mcp" "$MCP_BACKUP_KEY"
 }
 
 apply_prompted_mcp_keys() {

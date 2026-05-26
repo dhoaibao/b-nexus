@@ -1,10 +1,10 @@
 # b-agentic
 
-**An agent workflow kernel for Claude Code, OpenCode, and Codex CLI.**
+**An agent workflow kernel for Claude Code, OpenCode, Codex CLI, and Gemini CLI.**
 
-`b-agentic` turns rough developer intent into disciplined loops: clarify, plan, build, validate, debug, review, and ship. Claude Code is the reference runtime; OpenCode and Codex CLI are supported through runtime-specific adapters.
+`b-agentic` turns rough developer intent into disciplined loops: clarify, plan, build, validate, debug, review, and ship. Claude Code is the reference runtime; OpenCode, Codex CLI, and Gemini CLI are supported through runtime-specific adapters.
 
-Skill names are runtime-neutral: Claude Code and OpenCode commonly expose `/b-*`, while Codex CLI uses `/skills`, `$skill-name`, or implicit matching.
+Skill names are runtime-neutral: Claude Code, OpenCode, and Gemini CLI commonly expose `/b-*`, while Codex CLI uses `/skills`, `$skill-name`, or implicit matching.
 
 ## Install
 
@@ -24,6 +24,12 @@ Install for Codex CLI:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --runtime=codex-cli
+```
+
+Install for Gemini CLI:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dhoaibao/b-agentic/main/install.sh | bash -s -- --runtime=gemini-cli
 ```
 
 Install for all registered runtimes:
@@ -51,11 +57,12 @@ The installer is designed to be a one-command bootstrap. It installs the kernel,
 
 ## What You Get
 
-- A runtime kernel installed into the active tool: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`, or `~/.codex/AGENTS.md`
-- The `b-agentic` skill set under the runtime-local skills tree (`~/.claude/skills/`, `~/.config/opencode/skills/`, or `~/.codex/skills/`)
+- A runtime kernel installed into the active tool: `~/.claude/CLAUDE.md`, `~/.config/opencode/AGENTS.md`, `~/.codex/AGENTS.md`, or `~/.gemini/GEMINI.md`
+- The `b-agentic` skill set under the runtime-local skills tree (`~/.claude/skills/`, `~/.config/opencode/skills/`, `~/.codex/skills/`, or `~/.gemini/skills/`)
 - Recommended runtime config templates, MCP config, and shared references
 - For OpenCode, thin `/b-*` command wrappers in `~/.config/opencode/commands/`
 - For Codex CLI, skill registration and MCP server config in `~/.codex/config.toml`
+- For Gemini CLI, thin `/b-*` TOML command wrappers in `~/.gemini/commands/`
 
 If an existing kernel file is preserved, the install stays in a pending state until you replace or merge it.
 
@@ -120,6 +127,12 @@ b-agentic/
 │   │   ├── configs/       # Runtime config templates and docs
 │   │   ├── scripts/       # Runtime-specific install and validate scripts
 │   │   └── tests/         # Runtime-specific smoke lane
+│   ├── gemini-cli/
+│   │   ├── kernel.md      # Gemini CLI runtime kernel
+│   │   ├── commands/      # Thin /b-* TOML command wrappers
+│   │   ├── configs/       # Runtime config templates and docs
+│   │   ├── scripts/       # Runtime-specific install and validate scripts
+│   │   └── tests/         # Runtime-specific smoke lane
 │   └── runtime-template/  # Scaffold for a future runtime adapter
 ├── references/
 │   ├── contract/          # Detailed runtime contract
@@ -148,4 +161,4 @@ b-agentic/
 
 - `CLAUDE.md` is the maintainer guide for this source repo
 - `references/contract/` contains the detailed runtime contract
-- `runtimes/claude-code/configs/README.md`, `runtimes/opencode/configs/README.md`, and `runtimes/codex-cli/configs/README.md` describe runtime-specific layout details
+- `runtimes/<name>/configs/README.md` describes runtime-specific layout details

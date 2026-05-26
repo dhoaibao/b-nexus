@@ -80,6 +80,7 @@ run_all_runtime_smoke_case() {
 main() {
   local snapshot_repo="$WORK_DIR/repo-snapshot"
   local runtime_name runtime_script
+  local -a runtime_names=()
 
   require_bin git
   require_bin python3
@@ -88,6 +89,10 @@ main() {
 
   while IFS= read -r runtime_name; do
     [ -n "$runtime_name" ] || continue
+    runtime_names+=("$runtime_name")
+  done < <(registered_runtime_names)
+
+  for runtime_name in "${runtime_names[@]}"; do
     runtime_script="$ROOT_DIR/runtimes/$runtime_name/tests/smoke.sh"
     [ -f "$runtime_script" ] || fail "missing smoke suite: $runtime_script"
 
@@ -96,7 +101,7 @@ main() {
     source "$runtime_script"
     declare -F run_runtime_smoke_cases >/dev/null || fail "runtime smoke suite did not define run_runtime_smoke_cases: $runtime_script"
     run_runtime_smoke_cases "$snapshot_repo"
-  done < <(registered_runtime_names)
+  done
 
   printf 'smoke-install.sh passed\n'
 }

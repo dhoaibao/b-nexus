@@ -348,6 +348,27 @@ def render_command_wrapper(skill: dict) -> str:
     )
 
 
+def render_gemini_command_wrapper(skill: dict) -> str:
+    command = skill["command"]
+    target = command.get("target", "request")
+    prompt = "\n".join(
+        [
+            f"Load the `{skill['name']}` skill and follow it for this {target}.",
+            "",
+            "{{args}}",
+        ]
+    )
+    return "\n".join(
+        [
+            f"description = {json.dumps(command['description'])}",
+            "",
+            "# Generated from skills/registry.yaml. Edit the registry, not this wrapper.",
+            f"prompt = {json.dumps(prompt)}",
+            "",
+        ]
+    )
+
+
 def render_folded_yaml_block(key: str, value: str) -> list[str]:
     wrapper = textwrap.TextWrapper(
         width=74,
@@ -460,7 +481,10 @@ def render_outputs(skills: list[dict], runtimes: list[dict]) -> dict[Path, str]:
         command_dir = ROOT / command_wrappers["source_dir"]
         for skill in exposed_skills:
             alias = skill["command"]["alias"]
-            outputs[command_dir / f"{alias}.md"] = render_command_wrapper(skill)
+            if runtime["name"] == "gemini-cli":
+                outputs[command_dir / f"{alias}.toml"] = render_gemini_command_wrapper(skill)
+            else:
+                outputs[command_dir / f"{alias}.md"] = render_command_wrapper(skill)
 
     return outputs
 

@@ -454,6 +454,7 @@ for runtime_name, api_key_line in [
     ("claude-code", "`context7`, `brave-search`, and `firecrawl` entries are installed immediately, but live requests need user-scope API keys in `~/.claude.json`."),
     ("opencode", "`context7`, `brave-search`, and `firecrawl` entries are installed immediately, but live requests need user-scope API keys in `~/.config/opencode/opencode.json`."),
     ("codex-cli", "`context7`, `brave-search`, and `firecrawl` entries are installed immediately, but live requests need user-scope API keys in `~/.codex/config.toml` or matching shell environment variables."),
+    ("gemini-cli", "`context7`, `brave-search`, and `firecrawl` entries are installed immediately, but live requests need user-scope API keys in `~/.gemini/settings.json` or matching shell environment variables."),
 ]:
     install_path = ROOT / "runtimes" / runtime_name / "scripts" / "install.sh"
     readme_path = ROOT / "runtimes" / runtime_name / "configs" / "README.md"
@@ -581,8 +582,9 @@ for json_path in sorted((ROOT / "runtimes").glob("*/configs/*.json")):
         if pattern.search(text):
             errors.append(f"{rel(json_path)}: contains secret-looking placeholder/literal {pattern.pattern!r}")
 
-    if json_path.name.startswith("mcp."):
+    if json_path.name.startswith("mcp.") or ("gemini-cli" in json_path.parts and json_path.name == "settings.template.json"):
         is_opencode = "opencode" in json_path.parts
+        is_gemini = "gemini-cli" in json_path.parts
         mcp_key = "mcp" if is_opencode else "mcpServers"
         servers = data.get(mcp_key)
         if not isinstance(servers, dict) or not servers:
@@ -639,6 +641,48 @@ for json_path in sorted((ROOT / "runtimes").glob("*/configs/*.json")):
                 if servers["gitnexus"].get("command") != ["gitnexus", "mcp"]:
                     errors.append(f"{rel(json_path)}: gitnexus must use installed gitnexus mcp command")
 
+        elif is_gemini:
+            if "brave-search" in servers:
+                env = servers["brave-search"].get("env", {})
+                if env.get("BRAVE_API_KEY") != "$BRAVE_API_KEY":
+                    errors.append(f"{rel(json_path)}: brave-search must use $BRAVE_API_KEY placeholder")
+                if servers["brave-search"].get("command") != "bunx":
+                    errors.append(f"{rel(json_path)}: brave-search must use bunx")
+                args = servers["brave-search"].get("args", [])
+                if "@brave/brave-search-mcp-server" not in args:
+                    errors.append(f"{rel(json_path)}: brave-search must use @brave/brave-search-mcp-server")
+
+            if "firecrawl" in servers:
+                env = servers["firecrawl"].get("env", {})
+                if env.get("FIRECRAWL_API_KEY") != "$FIRECRAWL_API_KEY":
+                    errors.append(f"{rel(json_path)}: firecrawl must use $FIRECRAWL_API_KEY placeholder")
+                if servers["firecrawl"].get("command") != "bunx":
+                    errors.append(f"{rel(json_path)}: firecrawl must use bunx")
+                if "firecrawl-mcp" not in servers["firecrawl"].get("args", []):
+                    errors.append(f"{rel(json_path)}: firecrawl must use firecrawl-mcp")
+
+            if "playwright" in servers:
+                if servers["playwright"].get("command") != "bunx":
+                    errors.append(f"{rel(json_path)}: playwright must use bunx")
+                args = servers["playwright"].get("args", [])
+                if "@playwright/mcp@latest" not in args:
+                    errors.append(f"{rel(json_path)}: playwright must use @playwright/mcp@latest")
+                if "--isolated" not in args:
+                    errors.append(f"{rel(json_path)}: playwright must use --isolated by default")
+
+            if "context7" in servers:
+                server = servers["context7"]
+                if server.get("httpUrl") != "https://mcp.context7.com/mcp":
+                    errors.append(f"{rel(json_path)}: context7 must use the official MCP HTTP endpoint")
+                headers = server.get("headers", {})
+                if headers.get("CONTEXT7_API_KEY") != "$CONTEXT7_API_KEY":
+                    errors.append(f"{rel(json_path)}: context7 must use $CONTEXT7_API_KEY header placeholder")
+
+            if "gitnexus" in servers:
+                gitnexus = servers["gitnexus"]
+                if gitnexus.get("command") != "gitnexus" or gitnexus.get("args") != ["mcp"]:
+                    errors.append(f"{rel(json_path)}: gitnexus must use installed gitnexus mcp command")
+
         else:
             if "brave-search" in servers:
                 env = servers["brave-search"].get("env", {})
@@ -683,7 +727,7 @@ for json_path in sorted((ROOT / "runtimes").glob("*/configs/*.json")):
                 if gitnexus.get("command") != "gitnexus" or gitnexus.get("args") != ["mcp"]:
                     errors.append(f"{rel(json_path)}: gitnexus must use installed gitnexus mcp command")
 
-        if json_path.name == "mcp.user.template.json":
+        if json_path.name == "mcp.user.template.json" or (is_gemini and json_path.name == "settings.template.json"):
             actual_user = set(servers)
             if actual_user != expected_user:
                 errors.append(f"{rel(json_path)}: user MCP template must contain all default global servers {sorted(expected_user)}, found {sorted(actual_user)}")

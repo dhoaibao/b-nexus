@@ -6,7 +6,7 @@ Guidelines for editing and maintaining the `b-agentic` source repository. This f
 
 - `README.md` stays brief: repo overview, install, and high-level layout.
 - Root `CLAUDE.md` is the shared maintainer guide for this repo, not a Claude-Code-only authoring spec.
-- Claude Code is the reference runtime and primary native-first target; OpenCode and Codex CLI are separate supported runtimes with their own install layouts.
+- Claude Code is the reference runtime and primary native-first target; OpenCode, Codex CLI, and Gemini CLI are separate supported runtimes with their own install layouts.
 - Shared runtime-facing content under `skills/` and `references/contract/` must stay runtime-neutral in behavior and path semantics.
 - Runtime-specific paths, kernel filenames, install-layout details, wrappers, and caveats belong under `runtimes/<name>/`.
 - Do not create a second root reference surface. Use root docs for orientation only, and keep detailed rules close to their owning sources.
@@ -111,9 +111,10 @@ Before merging runtime-facing changes:
 2. Run `scripts/validate-skills.sh`.
 3. Run `scripts/smoke-install.sh` when install, runtime, wrapper, or kernel delivery behavior changed.
 4. Codex runtime install, validation, and smoke paths rely on Python 3.11+ standard-library `tomllib` support.
-5. Check that shared content stayed runtime-neutral.
-6. Check that docs changed in the same commit when the public or maintainer surface changed.
-7. Check that prompt read gates point to `{{skill_support_path}}/...` for skill-local files and `{{runtime_reference_root}}/...` for shared references rather than hardcoded delivery paths.
+5. Gemini runtime commands are generated TOML wrappers under `runtimes/gemini-cli/commands/`.
+6. Check that shared content stayed runtime-neutral.
+7. Check that docs changed in the same commit when the public or maintainer surface changed.
+8. Check that prompt read gates point to `{{skill_support_path}}/...` for skill-local files and `{{runtime_reference_root}}/...` for shared references rather than hardcoded delivery paths.
 
 ## Review Checklist
 
