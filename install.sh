@@ -290,6 +290,35 @@ for runtime in registry.get('runtimes', []):
 PY
 }
 
+runtime_names_for_all_install() {
+  require_bin python3
+  python3 - "$SOURCE_DIR/runtimes/registry.yaml" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+registry = json.loads(Path(sys.argv[1]).read_text())
+names = [
+    runtime.get('name')
+    for runtime in registry.get('runtimes', [])
+    if isinstance(runtime.get('name'), str) and runtime.get('name')
+]
+skip_legacy_gemini = 'antigravity-cli' in names
+for name in names:
+    if skip_legacy_gemini and name == 'gemini-cli':
+        continue
+    print(name)
+PY
+}
+
+runtime_names_for_all() {
+  if uninstall_enabled; then
+    runtime_names
+  else
+    runtime_names_for_all_install
+  fi
+}
+
 runtime_registered() {
   local target="$1"
   local runtime_name
@@ -391,11 +420,13 @@ run_runtime_action() {
 run_all_runtimes() {
   local runtime_name rc overall_rc=0 runtime_count=0
   local action_label="Installing"
+  local target_label="all default runtimes"
   if uninstall_enabled; then
     action_label="Uninstalling"
+    target_label="all registered runtimes"
   fi
 
-  log "$action_label all registered runtimes"
+  log "$action_label $target_label"
 
   while IFS= read -r runtime_name; do
     [ -n "$runtime_name" ] || continue
@@ -420,7 +451,7 @@ run_all_runtimes() {
         return "$rc"
         ;;
     esac
-  done < <(runtime_names)
+  done < <(runtime_names_for_all)
 
   [ "$runtime_count" -gt 0 ] || die "no runtimes registered in $SOURCE_DIR/runtimes/registry.yaml"
   return "$overall_rc"

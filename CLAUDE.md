@@ -6,7 +6,7 @@ Guidelines for editing and maintaining the `b-agentic` source repository. This f
 
 - `README.md` stays brief: repo overview, install, and high-level layout.
 - Root `CLAUDE.md` is the shared maintainer guide for this repo, not a Claude-Code-only authoring spec.
-- Claude Code is the reference runtime and primary native-first target; OpenCode, Codex CLI, and Gemini CLI are separate supported runtimes with their own install layouts.
+- Claude Code is the reference runtime and primary native-first target; OpenCode, Codex CLI, and Antigravity CLI are separate supported runtimes with their own install layouts. Gemini CLI remains as a legacy compatibility runtime.
 - Shared runtime-facing content under `skills/` and `references/contract/` must stay runtime-neutral in behavior and path semantics.
 - Runtime-specific paths, kernel filenames, install-layout details, wrappers, and caveats belong under `runtimes/<name>/`.
 - Do not create a second root reference surface. Use root docs for orientation only, and keep detailed rules close to their owning sources.
@@ -111,10 +111,11 @@ Before merging runtime-facing changes:
 2. Run `scripts/validate-skills.sh`.
 3. Run `scripts/smoke-install.sh` when install, runtime, wrapper, or kernel delivery behavior changed.
 4. Codex runtime install, validation, and smoke paths rely on Python 3.11+ standard-library `tomllib` support.
-5. Gemini CLI exposes `/b-*` through its native skill command loader; do not add duplicate TOML wrappers under `~/.gemini/commands/`.
-6. Check that shared content stayed runtime-neutral.
-7. Check that docs changed in the same commit when the public or maintainer surface changed.
-8. Check that prompt read gates point to `{{skill_support_path}}/...` for skill-local files and `{{runtime_reference_root}}/...` for shared references rather than hardcoded delivery paths.
+5. Antigravity CLI exposes `/b-*` through its native skill command loader from `~/.gemini/antigravity-cli/skills/`; keep MCP in `~/.gemini/antigravity-cli/mcp_config.json` and use `serverUrl` for remote MCP entries.
+6. Gemini CLI remains a legacy compatibility runtime; do not add duplicate TOML wrappers under `~/.gemini/commands/`.
+7. Check that shared content stayed runtime-neutral.
+8. Check that docs changed in the same commit when the public or maintainer surface changed.
+9. Check that prompt read gates point to `{{skill_support_path}}/...` for skill-local files and `{{runtime_reference_root}}/...` for shared references rather than hardcoded delivery paths.
 
 ## Review Checklist
 

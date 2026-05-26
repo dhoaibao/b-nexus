@@ -13,14 +13,25 @@ trap cleanup EXIT
 source "$ROOT_DIR/tests/smoke/lib.sh"
 
 registry_runtime_records() {
-  python3 - "$ROOT_DIR/runtimes/registry.yaml" <<'PY'
+  local mode="${1:-all}"
+  python3 - "$ROOT_DIR/runtimes/registry.yaml" "$mode" <<'PY'
 from pathlib import Path
 import json
 import sys
 
 registry = json.loads(Path(sys.argv[1]).read_text())
-for runtime in registry.get('runtimes', []):
+mode = sys.argv[2]
+runtimes = registry.get('runtimes', [])
+names = [
+    runtime.get('name')
+    for runtime in runtimes
+    if isinstance(runtime.get('name'), str) and runtime.get('name')
+]
+skip_legacy_gemini = mode == 'install' and 'antigravity-cli' in names
+for runtime in runtimes:
     name = runtime.get('name')
+    if skip_legacy_gemini and name == 'gemini-cli':
+        continue
     metadata_root = runtime.get('metadata_root')
     memory_install_path = runtime.get('memory_install_path')
     if (
@@ -47,7 +58,11 @@ run_all_runtime_smoke_case() {
     manifest_path="$sandbox_all/home/$metadata_root/install.json"
     assert_file "$manifest_path"
     assert_json_value "$manifest_path" "data['runtime'] == '$runtime_name'"
-  done < <(registry_runtime_records)
+  done < <(registry_runtime_records install)
+
+  assert_no_path "$sandbox_all/home/.gemini/b-agentic/install.json"
+  assert_contains "$sandbox_all/home/.gemini/GEMINI.md" 'Agent Workflow Kernel for Antigravity CLI'
+  assert_contains "$sandbox_all/home/.gemini/GEMINI.md" '~/.gemini/antigravity-cli/b-agentic/references/contract/'
 
   expect_install_status 0 "$sandbox_all" "$snapshot_repo" --runtime=all --uninstall
 
@@ -74,7 +89,7 @@ run_all_runtime_smoke_case() {
     else
       assert_json_value "$manifest_path" "data['activationState'] == 'active'"
     fi
-  done < <(registry_runtime_records)
+  done < <(registry_runtime_records install)
 }
 
 main() {
