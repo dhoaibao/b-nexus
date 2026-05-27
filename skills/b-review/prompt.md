@@ -4,20 +4,21 @@ $ARGUMENTS
 
 Review changed code for blockers, regressions, security risk, and missing coverage. Findings first.
 
-Flags: `--skip-tests`, `--baseline=<path|url>`, `--range=<ref>..<ref>`, `--self`, `--external`.
+Flags: `--skip-tests`, `--baseline=<path|url>`, `--range=<ref>..<ref>`, `--self`, `--external`, `--audit-suite`.
 
 ## When to use
 
 - The user wants a pre-PR/pre-commit changed-code review.
 - A risky milestone needs reviewer scrutiny before continuing.
 - The goal is to find correctness, regression, security, edge-case, or coverage risks.
+- The user requests a b-agentic suite self-audit with `--audit-suite` (not a diff review). For any other codebase audit, stay in **b-review** without the flag. See `{{runtime_reference_root}}/contract/10-decisions.md` for the tiebreaker.
 
 ## When NOT to use
 
 - Something is broken and needs root-cause tracing -> use **b-debug**.
 - The task is writing or fixing tests -> use **b-test**.
 - The task is external lookup -> use **b-research**.
-- The user requests a b-agentic suite self-audit (not a diff review) -> use **b-audit**. For any other codebase audit, stay in **b-review**. See `{{runtime_reference_root}}/contract/10-decisions.md` for the tiebreaker.
+- The user requests a b-agentic suite self-audit without `--audit-suite` -> ask whether to run with `--audit-suite` or treat as a normal review.
 - The user asks only to run lint, format, or build commands without a review goal -> use native commands or the active build skill.
 - The request is plan review, UX critique, or research synthesis review.
 

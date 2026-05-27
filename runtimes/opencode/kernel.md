@@ -31,35 +31,19 @@ This runtime contract version is `2026-05-16`. New saved plans and multi-artifac
 
 ## 1. Routing
 
-Match the user's intent to one active skill. If a request spans phases, sequence `Decide -> Build -> Validate`.
+Match the user's intent to one active skill. If a request spans phases, sequence `Decide -> Build -> Validate`. Keep one active skill until its stop condition is hit. Required subtasks are handoffs, not parallel skill runs.
 
-| Intent | Skill |
-|---|---|
-| End-to-end PR readiness workflow across phases | `b-orchestrate` |
-| Decide how to build, decompose work | `b-plan` |
-| External docs, API facts, comparisons | `b-research` |
-| Execute approved or clearly scoped work | `b-implement` |
-| Mechanical rename, extract, move, inline, simplify, delete | `b-refactor` |
-| Runtime bug, error, broken behavior | `b-debug` |
-| Unit/integration/component tests, coverage, failing tests | `b-test` |
-| Real-browser, visual, and e2e verification | `b-browser` |
-| Pre-PR changed-code review | `b-review` |
-| b-agentic suite self-audit (suite-only) | `b-audit` |
+Key rules:
+- Explicit end-to-end PR-readiness workflows use `b-orchestrate`; single-phase asks stay with the phase owner.
+- A failing test exposing a real product bug → `b-debug`.
+- A named behavior-preserving transform → `b-refactor`.
+- Unclear goal or acceptance criteria → `b-plan` (Clarification mode).
+- `b-research` is for genuine external-knowledge blockers only.
+- Simulated DOM/component tests → `b-test`; real-browser/visual/e2e → `b-browser`.
+- `b-ship` is explicit-command-only after readiness is established.
+- No skill adds browser or DOM tooling as a side effect.
 
-### Trigger Precedence
-
-- Explicit end-to-end PR-readiness workflows use `b-orchestrate` to coordinate phase-skill handoffs; single-phase asks stay with the phase owner.
-- A failing test that likely exposes a real product bug beats `b-test`; use `b-debug`.
-- A named behavior-preserving rename/extract/move/inline/simplify/delete beats `b-implement`; use `b-refactor`.
-- Unclear user goal, end state, or acceptance criteria stays in `b-plan` (Clarification mode).
-- Unclear implementation approach or sequencing with a clear goal beats `b-implement`; use `b-plan`.
-- `b-research` is for genuine external-knowledge blockers, not questions the codebase or repo docs can answer locally.
-- Simulated DOM/component-test work stays with `b-test`; real-browser, visual, browser-session, live UI, and e2e verification use `b-browser`. `b-ship` is explicit-command-only after readiness is established. No skill may add browser or DOM tooling as a side effect; see runtime contract §10 for the boundary table and tool list.
-- `b-audit` is for b-agentic suite self-audits only; use `b-review` for all other codebase review tasks. See runtime contract §10 for the tiebreaker and the inline Context7 lookup threshold.
-
-Keep one active skill until its stop condition is hit. Required subtasks are handoffs, not parallel skill runs. If a new request arrives mid-flow, state the conflict and ask whether to pause, queue, or abandon unless the current transform must first reach a coherent checkpoint.
-
-Detailed routing, localized triggers, and switch policy: runtime contract §1 and §10.
+Detailed routing table, localized triggers, and switch policy: runtime contract §1 and §10.
 
 ## 2. Source Of Truth
 
@@ -88,22 +72,13 @@ Detailed rubrics and confidence signal: runtime contract §3.
 
 ## 4. Tool Priority
 
-Use the lightest reliable tool. Native local tools such as exact file reads, `rg`, `fd`/`fdfind`, `grep`, `find`, `jq`, and `bash` stay first for exact strings, manifests, prose, config, and commands. Treat MCP bundles as lazy capabilities, not default context sources; activate them only when they close the next evidence gap. Native tools are not MCP bundles; skill files may name them separately when they are part of the workflow.
+Use the lightest reliable tool. Native local tools stay first for exact strings, manifests, prose, config, and commands. Treat MCP bundles as lazy capabilities; activate them only when they close the next evidence gap.
 
-**Tool fallback (shared across all skills):** If required MCP bundles are unavailable, read `contract/04-tool-model.md` before applying fallbacks. Graceful degradation rules and the fallback ladder live there; skills do not restate them.
+**Tool fallback:** If required MCP bundles are unavailable, read `contract/04-tool-model.md` before applying fallbacks. Graceful degradation rules and the fallback ladder live there; skills do not restate them.
 
-| Task shape | First choice | Then narrow with |
-|---|---|---|
-| Graph overview, architecture, blast radius | `gitnexus-radar` when indexed, fresh, target-aware | `serena-symbol-toolkit` |
-| Exact symbol/body/references/edits | `serena-symbol-toolkit` | Native tools + `apply_patch` |
-| Library/framework docs | `context7-docs` | `b-research` |
-| Web/news/image discovery | `brave-search` | `firecrawl-extraction` for source content |
-| Known URL or local document extraction | `firecrawl-extraction` | `firecrawl-extended`, then approval-gated `firecrawl-deep` |
-| Real-browser/visual/e2e live UI operation | `playwright-browser-operator` when installed and safety-gated | Existing repo scripts, supplied evidence, or `firecrawl-extraction` for known remote pages |
+Serena is primary hands; GitNexus is optional radar only. Never use GitNexus for editing. Treat stale graph output as no evidence. The default user-scope MCP install provides Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus. Installed MCP config does not make MCP first-choice over native exact evidence.
 
-GitNexus is optional radar only; Serena is primary hands. Never use GitNexus for editing or exact-body inspection. Treat stale graph output as no evidence. The default user-scope MCP install provides Serena, Context7, Brave Search, Firecrawl, Playwright, and GitNexus. Installed MCP config does not make MCP first-choice over native exact evidence. Unknown command flags should not be ignored; ask once or continue only when intent is unambiguous.
-
-Detailed MCP bundles, fallback ladder, tool-use heuristics, flag/mode rules, and cost gates: runtime contract §4.
+Full tool table, MCP bundles, fallback ladder, and cost gates: runtime contract §4.
 
 ## 5. Evidence
 

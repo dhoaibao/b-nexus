@@ -331,13 +331,6 @@ refactor_triggers = set(normalized_routing_triggers.get("b-refactor", []))
 if "cleanup" in refactor_triggers:
     errors.append("skills/registry.yaml: b-refactor routing must not include the vague trigger 'cleanup'")
 
-audit_triggers = set(normalized_routing_triggers.get("b-audit", []))
-for forbidden_trigger in ["audit", "repo audit"]:
-    if forbidden_trigger in audit_triggers:
-        errors.append(
-            f"skills/registry.yaml: b-audit routing must not include the generic trigger {forbidden_trigger!r}"
-        )
-
 review_triggers = set(normalized_routing_triggers.get("b-review", []))
 for forbidden_trigger in ["pr", "lint"]:
     if forbidden_trigger in review_triggers:
@@ -377,11 +370,42 @@ runtime_template_root = ROOT / "runtimes" / "runtime-template"
 shared_kernel_template_path = ROOT / "references" / "contract" / "kernel.template.md"
 shared_kernel_template = read_text(shared_kernel_template_path)
 
-contract_version_match = re.search(r"This runtime contract version is `([0-9]{4}-[0-9]{2}-[0-9]{2})`", kernel)
-contract_version = contract_version_match.group(1) if contract_version_match else None
+kernel_contract_version_match = re.search(r"This runtime contract version is `([0-9]{4}-[0-9]{2}-[0-9]{2})`", kernel)
+kernel_contract_version = kernel_contract_version_match.group(1) if kernel_contract_version_match else None
+
+kernel_00_path = ROOT / "references" / "contract" / "00-kernel.md"
+kernel_00_text = read_text(kernel_00_path)
+canonical_version_match = re.search(r"This runtime contract version is `([0-9]{4}-[0-9]{2}-[0-9]{2})`", kernel_00_text)
+canonical_contract_version = canonical_version_match.group(1) if canonical_version_match else None
+
+if not canonical_contract_version:
+    errors.append("references/contract/00-kernel.md: unable to extract canonical contract version")
 
 if not kernel_path.exists():
     errors.append("runtimes/claude-code/kernel.md: missing Claude Code kernel source")
+
+# Check generated runtime kernels for contract version consistency with canonical source
+if canonical_contract_version:
+    for runtime_name in runtime_names:
+        runtime_kernel_path = ROOT / "runtimes" / runtime_name / "kernel.md"
+        if not runtime_kernel_path.exists():
+            continue
+        runtime_kernel_text = read_text(runtime_kernel_path)
+        runtime_version_match = re.search(r"This runtime contract version is `([0-9]{4}-[0-9]{2}-[0-9]{2})`", runtime_kernel_text)
+        if runtime_version_match:
+            runtime_version = runtime_version_match.group(1)
+            if runtime_version != canonical_contract_version:
+                errors.append(f"{rel(runtime_kernel_path)}: contract version {runtime_version!r} does not match canonical version {canonical_contract_version!r}")
+
+    # Check kernel template consistency with canonical source
+    if shared_kernel_template:
+        template_version_match = re.search(r"This runtime contract version is `([0-9]{4}-[0-9]{2}-[0-9]{2})`", shared_kernel_template)
+        if template_version_match:
+            template_version = template_version_match.group(1)
+            if template_version != canonical_contract_version:
+                errors.append(f"{rel(shared_kernel_template_path)}: contract version {template_version!r} does not match canonical version {canonical_contract_version!r}")
+
+contract_version = canonical_contract_version or kernel_contract_version
 
 for runtime_name in runtime_names:
     runtime_dir = ROOT / "runtimes" / runtime_name
@@ -539,7 +563,6 @@ for required_line in [
 
 for verdict_prompt_path in [
     ROOT / "skills" / "b-review" / "prompt.md",
-    ROOT / "skills" / "b-audit" / "prompt.md",
     ROOT / "skills" / "b-orchestrate" / "prompt.md",
 ]:
     verdict_prompt = read_text(verdict_prompt_path)
@@ -547,9 +570,9 @@ for verdict_prompt_path in [
         errors.append(f"{rel(verdict_prompt_path)}: verdict-owning prompt must reference the verdict field explicitly")
 
 required_b_test_intent = "| Unit/integration/component tests, coverage, failing tests | `b-test` |"
-if required_b_test_intent not in shared_kernel_template:
+if required_b_test_intent not in shared_kernel_template and required_b_test_intent not in read_text(ROOT / 'references' / 'contract' / '01-routing.md'):
     errors.append(
-        f"{rel(shared_kernel_template_path)}: missing updated b-test routing intent for component-test ownership"
+        f"{rel(shared_kernel_template_path)} and references/contract/01-routing.md: missing updated b-test routing intent for component-test ownership"
     )
 
 stale_orchestrate_handoff = "- Browser/DOM/visual/e2e evidence gap -> `/b-browser`."

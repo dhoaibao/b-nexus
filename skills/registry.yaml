@@ -219,40 +219,22 @@
         "exposed": true
       },
       "routing": {
-        "intent": "Pre-PR changed-code review",
+        "intent": "Pre-PR changed-code review and b-agentic suite audit",
         "triggers": [
           "review",
           "pre-PR",
-          "\"what would a reviewer\""
-        ]
-      },
-      "prompt": {
-        "description": "Pre-PR changed-code review for reviewer-style reads of a diff, commit range, or checkpoint after implementation. Do NOT invoke for repo/suite audits, UI/design review, plan review, or research synthesis review. Unlike b-audit, b-review is diff/range-first and judges changed code adequacy, risk, and missing tests.",
-        "argument_hint": "[--range=<ref>..<ref>] [--baseline=<path|url>] [--skip-tests]"
-      }
-    },
-    {
-      "name": "b-audit",
-      "phase": "Validate",
-      "use": "Audit the b-agentic suite for systemic risk (suite-only)",
-      "command": {
-        "alias": "b-audit",
-        "description": "Audit the b-agentic suite for systemic risk",
-        "exposed": true
-      },
-      "routing": {
-        "intent": "b-agentic suite self-audit (suite-only)",
-        "triggers": [
+          "\"what would a reviewer\"",
           "b-agentic audit",
           "suite audit",
           "maintainer audit"
         ]
       },
       "prompt": {
-        "description": "b-agentic suite self-audit only. Reviewer-style audits of the b-agentic runtime contract, skill layout, installer, validator, tool boundaries, or safety-gate drift. Unlike b-review, b-audit is not diff/range-first and reports sampled coverage plus residual risk. For any other codebase, use b-review.",
-        "argument_hint": "[--surface=<area>] [--baseline=<path|url>] [--skip-checks]"
+        "description": "Pre-PR changed-code review for reviewer-style reads of a diff, commit range, or checkpoint after implementation. Do NOT invoke for repo/suite audits, UI/design review, plan review, or research synthesis review. Unlike b-audit, b-review is diff/range-first and judges changed code adequacy, risk, and missing tests.",
+        "argument_hint": "[--range=<ref>..<ref>] [--baseline=<path|url>] [--skip-tests] [--audit-suite]"
       }
     },
+
     {
       "name": "b-ship",
       "phase": "Ship",
