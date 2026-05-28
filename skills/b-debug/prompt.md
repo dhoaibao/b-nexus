@@ -64,6 +64,8 @@ Read `{{runtime_reference_root}}/contract/07-execution.md` before choosing verif
 
 Remove all `b-debug-probe` markers and scan for untagged debug leftovers (`console.log`, `print`, breakpoints, fake clocks, profiler hooks). Run `rg --hidden 'b-debug-probe' -- <touched-paths>` and verify zero matches before reporting success. Re-run verification after cleanup. Mention restart/reload requirements when config or startup changed.
 
+If `git-delta` is configured as `core.pager`, `git diff` output may be reformatted for display; use `GIT_PAGER=cat git diff` or `git --no-pager diff` when parsing diff output programmatically.
+
 ## Output format
 
 ```text

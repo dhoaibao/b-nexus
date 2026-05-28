@@ -57,7 +57,7 @@ Before editing, state the current step in one line: source of truth, files or sy
 
 Use Serena for symbol-aware edits.
 
-- Keep native tools first for one-file prose/config/string edits where symbol or graph evidence adds nothing; prefer `rg`, `fd`/`fdfind`, and `jq` when those commands are available and materially faster.
+- Keep native tools first for one-file prose/config/string edits where symbol or graph evidence adds nothing; prefer `rg`, `fd`/`fdfind`, and `jq`/`yq` when those commands are available and materially faster.
 - Use Serena first when the step needs exact declarations, references, diagnostics, or symbol-aware edits.
 - Use Context7 only when one narrow third-party API uncertainty blocks the next local edit or verification choice; pin the relevant version before trusting the result.
 - Do not widen scope or add MCP calls just because the runtime bundle is installed.

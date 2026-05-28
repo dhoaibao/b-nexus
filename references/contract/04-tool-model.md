@@ -36,6 +36,19 @@ Use deeper MCP guidance where it materially improves evidence quality or coordin
 - **Escalation rule:** if local evidence already answers the next decision, do not add MCP calls just because the bundle exists.
 - **Runtime readiness rule:** installers and runtime docs may explain what still needs user setup, but availability messaging does not justify auto-running onboarding, indexing, or other user-scope setup steps.
 
+### Shell tool quick reference
+
+The installer lists these in core (`rg`, `fd`/`fdfind`, `jq`, `tmux`, `fzf`) and optional (`bat`/`batcat`, `yq`, `git-delta`, `gh`) tiers. Use them when available and faster than broader fallbacks.
+
+| Tool | When to use | Agent note | Conditionality |
+|---|---|---|---|
+| `yq` | Parse/query YAML registries and configs | YAML counterpart to `jq`; check `command -v yq` | Optional |
+| `gh` | CI status, PR ops, issue queries, auth checks | Prefer over manual `curl` GitHub API calls; check `gh auth status` before use | Optional |
+| `git-delta` | Syntax-highlighted diff display | When set as `core.pager`, auto-applies to `git diff`; use `GIT_PAGER=cat git diff` or `git --no-pager diff` for raw machine-readable output | Optional |
+| `bat`/`batcat` | Syntax-highlighted file display for user-visible output | Agents read files directly; use only when producing visible shell output for the user | Optional |
+| `fzf` | Non-interactive `--filter` scoring | `fzf --filter "<q>" < list` only; never pipe to interactive fzf in agent workflows; prefer `rg`/`grep` unless scoring is needed | Core |
+| `tmux` | Multi-hour detached background jobs | For short tasks prefer direct background (`&`) or shell `run_in_background`; `tmux new-session -d -s <n>` for long-lived sessions | Core |
+
 ### Tool selection rules
 
 - Single-file or local-only task: use native tools or Serena for exact symbols.
@@ -57,7 +70,7 @@ Skills reference MCP bundles by name instead of repeating per-tool MCP lists. Na
 - **Discovery:** `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `find_declaration`, `find_implementations`, `search_for_pattern`.
 - **Verification:** `get_diagnostics_for_file`.
 - **Edits:** `replace_symbol_body`, `insert_before_symbol`, `insert_after_symbol`, `rename_symbol`, `safe_delete_symbol`.
-- **LSP caveat:** strong for TS/JS, Python, and similar; weak for Bash, YAML, Markdown, Lua, and many DSLs. Treat non-LSP renames/safe-deletes/diagnostics as **not authoritative**; widen verification.
+- **LSP caveat:** strong for TS/JS, Python, and similar; weak for Bash, YAML, Markdown, Lua, and many DSLs. Treat non-LSP renames/safe-deletes/diagnostics as **not authoritative**; widen verification. When Serena is weak, fall back to `rg`/native reads and `apply_patch` for discovery and edits in Bash, YAML, Markdown, and similar non-LSP files.
 
 #### `context7-docs`
 
