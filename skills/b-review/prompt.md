@@ -72,7 +72,8 @@ If external knowledge is required, resolve one narrow docs lookup inline or hand
 ## Output format
 
 ```text
-Scope/Mode/Path/Baseline -> Findings -> Checked and clean -> Coverage/Tests/Observability -> Verdict
+Mode: changed-code | suite-audit
+Scope/Path/Baseline -> Findings -> Checked and clean -> Coverage/Tests/Observability -> Verdict
 ```
 
 

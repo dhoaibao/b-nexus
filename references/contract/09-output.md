@@ -28,7 +28,7 @@ State values:
 ```text
 [status]
 skill: <b-skill-name>
-run-id: <YYYYMMDD-HHMMSS>-<task-slug>   (include on any run that wrote artifacts, is part of a handoff chain, or minted a non-trivial orchestration run-id; omit on pure-chat runs with no run-id)
+run-id: <YYYYMMDD-HHMMSS>-<task-slug>   (see run-id conditions below)
 state: complete | blocked | needs-input | handed-off
 artifacts: <comma-separated paths or 'none'>
 next: <skill name or 'none'>
@@ -42,6 +42,15 @@ notes: <cost summary, pre-auth carve-outs, or other run-scoped notes>   (require
 Required fields are `skill`, `state`, `artifacts`, `next`, `blockers`. Every other field is **omit-when-empty** except `cause`, which is required for `blocked` and `needs-input`. Skip the whole line rather than emit a placeholder when an optional field is empty. The `confidence` line, when present, always sits immediately above `notes` so downstream skills can find it at a fixed offset.
 
 `state` reports execution flow; `verdict` reports the skill-specific outcome. For example, a completed review may emit `state: complete` with `verdict: NEEDS FIXES`, and a completed orchestration run may emit `state: complete` with `verdict: READY WITH FOLLOW-UPS`. When a skill defines named verdicts, emit them in `verdict:` instead of burying them in prose or `notes:`.
+
+**run-id conditions** (applies to both `[status]` and `[handoff]` blocks):
+
+| Condition | Include? |
+|---|---|
+| Wrote artifacts to disk | Yes |
+| Part of a handoff chain (source or receiver) | Yes |
+| Minted or inherited a non-trivial orchestration run-id | Yes |
+| Pure-chat run — no artifacts, no handoff chain | Omit |
 
 #### Named verdicts by skill
 
@@ -96,7 +105,7 @@ When a skill hands off to another skill, emit this fenced block in chat **before
 ```text
 [handoff]
 source: <current skill>
-run-id: <YYYYMMDD-HHMMSS>-<task-slug>   (include when the source skill wrote artifacts, inherited a run-id, or minted one for non-trivial orchestration; omit on chat-only handoffs without a run-id)
+run-id: <YYYYMMDD-HHMMSS>-<task-slug>   (see run-id conditions above)
 goal: <one-line goal for the next skill>
 decisions: <confirmed decisions or 'none'>
 assumptions: <open assumptions or 'none'>

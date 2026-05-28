@@ -134,6 +134,8 @@ registry_skills = load_skill_registry()
 
 skill_paths = sorted((ROOT / "skills").glob("*/SKILL.md"))
 skill_names = [path.parent.name for path in skill_paths]
+_kernel_template_early = read_text(ROOT / "references" / "contract" / "kernel.template.md")
+kernel_template_09_gate = "09-output" in _kernel_template_early
 allowed_frontmatter = {
     "name",
     "description",
@@ -207,11 +209,11 @@ for path in skill_paths:
             errors.append(f"{rel(path)}: missing required section {section!r}")
 
     if "handoff envelope" in text.lower() or "[handoff]" in text:
-        if not has_contract_09_read_gate(text):
+        if not has_contract_09_read_gate(text) and not kernel_template_09_gate:
             errors.append(f"{rel(path)}: emits handoff envelope but missing contract/09-output reference")
 
     lower_text = text.lower()
-    if ("hand off" in lower_text or "handoff" in lower_text or "[status]" in text or "status block" in lower_text) and not has_contract_09_read_gate(text):
+    if ("hand off" in lower_text or "handoff" in lower_text or "[status]" in text or "status block" in lower_text) and not has_contract_09_read_gate(text) and not kernel_template_09_gate:
         errors.append(f"{rel(path)}: mentions handoff or status-block behavior but missing contract/09-output reference")
 
     if "## Output format" in body:
@@ -369,6 +371,9 @@ smoke_lib_path = ROOT / "tests" / "smoke" / "lib.sh"
 runtime_template_root = ROOT / "runtimes" / "runtime-template"
 shared_kernel_template_path = ROOT / "references" / "contract" / "kernel.template.md"
 shared_kernel_template = read_text(shared_kernel_template_path)
+
+if shared_kernel_template and "09-output" not in shared_kernel_template:
+    errors.append(f"{rel(shared_kernel_template_path)}: kernel template must reference contract/09-output for the shared status-block schema")
 
 kernel_contract_version_match = re.search(r"This runtime contract version is `([0-9]{4}-[0-9]{2}-[0-9]{2})`", kernel)
 kernel_contract_version = kernel_contract_version_match.group(1) if kernel_contract_version_match else None

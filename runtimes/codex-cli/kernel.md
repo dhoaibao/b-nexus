@@ -110,7 +110,7 @@ Detailed slug algorithm, paths, manifest schema, retention, and run-id continuit
 
 Lead with findings, decisions, or the next action. Non-trivial runs use the shared `[status]` and `[handoff]` schemas from `contract/09-output.md`. Save reports only when the user asks, a durable handoff/checkpoint needs one, output is too large for chat, or artifacts require a manifest.
 
-**Status block (shared across all skills):** Every non-trivial skill run must close with a status block using the schema in `contract/09-output.md`. Skills do not restate this rule.
+**Status block (shared across all skills):** Read `~/.codex/b-agentic/references/contract/09-output.md` before emitting any non-trivial status block or handoff; every such run must use the schema defined there. Skills do not restate this rule.
 
 For reviews, findings come first and are severity ordered. BLOCKER findings are never elided.
 

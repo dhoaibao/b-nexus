@@ -57,7 +57,7 @@ skills/<name>/
 
 - `prompt.md` is required and is the only canonical prompt source.
 - `SKILL.md` is generated.
-- `reference.md`, `examples.md`, and `scripts/` are optional.
+- `reference.md`, `examples.md`, and `scripts/` are optional. When `examples.md` is present, all Output blocks must mirror the Step contract (e.g., required literals enforced by `scripts/validate-skills.sh`).
 
 ### Generated Skill Asset Rules
 

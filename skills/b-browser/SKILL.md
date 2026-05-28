@@ -92,8 +92,6 @@ Clean up or report generated screenshots, videos, traces, logs, browser state, t
 
 State whether real-browser/visual/e2e evidence is verified, missing, failed, or accepted as a follow-up. Do not claim **READY FOR PR** when relevant browser evidence is absent or failed.
 
-Read `../../b-agentic/references/contract/09-output.md` before closing a non-trivial browser verification run with a status block or handoff.
-
 ## Output format
 
 ```text

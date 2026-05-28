@@ -73,13 +73,7 @@ Research (deep): answer, key findings, limitations, sources, confidence.
 ## Rules
 
 - Never ask the user to choose lookup vs research; decide and auto-deepen.
-- Use the lightest depth that answers correctly.
-- Pin versions when they affect the answer.
-- Do not bypass gated sources or paste secrets into fetches. Read `{{runtime_reference_root}}/contract/04-tool-model.md` for `firecrawl-deep` carve-out rules; the deep tier always requires explicit approval.
-- Do not send internal/private URLs, local rich documents, or likely internal documents to external extraction without explicit approval.
-- Prefer 2-4 authoritative sources over long weak lists.
-- Use limitations and confidence labels instead of filling gaps from memory.
-- Cited URLs must come from fetched or user-provided sources in this session.
-- Include `as of <date>` for recency-sensitive, pricing, security, licensing, compatibility, and migration answers.
-- Do not infer document substance from filenames, metadata, or snippets when a rich local document could not be extracted.
-- Read `{{runtime_reference_root}}/contract/09-output.md` before closing a non-trivial research run with a status block or saved report.
+- Use the lightest depth that answers correctly; pin versions when they affect the answer.
+- Prefer 2–4 authoritative sources over long weak lists.
+- Read `{{runtime_reference_root}}/contract/04-tool-model.md` and `{{runtime_reference_root}}/contract/06-safety.md` before applying deep-tier approval, gated-source, or external-extraction rules.
+- Read `{{runtime_reference_root}}/contract/05-evidence.md` before applying freshness labels, citation provenance, or confidence signals.
