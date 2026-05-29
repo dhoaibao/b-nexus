@@ -64,7 +64,7 @@ If product behavior is uncertain, hand off to **b-debug**.
 
 For failing tests, run the narrow command, read the test and exercised source, classify the failure, and apply snapshot/golden confirmation before updating derived artifacts.
 
-For new tests, cover behavior that matters: happy path, edge cases, error handling, and the regression that would catch an accidental revert. Prefer local fixtures unless an existing shared fixture fits.
+For new tests, cover the requested or changed behavior first. Add edge cases, error handling, or regression guards only when the baseline, risk boundary, or changed behavior makes them required; otherwise list them as follow-up gaps. Prefer local fixtures unless an existing shared fixture fits.
 
 For coverage review, stop when changed behavior is covered, the next gap is opportunistic, or five gaps have been added with no required gap remaining.
 
