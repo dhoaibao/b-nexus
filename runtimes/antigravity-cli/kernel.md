@@ -11,7 +11,7 @@ Use these rules before any skill-specific instruction. If context pressure is hi
 
 Reference checklist: when a kernel rule, skill step, output format, or handoff says to use a schema, rubric, protocol, checklist, or reference section from a b-agentic runtime contract, read the named section file before applying that rule. Adherence is voluntary self-guidance — the runtime has no enforcement hook. Installed skills should read shared contract files from the runtime's shared reference snapshot under `~/.gemini/antigravity-cli/b-agentic/references/contract/*.md` and skill-local support files from their own directory when a skill points there.
 
-Runtime gate checklist: for non-trivial work, make the gate explicit at the point of use. Before acting, confirm the active skill and source of truth; before editing or external/mutating actions, confirm approval, staleness, worktree, and safety gates; before reporting done or switching skills, confirm verification and read runtime contract §9 when a status block or handoff is required.
+Runtime gate checklist: for non-trivial work, make the gate explicit at the point of use. Before acting, confirm the active skill and source of truth; before editing or external/mutating actions, confirm approval, staleness, worktree, and safety gates; before reporting done or switching skills, confirm verification and read `~/.gemini/antigravity-cli/b-agentic/references/contract/09-output.md` (§9) when a status block or handoff is required.
 
 1. Route to exactly one active skill by intent; switch only at a stop condition or explicit user override.
 2. Follow the source-of-truth ladder: latest user instruction, approved saved plan, approved chat plan, repo evidence, then stated assumptions.
@@ -74,7 +74,7 @@ Detailed rubrics and confidence signal: runtime contract §3.
 
 Use the lightest reliable tool. Native local tools stay first for exact strings, manifests, prose, config, and commands. Treat MCP bundles as lazy capabilities; activate them only when they close the next evidence gap.
 
-**Tool fallback:** If required MCP bundles are unavailable, read `contract/04-tool-model.md` before applying fallbacks. Graceful degradation rules and the fallback ladder live there; skills do not restate them.
+**Tool fallback:** If required MCP bundles are unavailable, read `~/.gemini/antigravity-cli/b-agentic/references/contract/04-tool-model.md` before applying fallbacks. Graceful degradation rules and the fallback ladder live there; skills do not restate them.
 
 Serena is primary hands. The default user-scope MCP install provides Serena, Context7, Brave Search, Firecrawl, and Playwright. Installed MCP config does not make MCP first-choice over native exact evidence.
 
@@ -108,7 +108,7 @@ Detailed slug algorithm, paths, manifest schema, retention, and run-id continuit
 
 ## 9. Output And Handoffs
 
-Lead with findings, decisions, or the next action. Non-trivial runs use the shared `[status]` and `[handoff]` schemas from `contract/09-output.md`. Save reports only when the user asks, a durable handoff/checkpoint needs one, output is too large for chat, or artifacts require a manifest.
+Lead with findings, decisions, or the next action. Non-trivial runs use the shared `[status]` and `[handoff]` schemas from `~/.gemini/antigravity-cli/b-agentic/references/contract/09-output.md`. Save reports only when the user asks, a durable handoff/checkpoint needs one, output is too large for chat, or artifacts require a manifest.
 
 **Status block (shared across all skills):** Read `~/.gemini/antigravity-cli/b-agentic/references/contract/09-output.md` before emitting any non-trivial status block or handoff; every such run must use the schema defined there. Skills do not restate this rule.
 

@@ -33,12 +33,12 @@ If `$ARGUMENTS` is present, treat it as a plan path, plan slug, approved chat pl
 
 Resolve scope in this order: saved plan path, plan slug, explicitly approved chat plan, then small direct request.
 
-For saved plans, validate before executing:
+For saved plans, **read `{{runtime_reference_root}}/contract/02-source-of-truth.md` before validating**, then run the §2 plan-validation and staleness gates and map each failure to an execution outcome:
 
-1. **Frontmatter check:** `status` is `approved` or `in-progress`; `touch_points` lists at least one path; every unchecked step has `Done when` verification. If validation fails, stop with `cause: conflict` and report the failing check.
-2. **Approval check:** The plan has explicit user approval (current-chat or durable frontmatter `approved_at`). If unapproved, stop with `cause: user_blocked` and request approval.
-3. **Staleness check:** Run `git diff --name-only <approved_head>..HEAD -- <touch_points>` and `git diff --name-only <approved_head> -- <touch_points>` when `approved_head` exists. If any touched file has drift, stop with `cause: conflict` and report the stale plan.
-4. **Blocked-by check:** If the plan has a `blocked_by` array, verify every listed plan reports `status: complete`. If any blocker is not complete, stop with `cause: conflict` and report the blocking plan slug and status.
+1. **Frontmatter/validation fails** (missing frontmatter, non-executable `status`, empty `touch_points`, or an unchecked step without `Done when`): stop with `cause: conflict` and report the failing check.
+2. **No explicit approval** (neither current-chat approval nor durable `approved_at` per §2): stop with `cause: user_blocked` and request approval.
+3. **§2 staleness gate trips** (any `touch_points` drift): stop with `cause: conflict` and report the stale plan.
+4. **Blocked-by check** (b-implement-specific, not in §2): if the plan has a `blocked_by` array, verify every listed plan reports `status: complete`. If any blocker is not complete, stop with `cause: conflict` and report the blocking plan slug and status.
 
 For **small direct requests** (no saved plan), if any small-direct criterion fails, stop with `cause: conflict` and route to **b-plan**.
 

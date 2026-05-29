@@ -125,17 +125,11 @@ def require_contains(path: Path, text: str, needles, label: str):
             errors.append(f"{rel(path)}: missing {label} {needle!r}")
 
 
-def has_contract_09_read_gate(text: str) -> bool:
-    return "contract/09-output" in text
-
-
 runtime_names = load_runtime_registry()
 registry_skills = load_skill_registry()
 
 skill_paths = sorted((ROOT / "skills").glob("*/SKILL.md"))
 skill_names = [path.parent.name for path in skill_paths]
-_kernel_template_early = read_text(ROOT / "references" / "contract" / "kernel.template.md")
-kernel_template_09_gate = "09-output" in _kernel_template_early
 allowed_frontmatter = {
     "name",
     "description",
@@ -208,13 +202,11 @@ for path in skill_paths:
         if section not in body:
             errors.append(f"{rel(path)}: missing required section {section!r}")
 
-    if "handoff envelope" in text.lower() or "[handoff]" in text:
-        if not has_contract_09_read_gate(text) and not kernel_template_09_gate:
-            errors.append(f"{rel(path)}: emits handoff envelope but missing contract/09-output reference")
-
-    lower_text = text.lower()
-    if ("hand off" in lower_text or "handoff" in lower_text or "[status]" in text or "status block" in lower_text) and not has_contract_09_read_gate(text) and not kernel_template_09_gate:
-        errors.append(f"{rel(path)}: mentions handoff or status-block behavior but missing contract/09-output reference")
+    # Per kernel §9 ("Skills do not restate this rule"), the status/handoff read-gate is
+    # kernel-global: every runtime installs the kernel into its memory file, which carries
+    # the contract/09-output read-gate. A per-skill 09-reference assertion is intentionally
+    # NOT enforced here — most skills correctly defer to the kernel gate rather than
+    # embedding their own (only b-orchestrate and b-review carry one, by point-of-use need).
 
     if "## Output format" in body:
         output_fmt_start = body.index("## Output format")
@@ -410,6 +402,40 @@ shared_kernel_template = read_text(shared_kernel_template_path)
 
 if shared_kernel_template and "09-output" not in shared_kernel_template:
     errors.append(f"{rel(shared_kernel_template_path)}: kernel template must reference contract/09-output for the shared status-block schema")
+
+# --- Read-gate resolvability guard (locks the M1/n1 broken-pointer class) ---
+# Every contract read-gate path shipped in a kernel or SKILL must resolve to a real
+# source under references/contract/, and the kernel template must never carry a bare
+# unanchored `contract/<f>.md` gate path (the M1 defect class). Scoped to explicit
+# references/contract/<f>.md citations and skill-local ./reference.md gates so ordinary
+# prose ("runtime contract §N", the `references/contract/*.md` glob) is not flagged.
+_contract_dir = ROOT / "references" / "contract"
+_contract_ref_re = re.compile(r"references/contract/([0-9A-Za-z][0-9A-Za-z._-]*\.md)")
+_bare_contract_re = re.compile(r"(?<![\w/])contract/([0-9][0-9A-Za-z._-]*\.md)")
+
+_read_gate_sources = [shared_kernel_template_path]
+_read_gate_sources += [ROOT / "runtimes" / _rn / "kernel.md" for _rn in runtime_names]
+_read_gate_sources += list(skill_paths)
+for _gate_path in _read_gate_sources:
+    _gate_text = read_text(_gate_path)
+    for _contract_file in sorted(set(_contract_ref_re.findall(_gate_text))):
+        if not (_contract_dir / _contract_file).exists():
+            errors.append(
+                f"{rel(_gate_path)}: read-gate cites references/contract/{_contract_file} but no such contract source exists"
+            )
+
+for _bare_file in sorted(set(_bare_contract_re.findall(shared_kernel_template))):
+    errors.append(
+        f"{rel(shared_kernel_template_path)}: unanchored read-gate path contract/{_bare_file}; "
+        f"use {{{{runtime_metadata_root}}}}/references/contract/{_bare_file}"
+    )
+
+for _skill_path in skill_paths:
+    _skill_name = _skill_path.parent.name
+    if "./reference.md" in read_text(_skill_path) and not (ROOT / "skills" / _skill_name / "reference.md").exists():
+        errors.append(
+            f"{rel(_skill_path)}: read-gate cites ./reference.md but skills/{_skill_name}/reference.md does not exist"
+        )
 
 kernel_contract_version_match = re.search(r"This runtime contract version is `([0-9]{4}-[0-9]{2}-[0-9]{2})`", kernel)
 kernel_contract_version = kernel_contract_version_match.group(1) if kernel_contract_version_match else None
@@ -905,7 +931,15 @@ for _prompt_path in sorted((ROOT / "skills").glob("*/prompt.md")):
 
 _examples_required_literals = {
     "b-debug": ["Root cause:"],
+    "b-implement": ["Plan source:", "Verification:", "Next:"],
+    "b-refactor": ["Target:", "Verification:", "Follow-up:"],
 }
+# Every skill that ships examples.md must declare its Step-contract literals above, so the
+# mirror rule cannot silently lapse when a new examples.md is added (CLAUDE.md authoring rule).
+for _ex_path in sorted((ROOT / "skills").glob("*/examples.md")):
+    _ex_skill = _ex_path.parent.name
+    if _ex_skill not in _examples_required_literals:
+        errors.append(f"{rel(_ex_path)}: ships examples.md but declares no Step-contract literals in tooling/validate/shared.py")
 _output_block_re = re.compile(r'\*\*Output:\*\*\s*```text\n(.*?)```', re.DOTALL)
 for _skill_name, _required_literals in _examples_required_literals.items():
     _examples_path = ROOT / "skills" / _skill_name / "examples.md"

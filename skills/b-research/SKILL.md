@@ -89,3 +89,4 @@ Research (deep): answer, key findings, limitations, sources, confidence.
 - Never ask the user to choose lookup vs research; decide and auto-deepen.
 - Use the lightest depth that answers correctly; pin versions when they affect the answer.
 - Prefer 2–4 authoritative sources over long weak lists.
+- Stop at the cited answer; hand off code changes to **b-implement**, runtime tracing to **b-debug**, and planning or new decisions to **b-plan** rather than acting on the findings here.

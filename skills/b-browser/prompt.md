@@ -53,10 +53,7 @@ Read `{{runtime_reference_root}}/contract/06-safety.md` before running real-brow
 
 Ask for approval before dependency writes, dev servers, persisted browser state, external services, long-running commands, generated evidence outside normal repo output paths, or unsafe arbitrary-code browser tools.
 
-**Trusted target rubric for `browser_run_code_unsafe`:**
-- **Trusted:** localhost dev servers on loopback, official documentation sites for the project's frameworks/libraries, known test fixtures or sandbox environments, and URLs explicitly named in the repo's own tests or docs.
-- **Not trusted:** arbitrary user-supplied URLs, third-party services without an explicit business need, login pages or auth flows, payment or billing pages, production environments with real data, and any page that handles secrets or PII.
-- Always prefer ordinary browser actions first. Unsafe code execution requires explicit user approval naming the specific target URL and the reason ordinary actions are insufficient.
+Before any unsafe arbitrary-code browser execution, apply the §6 trusted-target rubric (gated above): always prefer ordinary browser actions first, and require explicit user approval naming the specific target URL and why ordinary actions cannot answer the question.
 
 ### Step 4 - Collect evidence
 
